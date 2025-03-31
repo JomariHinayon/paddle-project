@@ -103,12 +103,15 @@ const setSession = async ()=>{
     const user = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["auth"].currentUser;
     if (user) {
         const token = await user.getIdToken();
-        // Store the token in a cookie
-        document.cookie = `session=${token}; path=/; max-age=3600; samesite=strict`;
+        document.cookie = `session=${token}; path=/; max-age=3600; samesite=strict; secure`;
     }
 };
 const clearSession = ()=>{
-    document.cookie = 'session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    // Clear all auth-related cookies
+    document.cookie = 'session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure';
+    // Clear any other auth-related state here
+    localStorage.removeItem('user');
+    sessionStorage.clear();
 };
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);

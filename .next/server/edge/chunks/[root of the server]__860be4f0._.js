@@ -28,17 +28,27 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$api$2f$server$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/next/dist/esm/api/server.js [middleware-edge] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/esm/server/web/spec-extension/response.js [middleware-edge] (ecmascript)");
 ;
+// Array of public routes that don't require authentication
+const publicRoutes = [
+    '/',
+    '/login',
+    '/signup',
+    '/confirm-signup',
+    '/auth/action'
+];
 async function middleware(request) {
-    // Skip middleware for auth-related paths
-    if (request.nextUrl.pathname.startsWith('/auth/') || request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup' || request.nextUrl.pathname === '/confirm-signup') {
+    const { pathname } = request.nextUrl;
+    // Allow public routes
+    if (publicRoutes.includes(pathname)) {
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next();
     }
+    // Check for session token
     const session = request.cookies.get('session')?.value;
     if (!session) {
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/login', request.url));
     }
     try {
-        // Simple JWT token verification using Firebase REST API
+        // Verify token with Firebase Auth
         const verifyEndpoint = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${("TURBOPACK compile-time value", "AIzaSyAZgykutTrEf_s4X53uL0e5g5IeU9LN7Ao")}`;
         const response = await fetch(verifyEndpoint, {
             method: 'POST',
@@ -50,16 +60,26 @@ async function middleware(request) {
             })
         });
         const data = await response.json();
+        // No user found or invalid token
         if (!data.users?.[0]) {
-            throw new Error('Invalid token');
+            throw new Error('Invalid session');
         }
-        // Check email verification status
-        if (!data.users[0].emailVerified && !request.nextUrl.pathname.startsWith('/confirm-signup')) {
+        const user = data.users[0];
+        // Redirect unverified users to email verification page
+        if (!user.emailVerified && pathname !== '/confirm-signup') {
             return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/confirm-signup', request.url));
+        }
+        // Allow access to dashboard routes for verified users
+        if (user.emailVerified && pathname.startsWith('/dashboard')) {
+            const requestHeaders = new Headers(request.headers);
+            requestHeaders.set('user', JSON.stringify(user));
+            return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next({
+                headers: requestHeaders
+            });
         }
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next();
     } catch (error) {
-        // Clear invalid session cookie
+        // Clear invalid session and redirect to login
         const response = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/login', request.url));
         response.cookies.delete('session');
         return response;
@@ -68,13 +88,12 @@ async function middleware(request) {
 const config = {
     matcher: [
         /*
-     * Match all request paths except:
-     * 1. /api routes
+     * Match all routes except:
+     * 1. /api (API routes)
      * 2. /_next (Next.js internals)
-     * 3. /fonts (inside /public)
-     * 4. /examples (inside /public)
-     * 5. all root files inside /public (e.g. /favicon.ico)
-     */ '/((?!api|_next|fonts|examples|[\\w-]+\\.\\w+).*)'
+     * 3. /static (static files)
+     * 4. /*.* (files with extensions)
+     */ '/((?!api|_next|static|.*\\.[^/]*$).*)'
     ]
 };
 }}),

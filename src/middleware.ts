@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Array of public routes that don't require authentication
+const publicRoutes = ['/', '/login', '/signup', '/confirm-signup', '/auth/action'];
+
 export async function middleware(request: NextRequest) {
-  // Skip middleware for auth-related paths
-  if (request.nextUrl.pathname.startsWith('/auth/') || 
-      request.nextUrl.pathname === '/login' ||
-      request.nextUrl.pathname === '/signup' ||
-      request.nextUrl.pathname === '/confirm-signup') {
+  const { pathname } = request.nextUrl;
+
+  // Allow public routes
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
+  // Check for session token
   const session = request.cookies.get('session')?.value;
 
   if (!session) {
@@ -17,7 +20,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // Simple JWT token verification using Firebase REST API
+    // Verify token with Firebase Auth
     const verifyEndpoint = `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`;
     const response = await fetch(verifyEndpoint, {
       method: 'POST',
@@ -29,18 +32,31 @@ export async function middleware(request: NextRequest) {
 
     const data = await response.json();
 
+    // No user found or invalid token
     if (!data.users?.[0]) {
-      throw new Error('Invalid token');
+      throw new Error('Invalid session');
     }
 
-    // Check email verification status
-    if (!data.users[0].emailVerified && !request.nextUrl.pathname.startsWith('/confirm-signup')) {
+    const user = data.users[0];
+
+    // Redirect unverified users to email verification page
+    if (!user.emailVerified && pathname !== '/confirm-signup') {
       return NextResponse.redirect(new URL('/confirm-signup', request.url));
+    }
+
+    // Allow access to dashboard routes for verified users
+    if (user.emailVerified && pathname.startsWith('/dashboard')) {
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('user', JSON.stringify(user));
+      
+      return NextResponse.next({
+        headers: requestHeaders,
+      });
     }
 
     return NextResponse.next();
   } catch (error) {
-    // Clear invalid session cookie
+    // Clear invalid session and redirect to login
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('session');
     return response;
@@ -50,13 +66,12 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
-     * 1. /api routes
+     * Match all routes except:
+     * 1. /api (API routes)
      * 2. /_next (Next.js internals)
-     * 3. /fonts (inside /public)
-     * 4. /examples (inside /public)
-     * 5. all root files inside /public (e.g. /favicon.ico)
+     * 3. /static (static files)
+     * 4. /*.* (files with extensions)
      */
-    '/((?!api|_next|fonts|examples|[\\w-]+\\.\\w+).*)',
+    '/((?!api|_next|static|.*\\.[^/]*$).*)',
   ],
 };
