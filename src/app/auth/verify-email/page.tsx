@@ -1,0 +1,74 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { applyActionCode, auth } from '@/lib/firebase';
+import Link from 'next/link';
+
+export default function VerifyEmail() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    const verifyEmail = async () => {
+      const oobCode = searchParams.get('oobCode');
+      
+      if (!oobCode) {
+        setStatus('error');
+        setErrorMessage('Invalid verification link');
+        return;
+      }
+
+      try {
+        await applyActionCode(auth, oobCode);
+        setStatus('success');
+      } catch (error: any) {
+        setStatus('error');
+        setErrorMessage(error.message || 'Failed to verify email');
+      }
+    };
+
+    verifyEmail();
+  }, [searchParams]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+        {status === 'loading' && (
+          <div className="flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p className="text-gray-600">Verifying your email...</p>
+          </div>
+        )}
+
+        {status === 'success' && (
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold text-gray-800">Email Verified!</h1>
+            <p className="text-green-600">Your email has been successfully verified.</p>
+            <Link
+              href="/login"
+              className="block w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Continue to Login
+            </Link>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold text-gray-800">Verification Failed</h1>
+            <p className="text-red-600">{errorMessage}</p>
+            <Link
+              href="/signup"
+              className="block w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Back to Sign Up
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
