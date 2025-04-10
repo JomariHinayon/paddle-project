@@ -19,3 +19,6 @@ yarn-error.log*
 
 # Environment files (if any)
 .env
+
+# Google Cloud Service Account
+config/serviceAccountKey.json
