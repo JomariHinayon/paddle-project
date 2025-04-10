@@ -1,5 +1,5 @@
 export const PADDLE_CONFIG = {
-  clientToken: "test_2c55b94e5180a69d07a0a04db62",
+  clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || '',
   prices: {
     standard: {
       month: "pri_01jqpptmznh4vswj791kdk56q3",

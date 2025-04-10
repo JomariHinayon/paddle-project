@@ -95,6 +95,9 @@ export default function Dashboard() {
       },
       customer: {
         email: user?.email || '',
+      },
+      customData: {
+        userId: user?.uid || ''
       }
     });
   };
