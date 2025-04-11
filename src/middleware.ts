@@ -1,15 +1,30 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Array of public routes that don't require authentication
-const publicRoutes = ['/', '/login', '/signup', '/confirm-signup', '/auth/action'];
+const publicRoutes = ['/', '/login', '/signup', '/confirm-signup', '/auth/action', '/checkout', '/api/webhook/paddle'];
 
 export async function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  // Add CSP headers with Paddle domains
+  const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.paddle.com https://*.datadoghq-browser-agent.com https://*.googletagmanager.com https://core.spreedly.com https://global.localizecdn.com https://js.stripe.com;
+    style-src 'self' 'unsafe-inline' https://*.paddle.com;
+    frame-src 'self' https://*.paddle.com http://localhost:* https://sandbox-buy.paddle.com https://buy.paddle.com;
+    frame-ancestors 'self' http://localhost:* https://*.paddle.com;
+    img-src 'self' data: https: blob:;
+    font-src 'self' https://*.paddle.com;
+    connect-src 'self' https://*.paddle.com https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.datadoghq-browser-agent.com https://*.google-analytics.com;
+  `.replace(/\s{2,}/g, ' ').trim();
+
+  response.headers.set('Content-Security-Policy', cspHeader);
+
   const { pathname } = request.nextUrl;
 
   // Allow public routes
   if (publicRoutes.includes(pathname)) {
-    return NextResponse.next();
+    return response;
   }
 
   // Check for session token
@@ -31,6 +46,7 @@ export async function middleware(request: NextRequest) {
     });
 
     const data = await response.json();
+    console.log('Firebase Auth Response:', { userId: data.users?.[0]?.localId });
 
     // No user found or invalid token
     if (!data.users?.[0]) {
@@ -38,6 +54,12 @@ export async function middleware(request: NextRequest) {
     }
 
     const user = data.users[0];
+    console.log('Authenticated User:', { 
+      uid: user.localId,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      path: pathname 
+    });
 
     // Redirect unverified users to email verification page
     if (!user.emailVerified && pathname !== '/confirm-signup') {
@@ -54,24 +76,18 @@ export async function middleware(request: NextRequest) {
       });
     }
 
-    return NextResponse.next();
+    return response;
   } catch (error) {
     // Clear invalid session and redirect to login
-    const response = NextResponse.redirect(new URL('/login', request.url));
-    response.cookies.delete('session');
-    return response;
+    const redirectResponse = NextResponse.redirect(new URL('/login', request.url));
+    redirectResponse.cookies.delete('session');
+    return redirectResponse;
   }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all routes except:
-     * 1. /api (API routes)
-     * 2. /_next (Next.js internals)
-     * 3. /static (static files)
-     * 4. /*.* (files with extensions)
-     */
-    '/((?!api|_next|static|.*\\.[^/]*$).*)',
+    // Protect all routes except static assets, API routes, and webhooks
+    '/((?!api|_next|static|webhook|.*\\.[^/]*$).*)',
   ],
 };

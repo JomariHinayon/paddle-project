@@ -8,6 +8,8 @@ import LogoutButton from '@/components/LogoutButton';
 import UserProfileCard from '@/components/UserProfileCard';
 import Script from 'next/script';
 import { PADDLE_CONFIG, type PlanType, type BillingCycle } from '@/lib/paddle-config';
+import { getFirestore, doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 declare global {
   interface Window {
@@ -102,6 +104,79 @@ export default function Dashboard() {
     });
   };
 
+  const testFirebaseWrite = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
+        console.log('No user logged in');
+        return;
+      }
+
+      console.log('Current user UID:', user.uid);
+      
+      const db = getFirestore();
+      const testRef = doc(db, 'users', user.uid, 'tests', new Date().toISOString());
+      
+      await setDoc(testRef, {
+        timestamp: new Date(),
+        testData: 'Test write to Firebase',
+        userId: user.uid
+      });
+      
+      console.log('Test data written successfully');
+    } catch (error) {
+      console.error('Error writing test data:', error);
+    }
+  };
+
+  const handlePaddleEvent = async (event: any) => {
+    console.log('Paddle event:', event);
+    
+    if (event.name === 'checkout.completed' && user) {
+      try {
+        const db = getFirestore();
+        const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+        
+        // Extract and validate transaction data
+        const transactionData = {
+          checkoutId: event.data.id || null,
+          transactionId: event.data.order_id || null,
+          status: event.data.status || 'completed',
+          total: event.data.details?.totals?.total || 0,
+          currency: event.data.currency_code || 'USD',
+          customerId: event.data.customer?.id || null,
+          customerEmail: event.data.customer?.email || user.email,
+          items: event.data.items || [],
+          planType: event.data.items?.[0]?.price?.product_id || null,
+          billingCycle: event.data.recurring_payment_type || 'one_time',
+          createdAt: new Date(),
+          userId: user.uid,
+          paddleEventData: JSON.parse(JSON.stringify(event.data)) // Clean copy of event data
+        };
+
+        console.log('Saving transaction data:', transactionData);
+        
+        await addDoc(transactionsRef, transactionData);
+        console.log('Transaction saved to Firebase');
+
+        // Update user's subscription status
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, {
+          hasActiveSubscription: true,
+          lastTransactionDate: new Date(),
+          currentPlan: transactionData.planType,
+          subscriptionStatus: 'active'
+        }, { merge: true });
+        
+      } catch (error) {
+        console.error('Error saving transaction:', error);
+        console.error('Event data:', event);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Script 
@@ -111,9 +186,7 @@ export default function Dashboard() {
             window.Paddle.Environment.set('sandbox');
             window.Paddle.Setup({ 
               token: PADDLE_CONFIG.clientToken,
-              eventCallback: (data: any) => {
-                console.log('Paddle event:', data);
-              }
+              eventCallback: handlePaddleEvent
             });
             setPaddleLoaded(true);
           }
@@ -221,6 +294,14 @@ export default function Dashboard() {
                   </button>
                 </div>
               </div>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={testFirebaseWrite}
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Test Firebase Write
+              </button>
             </div>
           </div>
         </div>

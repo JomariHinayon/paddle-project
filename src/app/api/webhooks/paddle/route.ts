@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { db } from '@/lib/firebase-admin';
 import { getFirestore, collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       switch (payload.event_type) {
         case 'checkout.completed':
           // Store checkout data
-          await adminDb.collection('checkouts').doc(payload.data.id).set({
+          await db.collection('checkouts').doc(payload.data.id).set({
             orderId: payload.data.order_id,
             status: 'completed',
             customerId: payload.data.customer_id,
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
           // Update user status
           if (payload.data.custom_data?.userId) {
-            await adminDb.collection('users').doc(payload.data.custom_data.userId).set({
+            await db.collection('users').doc(payload.data.custom_data.userId).set({
               hasActiveSubscription: true,
               lastCheckout: new Date().toISOString(),
               lastOrderId: payload.data.order_id
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
         case 'subscription.created':
         case 'subscription.updated':
-          await adminDb.collection('subscriptions').doc(payload.data.id).set({
+          await db.collection('subscriptions').doc(payload.data.id).set({
             userId: payload.data.custom_data?.userId,
             status: payload.data.status,
             planId: payload.data.items[0].price.product_id,

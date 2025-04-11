@@ -28,19 +28,33 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$api$2f$server$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/next/dist/esm/api/server.js [middleware-edge] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/esm/server/web/spec-extension/response.js [middleware-edge] (ecmascript)");
 ;
-// Array of public routes that don't require authentication
 const publicRoutes = [
     '/',
     '/login',
     '/signup',
     '/confirm-signup',
-    '/auth/action'
+    '/auth/action',
+    '/checkout',
+    '/api/webhook/paddle'
 ];
 async function middleware(request) {
+    const response = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next();
+    // Add CSP headers with Paddle domains
+    const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.paddle.com https://*.datadoghq-browser-agent.com https://*.googletagmanager.com https://core.spreedly.com https://global.localizecdn.com https://js.stripe.com;
+    style-src 'self' 'unsafe-inline' https://*.paddle.com;
+    frame-src 'self' https://*.paddle.com http://localhost:* https://sandbox-buy.paddle.com https://buy.paddle.com;
+    frame-ancestors 'self' http://localhost:* https://*.paddle.com;
+    img-src 'self' data: https: blob:;
+    font-src 'self' https://*.paddle.com;
+    connect-src 'self' https://*.paddle.com https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.datadoghq-browser-agent.com https://*.google-analytics.com;
+  `.replace(/\s{2,}/g, ' ').trim();
+    response.headers.set('Content-Security-Policy', cspHeader);
     const { pathname } = request.nextUrl;
     // Allow public routes
     if (publicRoutes.includes(pathname)) {
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next();
+        return response;
     }
     // Check for session token
     const session = request.cookies.get('session')?.value;
@@ -60,11 +74,20 @@ async function middleware(request) {
             })
         });
         const data = await response.json();
+        console.log('Firebase Auth Response:', {
+            userId: data.users?.[0]?.localId
+        });
         // No user found or invalid token
         if (!data.users?.[0]) {
             throw new Error('Invalid session');
         }
         const user = data.users[0];
+        console.log('Authenticated User:', {
+            uid: user.localId,
+            email: user.email,
+            emailVerified: user.emailVerified,
+            path: pathname
+        });
         // Redirect unverified users to email verification page
         if (!user.emailVerified && pathname !== '/confirm-signup') {
             return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/confirm-signup', request.url));
@@ -77,23 +100,18 @@ async function middleware(request) {
                 headers: requestHeaders
             });
         }
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].next();
+        return response;
     } catch (error) {
         // Clear invalid session and redirect to login
-        const response = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/login', request.url));
-        response.cookies.delete('session');
-        return response;
+        const redirectResponse = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$esm$2f$server$2f$web$2f$spec$2d$extension$2f$response$2e$js__$5b$middleware$2d$edge$5d$__$28$ecmascript$29$__["NextResponse"].redirect(new URL('/login', request.url));
+        redirectResponse.cookies.delete('session');
+        return redirectResponse;
     }
 }
 const config = {
     matcher: [
-        /*
-     * Match all routes except:
-     * 1. /api (API routes)
-     * 2. /_next (Next.js internals)
-     * 3. /static (static files)
-     * 4. /*.* (files with extensions)
-     */ '/((?!api|_next|static|.*\\.[^/]*$).*)'
+        // Protect all routes except static assets, API routes, and webhooks
+        '/((?!api|_next|static|webhook|.*\\.[^/]*$).*)'
     ]
 };
 }}),
