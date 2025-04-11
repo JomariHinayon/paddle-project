@@ -8,7 +8,7 @@ import LogoutButton from '@/components/LogoutButton';
 import UserProfileCard from '@/components/UserProfileCard';
 import Script from 'next/script';
 import { PADDLE_CONFIG, type PlanType, type BillingCycle } from '@/lib/paddle-config';
-import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { identifyPlan } from '@/lib/paddle-utils';
 
@@ -191,7 +191,8 @@ export default function Dashboard() {
           hasActive: userData.hasActiveSubscription || false,
           plan: userData.currentPlan || null,
           status: userData.subscriptionStatus || 'inactive',
-          lastTransaction: userData.lastTransactionDate?.toDate() || null
+          lastTransaction: userData.lastTransactionDate?.toDate() || null,
+          product: userData.product || null
         });
         console.log('Subscription status:', userData);
       }
@@ -204,7 +205,9 @@ export default function Dashboard() {
     try {
       const db = getFirestore();
       const transactionsRef = collection(db, 'users', userId, 'transactions');
-      const transactionsSnap = await getDocs(transactionsRef);
+      // Order by timestamp in descending order and limit to 1
+      const q = query(transactionsRef, orderBy('timestamp', 'desc'), limit(1));
+      const transactionsSnap = await getDocs(q);
       
       const logs = transactionsSnap.docs.map(doc => ({
         id: doc.id,
@@ -227,7 +230,7 @@ export default function Dashboard() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <Script 
         src="https://cdn.paddle.com/paddle/v2/paddle.js"
         onLoad={() => {
@@ -242,95 +245,144 @@ export default function Dashboard() {
         }}
       />
       
-      <nav className="bg-white shadow-sm">
+      {/* Modern Navigation Bar with Glass Effect */}
+      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <span className="text-xl font-semibold">Dashboard</span>
+            <div className="flex items-center">
+              <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Dashboard
+              </span>
+            </div>
             <div className="flex items-center space-x-4">
-              <LogoutButton className="text-gray-700 hover:text-gray-900" />
+              <LogoutButton className="text-slate-700 hover:text-slate-900" />
             </div>
           </div>
         </div>
       </nav>
       
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
-            <UserProfileCard user={user} />
-          </div>
-          
-          <div className="md:col-span-2 space-y-6">
-            {subscription && (
-              <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-                <h2 className="text-lg font-semibold mb-2">Current Subscription</h2>
-                <div className="space-y-2">
-                  <p className="text-sm">
-                    Status: <span className={`font-medium ${
-                      subscription.status === 'active' ? 'text-green-600' : 'text-gray-600'
-                    }`}>
-                      {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
-                    </span>
-                  </p>
-                  {subscription.plan && (
-                    <p className="text-sm">
-                      Plan: <span className="font-medium">{subscription.plan}</span>
-                    </p>
-                  )}
-                  {subscription.lastTransaction && (
-                    <p className="text-sm">
-                      Last Updated: <span className="font-medium">
-                        {new Date(subscription.lastTransaction).toLocaleDateString()}
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Profile and Subscription Info Section */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
+              <UserProfileCard user={user} />
+              
+              {subscription && (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-32 h-32 -translate-y-8 translate-x-8">
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 opacity-50" />
+                  </div>
+                  
+                  <h2 className="text-lg font-semibold text-slate-800 mb-4 relative">Subscription Status</h2>
+                  <div className="space-y-4 relative">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-600">Status</span>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        subscription.status === 'active' 
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-slate-100 text-slate-800'
+                      }`}>
+                        {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
                       </span>
-                    </p>
-                  )}
+                    </div>
+                    
+                    {subscription.product && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-600">Current Plan</span>
+                        <span className="font-medium text-slate-800">
+                          {subscription.product.name || 'Unknown Plan'}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {subscription.lastTransaction && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-600">Last Payment</span>
+                        <span className="font-medium text-slate-800">
+                          {new Date(subscription.lastTransaction).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {transactions.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="text-sm font-medium mb-2">Transaction History</h3>
-                    <div className="space-y-2">
-                      {transactions.map(tx => (
-                        <div key={tx.id} className="text-sm border-t pt-2">
-                          <p className="text-gray-600">
-                            Plan: <span className="font-medium">{tx.planDetails.name}</span>
-                          </p>
-                          <p className="text-gray-600">
-                            Amount: <span className="font-medium">
-                              {tx.amountPaid} {tx.currency}
-                            </span>
-                          </p>
-                          <p className="text-gray-600">
-                            Date: <span className="font-medium">
-                              {new Date(tx.timestamp.toDate()).toLocaleDateString()}
-                            </span>
-                          </p>
-                        </div>
-                      ))}
+              )}
+            </div>
+          </div>
+
+          {/* Main Content Section */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Recent Transaction Card */}
+            {transactions.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-48 h-48 -translate-y-12 translate-x-12">
+                  <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-50 to-blue-50 opacity-50" />
+                </div>
+                
+                <div className="flex items-center justify-between mb-6 relative">
+                  <h2 className="text-xl font-semibold text-slate-800">Recent Transaction</h2>
+                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    Latest
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-sm text-slate-500 mb-1">Plan</p>
+                      <p className="text-lg font-medium text-slate-900">{transactions[0].planDetails.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500 mb-1">Amount Paid</p>
+                      <p className="text-lg font-medium text-slate-900">
+                        {transactions[0].amountPaid} {transactions[0].currency}
+                      </p>
                     </div>
                   </div>
-                )}
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-sm text-slate-500 mb-1">Date</p>
+                      <p className="text-lg font-medium text-slate-900">
+                        {new Date(transactions[0].timestamp.toDate()).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500 mb-1">Transaction ID</p>
+                      <p className="text-sm font-mono text-slate-600 break-all">
+                        {transactions[0].paddleTransactionId}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-800">Subscription Plans</h2>
-                <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+            {/* Subscription Plans */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 -translate-y-48 translate-x-48">
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-violet-50 to-purple-50 opacity-50" />
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 relative">
+                <h2 className="text-xl font-semibold text-slate-800">Subscription Plans</h2>
+                <div className="flex p-1 bg-slate-100 rounded-lg">
                   <button
                     onClick={() => setBillingCycle('month')}
-                    className={`px-4 py-2 rounded-md transition-colors ${
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                       billingCycle === 'month'
-                        ? 'bg-white shadow text-gray-800'
-                        : 'text-gray-600 hover:text-gray-800'
+                        ? 'bg-white shadow-sm text-slate-800'
+                        : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
                     Monthly
                   </button>
                   <button
                     onClick={() => setBillingCycle('year')}
-                    className={`px-4 py-2 rounded-md transition-colors ${
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                       billingCycle === 'year'
-                        ? 'bg-white shadow text-gray-800'
-                        : 'text-gray-600 hover:text-gray-800'
+                        ? 'bg-white shadow-sm text-slate-800'
+                        : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
                     Yearly
@@ -338,70 +390,75 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-                  <h3 className="text-xl font-semibold mb-2">Standard Plan</h3>
-                  <p className="text-gray-600 mb-4">
-                    {billingCycle === 'month' 
-                      ? 'Perfect for getting started' 
-                      : 'Save more with yearly billing'}
-                  </p>
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-gray-900">
-                      {prices.standard || 'Loading...'}
-                    </span>
-                    <span className="text-gray-600">/{billingCycle}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                {/* Standard Plan */}
+                <div className="group relative border border-slate-200 rounded-2xl p-6 hover:shadow-md hover:border-slate-300 transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                  
+                  <div className="relative">
+                    <h3 className="text-xl font-semibold text-slate-800 mb-2">Standard Plan</h3>
+                    <p className="text-slate-600 mb-4">
+                      {billingCycle === 'month' 
+                        ? 'Perfect for getting started' 
+                        : 'Save more with yearly billing'}
+                    </p>
+                    <div className="mb-6">
+                      <span className="text-3xl font-bold text-slate-900">
+                        {prices.standard || 'Loading...'}
+                      </span>
+                      <span className="text-slate-600">/{billingCycle}</span>
+                    </div>
+                    <button
+                      onClick={() => handleSubscription('standard')}
+                      disabled={!paddleLoaded}
+                      className={`w-full py-3 px-4 rounded-xl transition-all ${
+                        paddleLoaded 
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow group-hover:shadow-md' 
+                          : 'bg-slate-200 cursor-not-allowed text-slate-500'
+                      }`}
+                    >
+                      {paddleLoaded ? `Get Standard ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}` : 'Loading...'}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleSubscription('standard')}
-                    disabled={!paddleLoaded}
-                    className={`w-full py-2 px-4 rounded-md transition-colors ${
-                      paddleLoaded 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                        : 'bg-gray-300 cursor-not-allowed text-gray-500'
-                    }`}
-                  >
-                    {paddleLoaded ? `Get Standard ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}` : 'Loading...'}
-                  </button>
                 </div>
 
-                <div className="border border-violet-200 rounded-lg p-6 hover:shadow-lg transition-shadow bg-violet-50">
-                  <div className="absolute -mt-10 ml-4">
-                    <span className="bg-violet-600 text-white px-3 py-1 rounded-full text-sm font-medium">Popular</span>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Premium Plan</h3>
-                  <p className="text-gray-600 mb-4">
-                    {billingCycle === 'month' 
-                      ? 'Access all premium features' 
-                      : 'Best value for full access'}
-                  </p>
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-gray-900">
-                      {prices.premium || 'Loading...'}
+                {/* Premium Plan */}
+                <div className="group relative border-2 border-violet-200 rounded-2xl p-6 hover:shadow-md hover:border-violet-300 transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-indigo-50 opacity-50 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                  
+                  <div className="absolute -top-4 left-4">
+                    <span className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-sm">
+                      Popular
                     </span>
-                    <span className="text-gray-600">/{billingCycle}</span>
                   </div>
-                  <button
-                    onClick={() => handleSubscription('premium')}
-                    disabled={!paddleLoaded}
-                    className={`w-full py-2 px-4 rounded-md transition-colors ${
-                      paddleLoaded 
-                        ? 'bg-violet-600 hover:bg-violet-700 text-white' 
-                        : 'bg-gray-300 cursor-not-allowed text-gray-500'
-                    }`}
-                  >
-                    {paddleLoaded ? `Get Premium ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}` : 'Loading...'}
-                  </button>
+                  
+                  <div className="relative">
+                    <h3 className="text-xl font-semibold text-slate-800 mb-2">Premium Plan</h3>
+                    <p className="text-slate-600 mb-4">
+                      {billingCycle === 'month' 
+                        ? 'Access all premium features' 
+                        : 'Best value for full access'}
+                    </p>
+                    <div className="mb-6">
+                      <span className="text-3xl font-bold text-slate-900">
+                        {prices.premium || 'Loading...'}
+                      </span>
+                      <span className="text-slate-600">/{billingCycle}</span>
+                    </div>
+                    <button
+                      onClick={() => handleSubscription('premium')}
+                      disabled={!paddleLoaded}
+                      className={`w-full py-3 px-4 rounded-xl transition-all ${
+                        paddleLoaded 
+                          ? 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm hover:shadow group-hover:shadow-md' 
+                          : 'bg-slate-200 cursor-not-allowed text-slate-500'
+                      }`}
+                    >
+                      {paddleLoaded ? `Get Premium ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}` : 'Loading...'}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="mt-4">
-              <button
-                onClick={testFirebaseWrite}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Test Firebase Write
-              </button>
             </div>
           </div>
         </div>
