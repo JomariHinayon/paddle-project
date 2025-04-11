@@ -1,45 +1,42 @@
 import { NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase-admin';
 import { getFirestore, collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
-import crypto from 'crypto';
-
-// This should be moved to environment variables
-const PADDLE_PUBLIC_KEY = process.env.PADDLE_PUBLIC_KEY || '';
-
-const verifyWebhookSignature = (request: Request, rawBody: string, signature: string) => {
-  try {
-    const verifier = crypto.createVerify('sha256WithRSAEncryption');
-    verifier.update(rawBody);
-    return verifier.verify(PADDLE_PUBLIC_KEY, signature, 'base64');
-  } catch (error) {
-    console.error('Signature verification error:', error);
-    return false;
-  }
-};
 
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text();
-    const signature = req.headers.get('Paddle-Signature') || '';
-    
-    // Verify webhook signature in production
-    if (process.env.NODE_ENV === 'production') {
-      const isValid = verifyWebhookSignature(req, rawBody, signature);
-      if (!isValid) {
-        console.error('Invalid webhook signature');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-      }
-    }
-
     const payload = JSON.parse(rawBody);
     
     try {
       // Handle different webhook event types
       switch (payload.event_type) {
+        case 'checkout.completed':
+          // Store checkout data
+          await adminDb.collection('checkouts').doc(payload.data.id).set({
+            orderId: payload.data.order_id,
+            status: 'completed',
+            customerId: payload.data.customer_id,
+            userId: payload.data.custom_data?.userId,
+            total: payload.data.total,
+            currency: payload.data.currency_code,
+            createdAt: new Date().toISOString(),
+            webhookTime: new Date().toISOString()
+          });
+
+          // Update user status
+          if (payload.data.custom_data?.userId) {
+            await adminDb.collection('users').doc(payload.data.custom_data.userId).set({
+              hasActiveSubscription: true,
+              lastCheckout: new Date().toISOString(),
+              lastOrderId: payload.data.order_id
+            }, { merge: true });
+          }
+          break;
+
         case 'subscription.created':
         case 'subscription.updated':
-          // Store subscription data
-          await setDoc(doc(firestore, 'subscriptions', payload.data.id), {
+          await adminDb.collection('subscriptions').doc(payload.data.id).set({
             userId: payload.data.custom_data?.userId,
             status: payload.data.status,
             planId: payload.data.items[0].price.product_id,
