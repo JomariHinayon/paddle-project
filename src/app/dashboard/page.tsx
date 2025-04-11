@@ -8,8 +8,9 @@ import LogoutButton from '@/components/LogoutButton';
 import UserProfileCard from '@/components/UserProfileCard';
 import Script from 'next/script';
 import { PADDLE_CONFIG, type PlanType, type BillingCycle } from '@/lib/paddle-config';
-import { getFirestore, doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { identifyPlan } from '@/lib/paddle-utils';
 
 declare global {
   interface Window {
@@ -23,6 +24,8 @@ export default function Dashboard() {
   const [paddleLoaded, setPaddleLoaded] = useState(false);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('month');
   const [prices, setPrices] = useState<{[key in PlanType]?: string}>({});
+  const [subscription, setSubscription] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -139,23 +142,23 @@ export default function Dashboard() {
         const db = getFirestore();
         const transactionsRef = collection(db, 'users', user.uid, 'transactions');
         
-        // Extract and validate transaction data
-        const transactionData = {
-          checkoutId: event.data.id || null,
-          transactionId: event.data.order_id || null,
-          status: event.data.status || 'completed',
-          total: event.data.details?.totals?.total || 0,
-          currency: event.data.currency_code || 'USD',
-          customerId: event.data.customer?.id || null,
-          customerEmail: event.data.customer?.email || user.email,
-          items: event.data.items || [],
-          planType: event.data.items?.[0]?.price?.product_id || null,
-          billingCycle: event.data.recurring_payment_type || 'one_time',
-          createdAt: new Date(),
-          userId: user.uid,
-          paddleEventData: JSON.parse(JSON.stringify(event.data)) // Clean copy of event data
-        };
+        console.log('Full Paddle checkout.completed payload:', JSON.stringify(event, null, 2));
 
+        const item = event.data.items?.[0]; // Access the first item
+        const transactionData = {
+          userId: user.uid,
+          paddleTransactionId: event.data.id ?? '',
+          product: {
+            id: item?.product?.id ?? '',
+            name: item?.product?.name ?? ''
+          },
+          amountPaid: item?.totals?.total ?? 0,
+          currency: event.data.currency_code ?? 'USD',
+          paymentStatus: event.data.status ?? 'completed',
+          customerEmail: event.data.customer?.email ?? user.email ?? '',
+          timestamp: new Date()
+        };
+        
         console.log('Saving transaction data:', transactionData);
         
         await addDoc(transactionsRef, transactionData);
@@ -166,16 +169,62 @@ export default function Dashboard() {
         await setDoc(userRef, {
           hasActiveSubscription: true,
           lastTransactionDate: new Date(),
-          currentPlan: transactionData.planType,
+          currentPlan: transactionData.product.id,
           subscriptionStatus: 'active'
         }, { merge: true });
-        
       } catch (error) {
         console.error('Error saving transaction:', error);
         console.error('Event data:', event);
       }
     }
   };
+
+  const fetchSubscriptionStatus = async (userId: string) => {
+    try {
+      const db = getFirestore();
+      const userRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setSubscription({
+          hasActive: userData.hasActiveSubscription || false,
+          plan: userData.currentPlan || null,
+          status: userData.subscriptionStatus || 'inactive',
+          lastTransaction: userData.lastTransactionDate?.toDate() || null
+        });
+        console.log('Subscription status:', userData);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+    }
+  };
+
+  const fetchTransactionLogs = async (userId: string) => {
+    try {
+      const db = getFirestore();
+      const transactionsRef = collection(db, 'users', userId, 'transactions');
+      const transactionsSnap = await getDocs(transactionsRef);
+      
+      const logs = transactionsSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        planDetails: identifyPlan(doc.data().product.id)
+      }));
+      
+      setTransactions(logs);
+      console.log('Transaction logs:', logs);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.uid) {
+      fetchSubscriptionStatus(user.uid);
+      fetchTransactionLogs(user.uid);
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -211,6 +260,57 @@ export default function Dashboard() {
           </div>
           
           <div className="md:col-span-2 space-y-6">
+            {subscription && (
+              <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+                <h2 className="text-lg font-semibold mb-2">Current Subscription</h2>
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Status: <span className={`font-medium ${
+                      subscription.status === 'active' ? 'text-green-600' : 'text-gray-600'
+                    }`}>
+                      {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                    </span>
+                  </p>
+                  {subscription.plan && (
+                    <p className="text-sm">
+                      Plan: <span className="font-medium">{subscription.plan}</span>
+                    </p>
+                  )}
+                  {subscription.lastTransaction && (
+                    <p className="text-sm">
+                      Last Updated: <span className="font-medium">
+                        {new Date(subscription.lastTransaction).toLocaleDateString()}
+                      </span>
+                    </p>
+                  )}
+                </div>
+                {transactions.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium mb-2">Transaction History</h3>
+                    <div className="space-y-2">
+                      {transactions.map(tx => (
+                        <div key={tx.id} className="text-sm border-t pt-2">
+                          <p className="text-gray-600">
+                            Plan: <span className="font-medium">{tx.planDetails.name}</span>
+                          </p>
+                          <p className="text-gray-600">
+                            Amount: <span className="font-medium">
+                              {tx.amountPaid} {tx.currency}
+                            </span>
+                          </p>
+                          <p className="text-gray-600">
+                            Date: <span className="font-medium">
+                              {new Date(tx.timestamp.toDate()).toLocaleDateString()}
+                            </span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-semibold text-gray-800">Subscription Plans</h2>

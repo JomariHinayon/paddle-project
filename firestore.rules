@@ -31,6 +31,11 @@ service cloud.firestore {
       allow update: if isServiceAccount();
     }
 
+    // Allow users to create their own transactions
+    match /users/{userId}/transactions/{transactionId} {
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;

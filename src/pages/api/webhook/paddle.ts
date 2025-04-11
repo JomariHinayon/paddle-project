@@ -81,22 +81,24 @@ async function handleCheckoutCompleted(data: any) {
     updatedAt: new Date()
   });
 
-  // Add transaction record with userId
+  // Add transaction record with the required fields
   const transactionRef = userRef.collection('transactions').doc();
   batch.set(transactionRef, {
-    userId,
-    checkoutId: data.id,
-    orderId: data.order_id,
-    amount: data.total,
-    currency: data.currency_code,
-    status: 'completed',
-    createdAt: new Date(),
-    items: data.items,
-    customData: data.custom_data
+    userId: userId,
+    paddleTransactionId: data.order_id || '',
+    product: {
+      id: data.items?.[0]?.price?.product_id || '',
+      name: data.items?.[0]?.price?.description || ''
+    },
+    amountPaid: data.total || 0,
+    currency: data.currency_code || '',
+    paymentStatus: data.status || 'completed',
+    customerEmail: data.customer?.email || '',
+    timestamp: db.serverTimestamp() || ''
   });
 
   await batch.commit();
-  console.log('Successfully saved transaction for user:', userId);
+  console.log('Transaction saved successfully');
 }
 
 async function getRawBody(req: NextApiRequest): Promise<string> {
