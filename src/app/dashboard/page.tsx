@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [prices, setPrices] = useState<{[key in PlanType]?: string}>({});
   const [subscription, setSubscription] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -205,8 +206,8 @@ export default function Dashboard() {
     try {
       const db = getFirestore();
       const transactionsRef = collection(db, 'users', userId, 'transactions');
-      // Order by timestamp in descending order and limit to 1
-      const q = query(transactionsRef, orderBy('timestamp', 'desc'), limit(1));
+      // Order by timestamp in descending order to show most recent first
+      const q = query(transactionsRef, orderBy('timestamp', 'desc'));
       const transactionsSnap = await getDocs(q);
       
       const logs = transactionsSnap.docs.map(doc => ({
@@ -314,48 +315,118 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-8">
             {/* Recent Transaction Card */}
             {transactions.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-48 h-48 -translate-y-12 translate-x-12">
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-50 to-blue-50 opacity-50" />
-                </div>
-                
-                <div className="flex items-center justify-between mb-6 relative">
-                  <h2 className="text-xl font-semibold text-slate-800">Recent Transaction</h2>
-                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    Latest
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Plan</p>
-                      <p className="text-lg font-medium text-slate-900">{transactions[0].planDetails.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Amount Paid</p>
-                      <p className="text-lg font-medium text-slate-900">
-                        {transactions[0].amountPaid} {transactions[0].currency}
-                      </p>
-                    </div>
+              <>
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-48 h-48 -translate-y-12 translate-x-12">
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-50 to-blue-50 opacity-50" />
                   </div>
                   
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Date</p>
-                      <p className="text-lg font-medium text-slate-900">
-                        {new Date(transactions[0].timestamp.toDate()).toLocaleDateString()}
-                      </p>
+                  <div className="flex items-center justify-between mb-6 relative">
+                    <h2 className="text-xl font-semibold text-slate-800">Recent Transaction</h2>
+                    <button
+                      onClick={() => window.open('/transactions', '_blank')}
+                      className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      See all →
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1">Plan</p>
+                        <p className="text-lg font-medium text-slate-900">{transactions[0].planDetails.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1">Amount Paid</p>
+                        <p className="text-lg font-medium text-slate-900">
+                          {transactions[0].amountPaid} {transactions[0].currency}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Transaction ID</p>
-                      <p className="text-sm font-mono text-slate-600 break-all">
-                        {transactions[0].paddleTransactionId}
-                      </p>
+                    
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1">Date</p>
+                        <p className="text-lg font-medium text-slate-900">
+                          {new Date(transactions[0].timestamp.toDate()).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1">Transaction ID</p>
+                        <p className="text-sm font-mono text-slate-600 break-all">
+                          {transactions[0].paddleTransactionId}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+
+                {/* Transaction History */}
+                {/* <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-48 h-48 -translate-y-12 translate-x-12">
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-50 to-blue-50 opacity-50" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-6 relative">
+                    <h2 className="text-xl font-semibold text-slate-800">Transaction History</h2>
+                    <button
+                      onClick={() => setShowAllTransactions(!showAllTransactions)}
+                      className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      {showAllTransactions ? 'Hide' : 'See all'}
+                    </button>
+                  </div>
+                  
+                  {showAllTransactions && (
+                    <div className="space-y-4 relative">
+                      {transactions.map((transaction, index) => (
+                        <div 
+                          key={transaction.id}
+                          className={`p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-all ${
+                            index === 0 ? 'bg-blue-50/50' : 'bg-white'
+                          }`}
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                              <p className="text-sm text-slate-500">Plan</p>
+                              <p className="font-medium text-slate-900">{transaction.planDetails.name}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-slate-500">Amount</p>
+                              <p className="font-medium text-slate-900">
+                                {transaction.amountPaid} {transaction.currency}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-slate-500">Date</p>
+                              <p className="font-medium text-slate-900">
+                                {new Date(transaction.timestamp.toDate()).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-slate-500">Status</p>
+                              <span className={`inline-block px-2 py-1 rounded-full text-sm font-medium ${
+                                transaction.paymentStatus === 'completed'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-slate-100 text-slate-800'
+                              }`}>
+                                {transaction.paymentStatus.charAt(0).toUpperCase() + transaction.paymentStatus.slice(1)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {!showAllTransactions && transactions.length > 1 && (
+                    <p className="text-sm text-slate-500">
+                      You have {transactions.length - 1} more transaction{transactions.length - 1 !== 1 ? 's' : ''}. Click 'See all' to view them.
+                    </p>
+                  )}
+                </div> */}
+              </>
             )}
 
             {/* Subscription Plans */}
