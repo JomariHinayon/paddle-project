@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { firestore } from '@/lib/firebase-admin';
-import { collection, doc, addDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase-admin';
+import { getFirestore, collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { firestore } from '@/lib/firebase';
 
 export async function POST(req: Request) {
   try {
@@ -10,11 +11,10 @@ export async function POST(req: Request) {
     try {
       switch (payload.event_type) {
         case 'checkout.completed':
-          // Store transaction data in a single centralized location
-          const transactionData = {
+          // Store transaction data
+          await addDoc(collection(firestore, 'transactions'), {
             userId: payload.data.custom_data?.userId || '',
             paddleTransactionId: payload.data.order_id || '',
-            subscriptionId: payload.data.subscription_id || null,
             product: {
               id: payload.data.items?.[0]?.price?.product_id || '',
               name: payload.data.items?.[0]?.price?.description || ''
@@ -24,21 +24,21 @@ export async function POST(req: Request) {
             paymentStatus: payload.data.status || '',
             customerEmail: payload.data.customer?.email || '',
             timestamp: serverTimestamp()
-          };
-          await addDoc(collection(firestore, 'transactions'), transactionData);
+          });
           
-          // Update user's subscription reference
-          if (payload.data.subscription_id && payload.data.custom_data?.userId) {
+          // Update user's subscription status
+          if (payload.data.custom_data?.userId) {
             await setDoc(doc(firestore, 'users', payload.data.custom_data.userId), {
-              currentSubscription: payload.data.subscription_id,
-              updatedAt: serverTimestamp()
+              hasActiveSubscription: true,
+              lastTransactionDate: serverTimestamp(),
+              currentPlan: payload.data.items?.[0]?.price?.product_id || '',
+              subscriptionStatus: 'active'
             }, { merge: true });
           }
           break;
 
         case 'subscription.created':
         case 'subscription.updated':
-          // Maintain subscription data in a centralized subscriptions collection
           await setDoc(doc(firestore, 'subscriptions', payload.data.id), {
             userId: payload.data.custom_data?.userId || '',
             status: payload.data.status || '',
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
             currency: payload.data.items?.[0]?.price?.unit_price?.currency_code || '',
             startDate: payload.data.start_date || null,
             nextBillDate: payload.data.next_billed_at || null,
-            updatedAt: serverTimestamp()
+            timestamp: serverTimestamp()
           });
           break;
 
@@ -58,26 +58,48 @@ export async function POST(req: Request) {
           await setDoc(doc(firestore, 'subscriptions', payload.data.id), {
             status: 'canceled',
             canceledAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
+            timestamp: serverTimestamp()
           }, { merge: true });
+          break;
+
+        case 'transaction.completed':
+          await addDoc(collection(firestore, 'transactions'), {
+            userId: payload.data.custom_data?.userId || '',
+            paddleTransactionId: payload.data.id || '',
+            product: {
+              id: payload.data.items?.[0]?.price?.product_id || '',
+              name: payload.data.items?.[0]?.price?.description || ''
+            },
+            amountPaid: payload.data.details?.totals?.total || 0,
+            currency: payload.data.currency_code || '',
+            paymentStatus: payload.data.status || '',
+            customerEmail: payload.data.customer?.email || '',
+            timestamp: serverTimestamp()
+          });
           
-          // Find and update the user who owns this subscription
+          // Update user's subscription status
           if (payload.data.custom_data?.userId) {
             await setDoc(doc(firestore, 'users', payload.data.custom_data.userId), {
-              currentSubscription: null,
-              updatedAt: serverTimestamp()
+              hasActiveSubscription: true,
+              lastTransactionDate: serverTimestamp(),
+              currentPlan: payload.data.items?.[0]?.price?.product_id || '',
+              subscriptionStatus: 'active'
             }, { merge: true });
           }
           break;
+
+        default:
+          console.log('Unhandled webhook event:', payload.event_type);
       }
 
       return NextResponse.json({ success: true });
     } catch (error) {
       console.error('Error processing webhook:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      // Return 500 to tell Paddle to retry the webhook
+      return NextResponse.json({ error: 'Error processing webhook' }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error parsing webhook payload:', error);
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    console.error('Webhook parsing error:', error);
+    return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 });
   }
 }

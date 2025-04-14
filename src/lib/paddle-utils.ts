@@ -21,6 +21,10 @@ export const PADDLE_PLANS = {
   'pri_01jqxf4pd45rpn0h4t2': {
     name: 'Premium Plan',
     features: ['All features', 'Priority support']
+  },
+  'pro_01jrcyajvbkf83y5ycbnr055hf': {
+    name: 'Premium Monthly',
+    features: ['All features', 'Priority support']
   }
 } as const;
 

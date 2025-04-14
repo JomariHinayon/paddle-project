@@ -18,14 +18,6 @@ declare global {
   }
 }
 
-const getPlanDisplayName = (productId: string) => {
-  const planMap: { [key: string]: string } = {
-    'pro_01jrcyajvbkf83y5ycbnr055hf': 'Premium Monthly',
-    // Add other plan mappings as needed
-  };
-  return planMap[productId] || 'Unknown Plan';
-};
-
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(auth.currentUser);
@@ -213,20 +205,15 @@ export default function Dashboard() {
     try {
       const db = getFirestore();
       const transactionsRef = collection(db, 'users', userId, 'transactions');
+      // Order by timestamp in descending order and limit to 1
       const q = query(transactionsRef, orderBy('timestamp', 'desc'), limit(1));
       const transactionsSnap = await getDocs(q);
       
-      const logs = transactionsSnap.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          planDetails: {
-            ...identifyPlan(data.product.id),
-            displayName: getPlanDisplayName(data.product.id)
-          }
-        };
-      });
+      const logs = transactionsSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        planDetails: identifyPlan(doc.data().product.id)
+      }));
       
       setTransactions(logs);
       console.log('Transaction logs:', logs);
@@ -343,9 +330,7 @@ export default function Dashboard() {
                   <div className="space-y-6">
                     <div>
                       <p className="text-sm text-slate-500 mb-1">Plan</p>
-                      <p className="text-lg font-medium text-slate-900">
-                        {transactions[0]?.planDetails?.displayName || 'Unknown Plan'}
-                      </p>
+                      <p className="text-lg font-medium text-slate-900">{transactions[0].planDetails.name}</p>
                     </div>
                     <div>
                       <p className="text-sm text-slate-500 mb-1">Amount Paid</p>
