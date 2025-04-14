@@ -287,14 +287,16 @@ export default function Dashboard() {
                       </span>
                     </div>
                     
-                    {subscription.product && (
+                    {transactions.length > 0 && (
+
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-600">Current Plan</span>
-                        <span className="font-medium text-slate-800">
-                          {subscription.product.name || 'Unknown Plan'}
+                        <span className="text-slate-600">Plan</span>
+                        <span className="font-medium text-sm font-medium">
+                          {transactions[0].planDetails?.name || 'Unknown Plan'}
                         </span>
+
                       </div>
-                    )}
+                      )}
                     
                     {subscription.lastTransaction && (
                       <div className="flex items-center justify-between">
