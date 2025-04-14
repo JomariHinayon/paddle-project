@@ -271,40 +271,58 @@ export default function Dashboard() {
               
               {subscription && (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
+                  {/* Decorative background gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-blue-50 opacity-50" />
+                  
+                  {/* Decorative circles */}
                   <div className="absolute top-0 right-0 w-32 h-32 -translate-y-8 translate-x-8">
-                    <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 opacity-50" />
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 opacity-30" />
+                  </div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 translate-y-6 -translate-x-6">
+                    <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-100 to-blue-100 opacity-30" />
                   </div>
                   
-                  <h2 className="text-lg font-semibold text-slate-800 mb-4 relative">Subscription Status</h2>
-                  <div className="space-y-4 relative">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Status</span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  {/* Content */}
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-lg font-semibold text-slate-800">Subscription Status</h2>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                         subscription.status === 'active' 
                           ? 'bg-emerald-100 text-emerald-800'
                           : 'bg-slate-100 text-slate-800'
                       }`}>
+                        <span className={`w-2 h-2 rounded-full mr-2 ${
+                          subscription.status === 'active' 
+                            ? 'bg-emerald-500'
+                            : 'bg-slate-500'
+                        }`} />
                         {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
                       </span>
                     </div>
-                    
-                    {subscription.product && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600">Current Plan</span>
-                        <span className="font-medium text-slate-800">
-                          {subscription.product.name || 'Unknown Plan'}
-                        </span>
+
+                    <div className="space-y-6">
+                      <div className="bg-slate-50/80 rounded-xl p-4 backdrop-blur-sm border border-slate-100">
+                        <p className="text-sm font-medium text-slate-500 mb-1">Current Plan</p>
+                        <div className="flex items-center">
+                          <div className="flex-1">
+                            <p className="text-lg font-semibold text-slate-900">
+                              {transactions[0].planDetails?.name || 'Unknown Plan'}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    
-                    {subscription.lastTransaction && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600">Last Payment</span>
-                        <span className="font-medium text-slate-800">
-                          {new Date(subscription.lastTransaction).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
+                      
+                      {subscription.lastTransaction && (
+                        <div className="bg-slate-50/80 rounded-xl p-4 backdrop-blur-sm border border-slate-100">
+                          <p className="text-sm font-medium text-slate-500 mb-1">Last Payment</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-lg font-semibold text-slate-900">
+                              {new Date(subscription.lastTransaction).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -335,7 +353,9 @@ export default function Dashboard() {
                     <div className="space-y-6">
                       <div>
                         <p className="text-sm text-slate-500 mb-1">Plan</p>
-                        <p className="text-lg font-medium text-slate-900">{transactions[0].planDetails.name}</p>
+                        <p className="text-lg font-medium text-slate-900">
+                          {transactions[0].planDetails?.name || 'Unknown Plan'}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-slate-500 mb-1">Amount Paid</p>
