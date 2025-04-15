@@ -94,6 +94,7 @@ async function handleCheckoutCompleted(data: any) {
     currency: data.currency_code || '',
     paymentStatus: data.status || 'completed',
     customerEmail: data.customer?.email || '',
+    customerId: data.customer?.id || '', 
     timestamp: db.serverTimestamp() || ''
   });
 

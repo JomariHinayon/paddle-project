@@ -23,6 +23,7 @@ export async function POST(req: Request) {
             currency: payload.data.currency_code || '',
             paymentStatus: payload.data.status || '',
             customerEmail: payload.data.customer?.email || '',
+            customerId: payload.data.customer?.id || '', 
             timestamp: serverTimestamp()
           });
           
@@ -72,6 +73,7 @@ export async function POST(req: Request) {
             },
             amountPaid: payload.data.details?.totals?.total || 0,
             currency: payload.data.currency_code || '',
+            customerId: payload.data.customer?.id || '', 
             paymentStatus: payload.data.status || '',
             customerEmail: payload.data.customer?.email || '',
             timestamp: serverTimestamp()

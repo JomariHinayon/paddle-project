@@ -144,7 +144,7 @@ export default function Dashboard() {
         
         console.log('Full Paddle checkout.completed payload:', JSON.stringify(event, null, 2));
 
-        const item = event.data.items?.[0]; // Access the first item
+        const item = event.data.items?.[0];
         const transactionData = {
           userId: user.uid,
           paddleTransactionId: event.data.id ?? '',
@@ -156,6 +156,7 @@ export default function Dashboard() {
           currency: event.data.currency_code ?? 'USD',
           paymentStatus: event.data.status ?? 'completed',
           customerEmail: event.data.customer?.email ?? user.email ?? '',
+          customerId: event.data.customer?.id ?? '', 
           timestamp: new Date()
         };
         
