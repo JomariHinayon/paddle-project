@@ -58,10 +58,14 @@ export async function middleware(request: NextRequest) {
     }
 
     const user = data.users[0];
+    const paddlePayload = request.body; // Assuming the Paddle payload is in the request body
+    const customerId = paddlePayload?.checkout?.completed?.customer?.id; // Extract customerId from Paddle payload
+
     console.log('Authenticated User:', { 
       uid: user.localId,
       email: user.email,
       emailVerified: user.emailVerified,
+      customerId, // Updated to use Paddle customerId
       path: pathname 
     });
 

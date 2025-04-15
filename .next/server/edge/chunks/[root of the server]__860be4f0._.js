@@ -85,10 +85,13 @@ async function middleware(request) {
             throw new Error('Invalid session');
         }
         const user = data.users[0];
+        const paddlePayload = request.body; // Assuming the Paddle payload is in the request body
+        const customerId = paddlePayload?.checkout?.completed?.customer?.id; // Extract customerId from Paddle payload
         console.log('Authenticated User:', {
             uid: user.localId,
             email: user.email,
             emailVerified: user.emailVerified,
+            customerId,
             path: pathname
         });
         // Redirect unverified users to email verification page

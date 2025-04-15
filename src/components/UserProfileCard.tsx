@@ -51,12 +51,12 @@ export default function UserProfileCard({ user }: UserProfileCardProps) {
             Active
           </span>
         </div>
-        <div className="flex justify-between items-center mt-2">
+        {/* <div className="flex justify-between items-center mt-2">
           <span className="text-sm text-gray-500">Subscription</span>
           <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
             Free Plan
           </span>
-        </div>
+        </div> */}
         <div className="flex justify-between items-center mt-2">
           <span className="text-sm text-gray-500">Email Verified</span>
           <span className={`px-2 py-1 text-xs rounded-full ${
