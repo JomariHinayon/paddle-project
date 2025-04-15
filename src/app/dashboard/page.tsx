@@ -136,12 +136,12 @@ export default function Dashboard() {
 
   const handlePaddleEvent = async (event: any) => {
     console.log('Paddle event:', event);
-    
+
     if (event.name === 'checkout.completed' && user) {
       try {
         const db = getFirestore();
         const transactionsRef = collection(db, 'users', user.uid, 'transactions');
-        
+
         console.log('Full Paddle checkout.completed payload:', JSON.stringify(event, null, 2));
 
         const item = event.data.items?.[0];
@@ -152,17 +152,22 @@ export default function Dashboard() {
             id: item?.product?.id ?? '',
             name: item?.product?.name ?? ''
           },
-          amountPaid: item?.totals?.total ?? 0,
-          currency: event.data.currency_code ?? 'USD',
+          amountPaid: item?.price?.unit_price?.amount ?? 0,
+          currency: item?.price?.unit_price?.currency_code ?? 'USD',
           paymentStatus: event.data.status ?? 'completed',
           customerEmail: event.data.customer?.email ?? user.email ?? '',
-          customerId: event.data.customer?.id ?? '', 
-          subscriptionId: event.data.subscription_id ?? '', // Added subscriptionId
+          customerId: event.data.customer?.id ?? '',
+          subscriptionId: event.data.id ?? '',
+          planId: item?.price?.product_id ?? '',
+          nextBillDate: event.data.next_billed_at ? new Date(event.data.next_billed_at) : null,
+          startDate: event.data.started_at ? new Date(event.data.started_at) : null,
+          priceId: item?.price?.id ?? '',
+          quantity: item?.quantity ?? 1,
           timestamp: new Date()
         };
-        
+
         console.log('Saving transaction data:', transactionData);
-        
+
         await addDoc(transactionsRef, transactionData);
         console.log('Transaction saved to Firebase');
 
@@ -172,7 +177,8 @@ export default function Dashboard() {
           hasActiveSubscription: true,
           lastTransactionDate: new Date(),
           currentPlan: transactionData.product.id,
-          subscriptionStatus: 'active'
+          subscriptionStatus: 'active',
+          currentSubscriptionId: transactionData.subscriptionId
         }, { merge: true });
       } catch (error) {
         console.error('Error saving transaction:', error);
