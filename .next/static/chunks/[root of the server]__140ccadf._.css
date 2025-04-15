@@ -1074,6 +1074,10 @@
     border-top-color: var(--color-blue-600);
   }
 
+  .bg-amber-100 {
+    background-color: var(--color-amber-100);
+  }
+
   .bg-background {
     background-color: var(--background);
   }
@@ -1498,6 +1502,14 @@
 
   .break-all {
     word-break: break-all;
+  }
+
+  .text-amber-600 {
+    color: var(--color-amber-600);
+  }
+
+  .text-amber-800 {
+    color: var(--color-amber-800);
   }
 
   .text-background {

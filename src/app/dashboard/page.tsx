@@ -157,6 +157,7 @@ export default function Dashboard() {
           paymentStatus: event.data.status ?? 'completed',
           customerEmail: event.data.customer?.email ?? user.email ?? '',
           customerId: event.data.customer?.id ?? '', 
+          subscriptionId: event.data.subscription_id ?? '', // Added subscriptionId
           timestamp: new Date()
         };
         
