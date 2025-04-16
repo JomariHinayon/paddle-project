@@ -152,21 +152,19 @@ export default function Dashboard() {
             id: item?.product?.id ?? '',
             name: item?.product?.name ?? ''
           },
-          amountPaid: item?.price?.unit_price?.amount ?? 0,
+          amountPaid: item?.totals?.total ?? 0,
           currency: item?.price?.unit_price?.currency_code ?? 'USD',
           paymentStatus: event.data.status ?? 'completed',
           customerEmail: event.data.customer?.email ?? user.email ?? '',
           customerId: event.data.customer?.id ?? '',
           subscriptionId: event.data.id ?? '',
-          planId: item?.price?.product_id ?? '',
           nextBillDate: event.data.next_billed_at ? new Date(event.data.next_billed_at) : null,
           startDate: event.data.started_at ? new Date(event.data.started_at) : null,
-          priceId: item?.price?.id ?? '',
           quantity: item?.quantity ?? 1,
           timestamp: new Date()
         };
 
-        console.log('Saving transaction data:', transactionData);
+        console.log(' transaction data:', transactionData);
 
         await addDoc(transactionsRef, transactionData);
         console.log('Transaction saved to Firebase');
