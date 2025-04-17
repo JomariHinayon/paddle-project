@@ -174,7 +174,7 @@ export default function Dashboard() {
 
         console.log('Subscription transaction data:', transactionData);
 
-        // Save transaction with the subscription ID as the document ID
+        // Save transaction with the subscription ID as the document ID.
         await setDoc(doc(transactionsRef, subscriptionId), transactionData);
         console.log('Subscription saved to Firebase');
 

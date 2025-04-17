@@ -790,7 +790,7 @@ function Dashboard() {
                     timestamp: new Date()
                 };
                 console.log('Subscription transaction data:', transactionData);
-                // Save transaction with the subscription ID as the document ID
+                // Save transaction with the subscription ID as the document ID.
                 await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$node$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["setDoc"])((0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$node$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["doc"])(transactionsRef, subscriptionId), transactionData);
                 console.log('Subscription saved to Firebase');
                 // Update user's subscription status
