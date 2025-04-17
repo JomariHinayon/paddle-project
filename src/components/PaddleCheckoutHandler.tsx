@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getFirestore, doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, collection, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 interface PaddleCheckoutHandlerProps {
@@ -47,8 +47,9 @@ export default function PaddleCheckoutHandler({ onSuccess, onError }: PaddleChec
           throw new Error('User not authenticated');
         }
         
-        // 1. First store checkout data in Firestore
         const db = getFirestore();
+        
+        // 1. First store checkout data in Firestore
         const checkoutRef = doc(collection(db, 'users', user.uid, 'checkouts'), checkoutId);
         
         const checkoutData = {
@@ -58,28 +59,38 @@ export default function PaddleCheckoutHandler({ onSuccess, onError }: PaddleChec
           status: 'completed',
           timestamp: new Date(),
           email: user.email,
+          processed: false,
         };
         
         await setDoc(checkoutRef, checkoutData);
         console.log('Checkout data saved to Firebase');
         
-        // 2. Make API call to verify subscription details
-        const response = await fetch('/api/subscriptions/get-details', {
+        // 2. Call our server endpoint to verify and process the checkout
+        const response = await fetch('/api/subscriptions/verify-checkout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            checkoutId,
             customerId,
-            userId: user.uid
+            userId: user.uid,
+            email: user.email
           }),
+        });
+        
+        // Update checkout record to mark as processed
+        await updateDoc(checkoutRef, {
+          processed: true,
+          verificationAttempted: true,
+          verificationTimestamp: new Date()
         });
         
         if (!response.ok) {
           // If API call fails, we'll rely on webhooks to update the subscription
           console.log('Subscription details not available yet, webhooks will update later');
           
-          // We should still update user record
+          // We should still update user record with Paddle customer ID
           const userRef = doc(db, 'users', user.uid);
           await setDoc(userRef, {
             paddleCustomerId: customerId,

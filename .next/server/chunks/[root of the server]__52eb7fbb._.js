@@ -84,14 +84,63 @@ var __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$ext
 ;
 ;
 ;
+// Helper function to handle private key formatting
+const getFirebaseCredential = ()=>{
+    if (process.env.FIREBASE_PRIVATE_KEY) {
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        // Option 1: If stored with \n
+        if (privateKey.includes('\\n')) {
+            privateKey = privateKey.replace(/\\n/g, '\n');
+        }
+        // Option 2: If stored as base64
+        if (isBase64(privateKey)) {
+            try {
+                privateKey = Buffer.from(privateKey, 'base64').toString('utf-8');
+            } catch (error) {
+                console.error('Error decoding base64 private key:', error);
+                throw new Error('Could not decode base64 Firebase private key.');
+            }
+        }
+        // Final check and formatting to ensure PEM structure
+        if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') || !privateKey.includes('-----END PRIVATE KEY-----')) {
+            console.error('Invalid private key format: Missing BEGIN or END markers.');
+            throw new Error('Invalid Firebase private key format.');
+        }
+        // Ensure internal newlines for the base64 part
+        const lines = privateKey.split('\n');
+        const beginLineIndex = lines.findIndex((line)=>line.includes('-----BEGIN PRIVATE KEY-----'));
+        const endLineIndex = lines.findIndex((line)=>line.includes('-----END PRIVATE KEY-----'));
+        if (beginLineIndex !== -1 && endLineIndex !== -1 && endLineIndex > beginLineIndex + 1) {
+            const keyLines = lines.slice(beginLineIndex + 1, endLineIndex);
+            const formattedKeyLines = keyLines.map((line)=>line.trim()).join('');
+            let formattedKey = lines.slice(0, beginLineIndex + 1).join('\n') + '\n';
+            for(let i = 0; i < formattedKeyLines.length; i += 64){
+                formattedKey += formattedKeyLines.substring(i, i + 64) + '\n';
+            }
+            formattedKey += lines.slice(endLineIndex).join('\n');
+            privateKey = formattedKey.trim(); // Trim any trailing newline
+        }
+        console.log('Using private key (first 20 chars):', privateKey.substring(0, 20) + '...');
+        return __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: privateKey
+        });
+    }
+    throw new Error('Firebase private key not found in environment variables.');
+};
+// Helper function to check if a string is likely base64 encoded
+function isBase64(str) {
+    try {
+        return Buffer.from(str, 'base64').toString('base64') === str;
+    } catch (e) {
+        return false;
+    }
+}
 // Initialize Firebase Admin if not already initialized
 if (!__TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].apps.length) {
     __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].initializeApp({
-        credential: __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-        })
+        credential: getFirebaseCredential()
     });
 }
 const db = __TURBOPACK__imported__module__$5b$externals$5d2f$firebase$2d$admin__$5b$external$5d$__$28$firebase$2d$admin$2c$__cjs$29$__["default"].firestore();

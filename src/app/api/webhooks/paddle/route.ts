@@ -1,14 +1,19 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import admin from 'firebase-admin';
-import { buffer } from 'micro';
+
+// Get Firebase private key in the correct format
+const getFirebasePrivateKey = () => {
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  return privateKey ? privateKey.replace(/\\n/g, '\n') : '';
+};
 
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      privateKey: getFirebasePrivateKey(),
     }),
   });
 }
@@ -29,17 +34,15 @@ const verifyPaddleSignature = (rawBody: string, signature: string) => {
   return hash === signature;
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
-
+export async function POST(req: NextRequest) {
   try {
-    const rawBody = (await buffer(req)).toString();
-    const signature = req.headers['paddle-signature'] as string;
+    const rawBody = await req.text();
+    const signature = req.headers.get('paddle-signature');
 
     console.log('Incoming webhook payload:', rawBody);
 
     if (!signature || !verifyPaddleSignature(rawBody, signature)) {
-      return res.status(401).json({ message: 'Invalid signature' });
+      return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
     }
 
     const { event_type, data } = JSON.parse(rawBody);
@@ -55,14 +58,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       case 'subscription_canceled':
         await handleSubscriptionCancellation(data);
         break;
+      case 'checkout_completed':
+        await handleCheckoutCompleted(data);
+        break;
       default:
         console.log(`Unhandled event type: ${event_type}`);
     }
 
-    res.status(200).json({ message: 'Webhook processed' });
+    return NextResponse.json({ message: 'Webhook processed' });
   } catch (error) {
     console.error('Webhook Error:', error);
-    res.status(400).json({ message: 'Webhook processing failed' });
+    return NextResponse.json({ message: 'Webhook processing failed' }, { status: 400 });
   }
 }
 
@@ -137,4 +143,81 @@ async function handleSubscriptionCancellation(data: any) {
     canceledAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   }, { merge: true });
+}
+
+async function handleCheckoutCompleted(data: any) {
+  // This event happens when checkout is completed, but before subscription is created
+  const customerId = data.customer_id;
+  const transactionId = data.id || data.transaction_id;
+  const userId = data.custom_data?.userId;
+  const email = data.customer_email || data.custom_data?.email;
+  
+  if (!customerId || !transactionId) {
+    console.error('Missing required data in checkout_completed event');
+    return;
+  }
+  
+  // Store the checkout data
+  const checkoutData = {
+    checkoutId: transactionId,
+    customerId,
+    userId,
+    transactionId,
+    email,
+    status: 'completed',
+    completedAt: data.completed_at ? new Date(data.completed_at) : admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    items: data.items || [],
+    customData: data.custom_data || {},
+    totalAmount: data.total_price?.amount || 0,
+    currency: data.total_price?.currency_code || 'USD',
+    billingDetails: data.billing_details || {},
+    rawEvent: data
+  };
+  
+  // Store the checkout data indexed by checkoutId
+  const checkoutRef = db.collection('checkouts').doc(transactionId);
+  await checkoutRef.set(checkoutData, { merge: true });
+  
+  // If we have a userId from custom data, associate with user
+  if (userId) {
+    const userCheckoutRef = db.collection('users').doc(userId).collection('checkouts').doc(transactionId);
+    await userCheckoutRef.set(checkoutData, { merge: true });
+    
+    // Check if we have a pending transaction for this checkout
+    const pendingTransactionId = `pending_${transactionId}`;
+    const pendingTransactionRef = db.collection('users').doc(userId).collection('transactions').doc(pendingTransactionId);
+    const pendingTransaction = await pendingTransactionRef.get();
+    
+    if (pendingTransaction.exists) {
+      // Update the pending transaction with checkout data
+      await pendingTransactionRef.update({
+        ...checkoutData,
+        status: 'checkout_completed',
+        subscriptionPending: true
+      });
+    }
+    
+    // Also update user record with customerId
+    const userRef = db.collection('users').doc(userId);
+    await userRef.set({
+      paddleCustomerId: customerId,
+      lastCheckoutId: transactionId,
+      lastCheckoutDate: checkoutData.completedAt
+    }, { merge: true });
+  } else {
+    // If no userId, we'll store it in a general collection for potential matching later
+    console.log('No userId in checkout_completed event custom data');
+  }
+  
+  // Try to determine if this checkout was for a subscription
+  const subscriptionProductIds = Object.keys(data.items || {})
+    .filter(key => data.items[key]?.recurring === true)
+    .map(key => data.items[key]?.product_id);
+  
+  if (subscriptionProductIds.length > 0) {
+    console.log('Subscription product detected in checkout:', subscriptionProductIds);
+    // We know a subscription will be created, but we don't have the ID yet
+    // It will be handled by the subscription_created webhook later
+  }
 }
