@@ -249,15 +249,49 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$ts
 const setSession = async ()=>{
     const user = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["auth"].currentUser;
     if (user) {
-        const token = await user.getIdToken();
-        document.cookie = `session=${token}; path=/; max-age=3600; samesite=strict; secure`;
+        const idToken = await user.getIdToken();
+        // Call the session API to create a proper session cookie
+        try {
+            const response = await fetch('/api/auth/session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    idToken
+                })
+            });
+            if (!response.ok) {
+                throw new Error('Failed to set session');
+            }
+            // The session cookie is now set by the API
+            return true;
+        } catch (error) {
+            console.error('Error setting session:', error);
+            return false;
+        }
     }
+    return false;
 };
-const clearSession = ()=>{
-    // Clear all auth-related cookies
-    document.cookie = 'session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure';
-    localStorage.removeItem('user');
-    sessionStorage.clear();
+const clearSession = async ()=>{
+    try {
+        // Call the logout API to revoke the session
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+        // Clear local storage and session storage
+        localStorage.removeItem('user');
+        sessionStorage.clear();
+        return true;
+    } catch (error) {
+        console.error('Error clearing session:', error);
+        // Fallback to client-side cookie clearing if the API fails
+        document.cookie = 'session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure';
+        localStorage.removeItem('user');
+        sessionStorage.clear();
+        return false;
+    }
 };
 }}),
 "[project]/src/components/GoogleSignInButton.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {

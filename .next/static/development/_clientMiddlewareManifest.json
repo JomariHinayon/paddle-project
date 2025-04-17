@@ -1,6 +1,6 @@
 [
   {
-    "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!api|_next|static|webhook|.*\\.[^/]*$).*))(\\\\.json)?[\\/#\\?]?$",
-    "originalSource": "/((?!api|_next|static|webhook|.*\\.[^/]*$).*)"
+    "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|favicon.ico|.*\\.[^/]*$).*))(\\\\.json)?[\\/#\\?]?$",
+    "originalSource": "/((?!_next/static|favicon.ico|.*\\.[^/]*$).*)"
   }
 ]

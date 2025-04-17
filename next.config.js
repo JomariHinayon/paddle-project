@@ -23,6 +23,17 @@ const nextConfig = {
         ]
       }
     ]
+  },
+  // External packages that should be processed by the server
+  serverExternalPackages: ['firebase-admin'],
+  // Set runtime configuration for specific routes
+  serverRuntimeConfig: {
+    // Force Node.js runtime for all API routes with Firebase Admin
+    api: {
+      bodyParser: {
+        sizeLimit: '1mb',
+      },
+    },
   }
 };
 
