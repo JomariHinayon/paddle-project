@@ -387,7 +387,8 @@ const PADDLE_CONFIG = {
         }
     },
     checkoutUrl: 'https://checkout.paddle.com/checkout',
-    customerPortalUrl: 'https://checkout.paddle.com/customer'
+    customerPortalUrl: 'https://checkout.paddle.com/customer',
+    customerPortalLink: ("TURBOPACK compile-time value", "https://sandbox-customer-portal.paddle.com/cpl_01jqppqpftkjwppfthwevb3h64") || 'https://sandbox-customer-portal.paddle.com'
 };
 const identifyPriceId = (priceId)=>{
     for (const [plan, cycles] of Object.entries(PADDLE_CONFIG.prices)){
@@ -1390,7 +1391,7 @@ function Dashboard() {
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                             className: "mt-6 pt-4 border-t border-slate-100",
                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
-                                                                href: `https://sandbox-checkout.paddle.com/subscriptions`,
+                                                                href: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].customerPortalLink,
                                                                 target: "_blank",
                                                                 rel: "noopener noreferrer",
                                                                 className: "flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors",
@@ -1684,7 +1685,7 @@ function Dashboard() {
                                                         className: "flex flex-wrap gap-3",
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                                                onClick: ()=>window.open('https://sandbox-checkout.paddle.com/subscriptions', '_blank'),
+                                                                onClick: ()=>window.open(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].customerPortalLink, '_blank'),
                                                                 className: "inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium",
                                                                 children: "Manage Subscription"
                                                             }, void 0, false, {

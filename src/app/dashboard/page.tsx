@@ -446,7 +446,7 @@ export default function Dashboard() {
 
                     <div className="mt-6 pt-4 border-t border-slate-100">
                       <a 
-                        href={`https://sandbox-checkout.paddle.com/subscriptions`} 
+                        href={PADDLE_CONFIG.customerPortalLink} 
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
@@ -535,7 +535,7 @@ export default function Dashboard() {
                   <p className="text-sm text-slate-500 mb-4">Thank you for your subscription! Your access is now active.</p>
                   <div className="flex flex-wrap gap-3">
                     <button 
-                      onClick={() => window.open('https://sandbox-checkout.paddle.com/subscriptions', '_blank')}
+                      onClick={() => window.open(PADDLE_CONFIG.customerPortalLink, '_blank')}
                       className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
                     >
                       Manage Subscription
