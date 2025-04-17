@@ -205,24 +205,21 @@ async function handleCheckoutCompleted(data: any) {
     return;
   }
 
-  const checkoutData = {
+  // We won't store the full checkout data in Firebase anymore
+  // Instead, we'll just keep a minimal reference to match with subscription.created events
+  console.log('Checkout completed event received. Waiting for subscription.created event.');
+  
+  // Store minimal reference data in a temporary collection
+  const tempRef = db.collection('pending_subscriptions').doc(transactionId);
+  await tempRef.set({
     checkoutId: transactionId,
     customerId,
     userId,
-    status: data.status,
-    completed: true,
-    items: data.items || [],
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    rawData: data
-  };
-
-  // Store the checkout data indexed by checkoutId
-  const checkoutRef = db.collection('checkouts').doc(transactionId);
-  await checkoutRef.set(checkoutData);
-
-  // Also store a reference in the user's collection for easier access
-  const userCheckoutRef = db.collection('users').doc(userId).collection('checkouts').doc(transactionId);
-  await userCheckoutRef.set(checkoutData);
+    created: admin.firestore.FieldValue.serverTimestamp(),
+    status: 'pending_subscription'
+  });
+  
+  console.log(`Created temporary reference for checkout ${transactionId} for user ${userId}`);
 }
 
 async function handleSubscriptionTransaction(data: any) {

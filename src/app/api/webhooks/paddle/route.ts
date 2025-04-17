@@ -157,67 +157,27 @@ async function handleCheckoutCompleted(data: any) {
     return;
   }
   
-  // Store the checkout data
-  const checkoutData = {
-    checkoutId: transactionId,
-    customerId,
-    userId,
-    transactionId,
-    email,
-    status: 'completed',
-    completedAt: data.completed_at ? new Date(data.completed_at) : admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    items: data.items || [],
-    customData: data.custom_data || {},
-    totalAmount: data.total_price?.amount || 0,
-    currency: data.total_price?.currency_code || 'USD',
-    billingDetails: data.billing_details || {},
-    rawEvent: data
-  };
+  // We won't store the full checkout data in Firebase anymore
+  // Instead, we'll just log the event and keep minimum reference data
+  // for potential matching when subscription.created webhook arrives
+  console.log('Checkout completed event received. Waiting for subscription.created event.');
   
-  // Store the checkout data indexed by checkoutId
-  const checkoutRef = db.collection('checkouts').doc(transactionId);
-  await checkoutRef.set(checkoutData, { merge: true });
-  
-  // If we have a userId from custom data, associate with user
+  // Store minimal reference data in a temporary collection
+  // This will be used to match with subscription.created events
   if (userId) {
-    const userCheckoutRef = db.collection('users').doc(userId).collection('checkouts').doc(transactionId);
-    await userCheckoutRef.set(checkoutData, { merge: true });
+    // Create a temporary reference without saving the full transaction data
+    const tempRef = db.collection('pending_subscriptions').doc(transactionId);
+    await tempRef.set({
+      checkoutId: transactionId,
+      customerId,
+      userId,
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      status: 'pending_subscription',
+      // Don't store complete checkout data, just the minimal info needed
+    });
     
-    // Check if we have a pending transaction for this checkout
-    const pendingTransactionId = `pending_${transactionId}`;
-    const pendingTransactionRef = db.collection('users').doc(userId).collection('transactions').doc(pendingTransactionId);
-    const pendingTransaction = await pendingTransactionRef.get();
-    
-    if (pendingTransaction.exists) {
-      // Update the pending transaction with checkout data
-      await pendingTransactionRef.update({
-        ...checkoutData,
-        status: 'checkout_completed',
-        subscriptionPending: true
-      });
-    }
-    
-    // Also update user record with customerId
-    const userRef = db.collection('users').doc(userId);
-    await userRef.set({
-      paddleCustomerId: customerId,
-      lastCheckoutId: transactionId,
-      lastCheckoutDate: checkoutData.completedAt
-    }, { merge: true });
+    console.log(`Created temporary reference for checkout ${transactionId} for user ${userId}`);
   } else {
-    // If no userId, we'll store it in a general collection for potential matching later
-    console.log('No userId in checkout_completed event custom data');
-  }
-  
-  // Try to determine if this checkout was for a subscription
-  const subscriptionProductIds = Object.keys(data.items || {})
-    .filter(key => data.items[key]?.recurring === true)
-    .map(key => data.items[key]?.product_id);
-  
-  if (subscriptionProductIds.length > 0) {
-    console.log('Subscription product detected in checkout:', subscriptionProductIds);
-    // We know a subscription will be created, but we don't have the ID yet
-    // It will be handled by the subscription_created webhook later
+    console.log('No userId in checkout_completed event, cannot create temporary reference');
   }
 }

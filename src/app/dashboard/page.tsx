@@ -137,37 +137,46 @@ export default function Dashboard() {
   const handlePaddleEvent = async (event: any) => {
     console.log('Paddle event:', event);
 
-    if (event.name === 'checkout.completed' && user) {
+    // Only process events that have a valid subscription ID - not just checkout completion
+    if (event.name === 'subscription.created' && user) {
       try {
         const db = getFirestore();
         const transactionsRef = collection(db, 'users', user.uid, 'transactions');
 
-        console.log('Full Paddle checkout.completed payload:', JSON.stringify(event, null, 2));
+        console.log('Full Paddle subscription.created payload:', JSON.stringify(event, null, 2));
 
         const item = event.data.items?.[0];
+        const subscriptionId = event.data.id;
+        
+        // Ensure we have a valid subscription ID
+        if (!subscriptionId) {
+          console.log('No valid subscription ID in event, not saving to Firebase');
+          return;
+        }
+        
         const transactionData = {
           userId: user.uid,
-          paddleTransactionId: event.data.id ?? '',
+          subscriptionId: subscriptionId,
           product: {
             id: item?.product?.id ?? '',
             name: item?.product?.name ?? ''
           },
           amountPaid: item?.totals?.total ?? 0,
           currency: item?.price?.unit_price?.currency_code ?? 'USD',
-          paymentStatus: event.data.status ?? 'completed',
+          paymentStatus: event.data.status ?? 'active',
           customerEmail: event.data.customer?.email ?? user.email ?? '',
           customerId: event.data.customer?.id ?? '',
-          subscriptionId: event.data.id ?? '',
           nextBillDate: event.data.next_billed_at ? new Date(event.data.next_billed_at) : null,
           startDate: event.data.started_at ? new Date(event.data.started_at) : null,
           quantity: item?.quantity ?? 1,
           timestamp: new Date()
         };
 
-        console.log(' transaction data:', transactionData);
+        console.log('Subscription transaction data:', transactionData);
 
-        await addDoc(transactionsRef, transactionData);
-        console.log('Transaction saved to Firebase');
+        // Save transaction with the subscription ID as the document ID
+        await setDoc(doc(transactionsRef, subscriptionId), transactionData);
+        console.log('Subscription saved to Firebase');
 
         // Update user's subscription status
         const userRef = doc(db, 'users', user.uid);
@@ -176,12 +185,15 @@ export default function Dashboard() {
           lastTransactionDate: new Date(),
           currentPlan: transactionData.product.id,
           subscriptionStatus: 'active',
-          currentSubscriptionId: transactionData.subscriptionId
+          currentSubscriptionId: subscriptionId
         }, { merge: true });
       } catch (error) {
-        console.error('Error saving transaction:', error);
+        console.error('Error saving subscription data:', error);
         console.error('Event data:', event);
       }
+    } else if (event.name === 'checkout.completed') {
+      // Just log the checkout completion without saving to Firebase
+      console.log('Checkout completed. Waiting for subscription.created event.');
     }
   };
 

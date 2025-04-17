@@ -47,25 +47,10 @@ export default function PaddleCheckoutHandler({ onSuccess, onError }: PaddleChec
           throw new Error('User not authenticated');
         }
         
-        const db = getFirestore();
+        // Instead of storing checkout data, we'll just pass it to the verification endpoint
+        console.log('Processing checkout - calling verification endpoint');
         
-        // 1. First store checkout data in Firestore
-        const checkoutRef = doc(collection(db, 'users', user.uid, 'checkouts'), checkoutId);
-        
-        const checkoutData = {
-          checkoutId,
-          customerId,
-          userId: user.uid,
-          status: 'completed',
-          timestamp: new Date(),
-          email: user.email,
-          processed: false,
-        };
-        
-        await setDoc(checkoutRef, checkoutData);
-        console.log('Checkout data saved to Firebase');
-        
-        // 2. Call our server endpoint to verify and process the checkout
+        // Call our server endpoint to verify and process the checkout
         const response = await fetch('/api/subscriptions/verify-checkout', {
           method: 'POST',
           headers: {
@@ -79,25 +64,9 @@ export default function PaddleCheckoutHandler({ onSuccess, onError }: PaddleChec
           }),
         });
         
-        // Update checkout record to mark as processed
-        await updateDoc(checkoutRef, {
-          processed: true,
-          verificationAttempted: true,
-          verificationTimestamp: new Date()
-        });
-        
         if (!response.ok) {
-          // If API call fails, we'll rely on webhooks to update the subscription
+          // If API call fails, we'll rely on webhooks to update the subscription later
           console.log('Subscription details not available yet, webhooks will update later');
-          
-          // We should still update user record with Paddle customer ID
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, {
-            paddleCustomerId: customerId,
-            checkoutCompleted: true,
-            checkoutId,
-            lastCheckoutDate: new Date()
-          }, { merge: true });
           
           // Clear URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -116,17 +85,23 @@ export default function PaddleCheckoutHandler({ onSuccess, onError }: PaddleChec
         const subscriptionData: SubscriptionResponse = await response.json();
         console.log('Subscription details retrieved from API:', subscriptionData);
         
-        // 3. Update user record with subscription details
-        const userRef = doc(db, 'users', user.uid);
-        await setDoc(userRef, {
-          hasActiveSubscription: true,
-          currentSubscriptionId: subscriptionData.subscriptionId,
-          subscriptionStatus: subscriptionData.status,
-          currentPlan: subscriptionData.planId,
-          nextBillDate: subscriptionData.nextBillDate ? new Date(subscriptionData.nextBillDate) : null,
-          paddleCustomerId: customerId,
-          lastCheckoutDate: new Date()
-        }, { merge: true });
+        // Only update user record if we have a valid subscription ID (not 'pending')
+        if (subscriptionData.subscriptionId && subscriptionData.subscriptionId !== 'pending') {
+          // Update user record with subscription details
+          const db = getFirestore();
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, {
+            hasActiveSubscription: true,
+            currentSubscriptionId: subscriptionData.subscriptionId,
+            subscriptionStatus: subscriptionData.status,
+            currentPlan: subscriptionData.planId,
+            nextBillDate: subscriptionData.nextBillDate ? new Date(subscriptionData.nextBillDate) : null,
+            paddleCustomerId: customerId,
+            lastCheckoutDate: new Date()
+          }, { merge: true });
+        } else {
+          console.log('No valid subscription ID received, waiting for webhook events');
+        }
         
         // Clear URL parameters
         window.history.replaceState({}, document.title, window.location.pathname);

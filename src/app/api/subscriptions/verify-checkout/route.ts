@@ -131,30 +131,18 @@ export async function POST(req: NextRequest) {
     
     // If we still don't have subscription data, return an error
     if (!subscriptionId) {
-      // Create a pending transaction record
-      const pendingTransactionId = `pending_${checkoutId}`;
-      const pendingTransaction = {
+      console.log('No subscription ID found for checkout. Waiting for subscription.created webhook.');
+      
+      // Instead of creating a pending transaction record in the user's transactions,
+      // we'll just store a minimal reference in a pending_subscriptions collection
+      const tempRef = db.collection('pending_subscriptions').doc(checkoutId);
+      await tempRef.set({
         checkoutId,
         customerId,
         userId,
         email,
-        status: 'pending',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        // Add custom data for webhook processing
-        customData: {
-          userId,
-          email,
-          checkoutId
-        }
-      };
-      
-      // Store the pending transaction
-      await db.collection('users').doc(userId).collection('transactions').doc(pendingTransactionId).set(pendingTransaction);
-      
-      // Also store in global checkouts collection for webhook reference
-      await db.collection('checkouts').doc(checkoutId).set({
-        ...pendingTransaction,
-        processed: false
+        created: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'pending_subscription'
       });
       
       return NextResponse.json(
@@ -189,16 +177,10 @@ export async function POST(req: NextRequest) {
       }
     };
     
-    // Store subscription data in Firestore
+    // Store subscription data in Firestore - only when we have a real subscription ID
     await db.collection('users').doc(userId).collection('transactions').doc(subscriptionId).set(processedData);
     
-    // Update the checkouts reference
-    await db.collection('checkouts').doc(checkoutId).set({
-      ...processedData,
-      processed: true
-    });
-    
-    // Update user record
+    // Also update user record with subscription details
     await db.collection('users').doc(userId).set({
       hasActiveSubscription: true,
       currentSubscriptionId: subscriptionId,

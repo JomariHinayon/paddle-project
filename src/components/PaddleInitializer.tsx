@@ -86,27 +86,14 @@ export default function PaddleInitializer({
             return;
           }
           
-          // Store the checkout data in Firestore
-          const db = getFirestore();
-          const checkoutRef = doc(db, 'users', user.uid, 'paddleEvents', checkoutId);
+          // Instead of storing checkout data, we'll just temporarily reference it 
+          // for tracking purposes only until a subscription is created
+          console.log('Paddle checkout completed. Waiting for subscription.created webhook.');
           
-          await setDoc(checkoutRef, {
-            eventType: 'checkout.completed',
-            checkoutId,
-            customerId,
-            timestamp: new Date(),
-            userId: user.uid,
-            email: user.email,
-            paddleEventData: checkoutData
-          });
-          
-          // Update user record with Paddle customer ID
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, {
-            paddleCustomerId: customerId,
-            lastCheckoutId: checkoutId,
-            lastCheckoutDate: new Date()
-          }, { merge: true });
+          // We'll still store the customerId temporarily for use in later flows
+          // but without saving other checkout data to Firebase
+          sessionStorage.setItem('paddle_checkout_id', checkoutId);
+          sessionStorage.setItem('paddle_customer_id', customerId);
           
           // Call the callback if provided
           if (onCheckoutComplete) {
@@ -116,8 +103,6 @@ export default function PaddleInitializer({
               paddleEventData: checkoutData
             });
           }
-          
-          console.log('Checkout completion data saved to Firestore');
           
           // Redirect to success page or clear URL parameters
           if (typeof window !== 'undefined' && window.location.search.includes('checkout_id')) {
