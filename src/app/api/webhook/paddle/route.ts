@@ -170,15 +170,26 @@ export async function POST(req: Request) {
 
     console.log(`Processing Paddle ${event_type} event`, { data: JSON.stringify(data) });
 
+    // Log the specific event type and data for debugging
+    console.log(`Received Paddle webhook event: ${event_type}`);
+    console.log(`Event data:`, JSON.stringify(data, null, 2));
+
+    // Process different types of webhook events
     switch (normalizedEvent) {
       case 'subscription_created':
-        await handleSubscriptionTransaction(data);
+        await handleSubscriptionCreated(data);
         break;
       case 'subscription_updated':
-        await handleSubscriptionTransaction(data);
+        await handleSubscriptionUpdated(data);
         break;
       case 'subscription_canceled':
-        await handleSubscriptionCancellation(data);
+        await handleSubscriptionCanceled(data);
+        break;
+      case 'subscription_payment_succeeded':
+        await handleSubscriptionPaymentSucceeded(data);
+        break;
+      case 'subscription_payment_failed':
+        await handleSubscriptionPaymentFailed(data);
         break;
       case 'checkout_completed':
         await handleCheckoutCompleted(data);
@@ -187,11 +198,370 @@ export async function POST(req: Request) {
         console.log(`Unhandled event type: ${event_type}`);
     }
 
-    return NextResponse.json({ message: 'Webhook processed' }, { status: 200 });
+    return NextResponse.json({ message: 'Webhook processed successfully' }, { status: 200 });
   } catch (error) {
     console.error('Webhook Error:', error);
     return NextResponse.json({ message: 'Webhook processing failed' }, { status: 400 });
   }
+}
+
+// Handler for subscription.created events
+async function handleSubscriptionCreated(data: any) {
+  try {
+    const userId = await getUserIdFromSubscriptionData(data);
+    const subscriptionId = data.id;
+    
+    if (!userId) {
+      console.error('Could not determine userId for subscription:', subscriptionId);
+      return;
+    }
+
+    // Extract and format subscription data
+    const subscriptionData = formatSubscriptionData(data);
+    
+    // Create/update subscription document in Firestore
+    // Use subscriptionId as the document ID for easy lookups
+    const subscriptionRef = db.collection('subscriptions').doc(subscriptionId);
+    await subscriptionRef.set({
+      ...subscriptionData,
+      userId, // Associate with user
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    
+    // Also store a reference in the user's subscriptions collection
+    const userSubscriptionRef = db.collection('users').doc(userId).collection('subscriptions').doc(subscriptionId);
+    await userSubscriptionRef.set({
+      ...subscriptionData,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    
+    // Update user document with active subscription status
+    const userRef = db.collection('users').doc(userId);
+    await userRef.set({
+      hasActiveSubscription: true,
+      currentSubscriptionId: subscriptionId,
+      subscriptionStatus: subscriptionData.status,
+      currentPlan: subscriptionData.planId,
+      nextBillDate: subscriptionData.nextBillDate,
+      paddleCustomerId: subscriptionData.customerId,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log(`Subscription created and saved to Firestore. SubscriptionId: ${subscriptionId}, UserId: ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription.created event:', error);
+    throw error;
+  }
+}
+
+// Handler for subscription.updated events
+async function handleSubscriptionUpdated(data: any) {
+  try {
+    const subscriptionId = data.id;
+    
+    // Check if the subscription already exists
+    const subscriptionRef = db.collection('subscriptions').doc(subscriptionId);
+    const subscriptionDoc = await subscriptionRef.get();
+    
+    if (!subscriptionDoc.exists) {
+      console.log(`Subscription ${subscriptionId} not found, treating as new subscription`);
+      return await handleSubscriptionCreated(data);
+    }
+    
+    const existingData = subscriptionDoc.data();
+    const userId = existingData?.userId || await getUserIdFromSubscriptionData(data);
+    
+    if (!userId) {
+      console.error('Could not determine userId for subscription update:', subscriptionId);
+      return;
+    }
+    
+    // Extract and format updated subscription data
+    const subscriptionData = formatSubscriptionData(data);
+    
+    // Update subscription document
+    await subscriptionRef.set({
+      ...subscriptionData,
+      userId,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    
+    // Update the user's subscription reference
+    const userSubscriptionRef = db.collection('users').doc(userId).collection('subscriptions').doc(subscriptionId);
+    await userSubscriptionRef.set({
+      ...subscriptionData,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    
+    // Update user document with the latest subscription info
+    const userRef = db.collection('users').doc(userId);
+    await userRef.set({
+      currentSubscriptionId: subscriptionId,
+      subscriptionStatus: subscriptionData.status,
+      currentPlan: subscriptionData.planId,
+      nextBillDate: subscriptionData.nextBillDate,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log(`Subscription updated in Firestore. SubscriptionId: ${subscriptionId}, UserId: ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription.updated event:', error);
+    throw error;
+  }
+}
+
+// Handler for subscription.canceled events
+async function handleSubscriptionCanceled(data: any) {
+  try {
+    const subscriptionId = data.id;
+    
+    // Find the subscription document
+    const subscriptionRef = db.collection('subscriptions').doc(subscriptionId);
+    const subscriptionDoc = await subscriptionRef.get();
+    
+    if (!subscriptionDoc.exists) {
+      console.error(`Subscription ${subscriptionId} not found for cancellation`);
+      return;
+    }
+    
+    const existingData = subscriptionDoc.data();
+    const userId = existingData?.userId;
+    
+    if (!userId) {
+      console.error('No userId associated with subscription:', subscriptionId);
+      return;
+    }
+    
+    const cancellationEffectiveDate = data.effective_from 
+      ? new Date(data.effective_from) 
+      : admin.firestore.FieldValue.serverTimestamp();
+    
+    // Update subscription document with canceled status
+    await subscriptionRef.set({
+      status: 'canceled',
+      canceledAt: admin.firestore.FieldValue.serverTimestamp(),
+      cancellationEffectiveDate,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    
+    // Update user's subscription reference
+    const userSubscriptionRef = db.collection('users').doc(userId).collection('subscriptions').doc(subscriptionId);
+    await userSubscriptionRef.set({
+      status: 'canceled',
+      canceledAt: admin.firestore.FieldValue.serverTimestamp(),
+      cancellationEffectiveDate,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    
+    // Update user document 
+    const userRef = db.collection('users').doc(userId);
+    await userRef.set({
+      subscriptionStatus: 'canceled',
+      subscriptionCanceledAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log(`Subscription canceled in Firestore. SubscriptionId: ${subscriptionId}, UserId: ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription.canceled event:', error);
+    throw error;
+  }
+}
+
+// Handler for subscription.payment_succeeded events
+async function handleSubscriptionPaymentSucceeded(data: any) {
+  try {
+    const subscriptionId = data.subscription_id;
+    
+    // Find the subscription document
+    const subscriptionRef = db.collection('subscriptions').doc(subscriptionId);
+    const subscriptionDoc = await subscriptionRef.get();
+    
+    if (!subscriptionDoc.exists) {
+      console.error(`Subscription ${subscriptionId} not found for payment update`);
+      return;
+    }
+    
+    const existingData = subscriptionDoc.data();
+    const userId = existingData?.userId;
+    
+    if (!userId) {
+      console.error('No userId associated with subscription:', subscriptionId);
+      return;
+    }
+    
+    // Create payment record
+    const paymentData = {
+      subscriptionId,
+      paymentId: data.id,
+      amount: data.amount,
+      currency: data.currency,
+      paymentDate: data.event_time ? new Date(data.event_time) : admin.firestore.FieldValue.serverTimestamp(),
+      status: 'succeeded',
+      nextBillDate: data.next_billed_at ? new Date(data.next_billed_at) : null,
+      receiptUrl: data.receipt_url || null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    
+    // Store payment in payments collection
+    const paymentRef = db.collection('users').doc(userId).collection('payments').doc(data.id);
+    await paymentRef.set(paymentData);
+    
+    // Update subscription with latest payment info
+    await subscriptionRef.set({
+      lastPaymentId: data.id,
+      lastPaymentDate: paymentData.paymentDate,
+      nextBillDate: paymentData.nextBillDate,
+      status: 'active', // Ensure status is active when payment succeeds
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    
+    // Update user document
+    const userRef = db.collection('users').doc(userId);
+    await userRef.set({
+      lastPaymentDate: paymentData.paymentDate,
+      hasActiveSubscription: true,
+      subscriptionStatus: 'active',
+      nextBillDate: paymentData.nextBillDate,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log(`Payment succeeded recorded. PaymentId: ${data.id}, SubscriptionId: ${subscriptionId}, UserId: ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription.payment_succeeded event:', error);
+    throw error;
+  }
+}
+
+// Handler for subscription.payment_failed events
+async function handleSubscriptionPaymentFailed(data: any) {
+  try {
+    const subscriptionId = data.subscription_id;
+    
+    // Find the subscription document
+    const subscriptionRef = db.collection('subscriptions').doc(subscriptionId);
+    const subscriptionDoc = await subscriptionRef.get();
+    
+    if (!subscriptionDoc.exists) {
+      console.error(`Subscription ${subscriptionId} not found for failed payment update`);
+      return;
+    }
+    
+    const existingData = subscriptionDoc.data();
+    const userId = existingData?.userId;
+    
+    if (!userId) {
+      console.error('No userId associated with subscription:', subscriptionId);
+      return;
+    }
+    
+    // Create failed payment record
+    const paymentData = {
+      subscriptionId,
+      paymentId: data.id,
+      amount: data.amount,
+      currency: data.currency,
+      paymentDate: data.event_time ? new Date(data.event_time) : admin.firestore.FieldValue.serverTimestamp(),
+      status: 'failed',
+      failureReason: data.error?.message || 'Payment failed',
+      nextRetryDate: data.next_retry_at ? new Date(data.next_retry_at) : null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    
+    // Store failed payment in payments collection
+    const paymentRef = db.collection('users').doc(userId).collection('payments').doc(data.id);
+    await paymentRef.set(paymentData);
+    
+    // Update subscription with payment failure info
+    await subscriptionRef.set({
+      lastFailedPaymentId: data.id,
+      lastFailedPaymentDate: paymentData.paymentDate,
+      paymentFailureReason: paymentData.failureReason,
+      nextRetryDate: paymentData.nextRetryDate,
+      status: 'past_due', // Usually when payment fails, subscription becomes past_due
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    
+    // Update user document
+    const userRef = db.collection('users').doc(userId);
+    await userRef.set({
+      lastFailedPaymentDate: paymentData.paymentDate,
+      subscriptionStatus: 'past_due',
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log(`Payment failure recorded. PaymentId: ${data.id}, SubscriptionId: ${subscriptionId}, UserId: ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription.payment_failed event:', error);
+    throw error;
+  }
+}
+
+// Helper function to determine userId from subscription data
+async function getUserIdFromSubscriptionData(data: any): Promise<string | null> {
+  // First try to get from custom_data
+  if (data.custom_data?.userId) {
+    return data.custom_data.userId;
+  }
+  
+  // Then try to find by customer ID
+  const customerId = data.customer_id;
+  if (customerId) {
+    const userQuery = await db.collection('users')
+      .where('paddleCustomerId', '==', customerId)
+      .limit(1)
+      .get();
+      
+    if (!userQuery.empty) {
+      return userQuery.docs[0].id;
+    }
+  }
+  
+  // Finally, try to find by existing subscription
+  const subscriptionId = data.id;
+  if (subscriptionId) {
+    const subscriptionDoc = await db.collection('subscriptions').doc(subscriptionId).get();
+    if (subscriptionDoc.exists && subscriptionDoc.data()?.userId) {
+      return subscriptionDoc.data()?.userId;
+    }
+  }
+  
+  return null;
+}
+
+// Helper function to format subscription data consistently
+function formatSubscriptionData(data: any) {
+  const item = data.items?.[0] || {};
+  const price = item.price || {};
+  const product = item.product || {};
+  const billingCycle = data.billing_cycle || {};
+  
+  return {
+    subscriptionId: data.id,
+    customerId: data.customer_id,
+    status: data.status || 'active',
+    planId: product.id || '',
+    planName: product.name || '',
+    priceId: price.id || '',
+    amount: parseFloat(price.unit_price?.amount || '0'),
+    currency: price.unit_price?.currency_code || data.currency_code || 'USD',
+    billingCycle: {
+      interval: billingCycle.interval || 'month',
+      frequency: billingCycle.frequency || 1,
+    },
+    startDate: data.started_at ? new Date(data.started_at) : new Date(),
+    nextBillDate: data.next_billed_at ? new Date(data.next_billed_at) : null,
+    currentPeriod: {
+      start: data.current_billing_period?.starts_at ? new Date(data.current_billing_period.starts_at) : null,
+      end: data.current_billing_period?.ends_at ? new Date(data.current_billing_period.ends_at) : null,
+    },
+    pausedAt: data.paused_at ? new Date(data.paused_at) : null,
+    canceledAt: data.canceled_at ? new Date(data.canceled_at) : null,
+    customData: data.custom_data || {},
+    rawData: process.env.NODE_ENV === 'development' ? data : undefined, // Only store raw data in development
+  };
 }
 
 async function handleCheckoutCompleted(data: any) {
@@ -220,138 +590,4 @@ async function handleCheckoutCompleted(data: any) {
   });
   
   console.log(`Created temporary reference for checkout ${transactionId} for user ${userId}`);
-}
-
-async function handleSubscriptionTransaction(data: any) {
-  let userId = data.custom_data?.userId;
-  const customerId = data.customer_id;
-  const subscriptionId = data.id;
-  const transactionId = data.transaction_id || subscriptionId;
-
-  if (!userId && customerId) {
-    // Try to find userId from customer ID if not directly provided
-    const userQuery = await db.collection('users')
-      .where('paddleCustomerId', '==', customerId)
-      .limit(1)
-      .get();
-      
-    if (!userQuery.empty) {
-      userId = userQuery.docs[0].id;
-      console.log(`Found userId ${userId} from customerId ${customerId}`);
-    }
-  }
-
-  if (!userId || !customerId) {
-    console.error('Missing required user identification data');
-    return;
-  }
-
-  const item = data.items?.[0];
-  const billingCycle = data.billing_cycle || item?.price?.billing_cycle || {};
-
-  const transactionData = {
-    subscriptionId,
-    customerId,
-    transactionId,
-    status: data.status || 'active',
-    planId: item?.product?.id || '',
-    priceId: item?.price?.id || '',
-    productId: item?.product?.id || '',
-    productName: item?.product?.name || '',
-    quantity: item?.quantity || 1,
-    amountPaid: parseFloat(item?.price?.unit_price?.amount || '0'),
-    currency: item?.price?.unit_price?.currency_code || data.currency_code || 'USD',
-    nextBillDate: data.next_billed_at ? new Date(data.next_billed_at) : null,
-    startDate: data.started_at ? new Date(data.started_at) : new Date(),
-    createdAt: data.created_at ? new Date(data.created_at) : new Date(),
-    updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
-    billingCycle: {
-      interval: billingCycle.interval || 'month',
-      frequency: billingCycle.frequency || 1,
-    },
-    customData: data.custom_data || {},
-    customerEmail: data.billing_details?.email || '',
-    addressId: data.address_id || '',
-    discount: data.discount || null,
-    pausedAt: data.paused_at ? new Date(data.paused_at) : null,
-    canceledAt: data.canceled_at ? new Date(data.canceled_at) : null,
-    firstBilledAt: data.first_billed_at ? new Date(data.first_billed_at) : null,
-    currentBillingPeriod: {
-      startsAt: data.current_billing_period?.starts_at ? new Date(data.current_billing_period.starts_at) : null,
-      endsAt: data.current_billing_period?.ends_at ? new Date(data.current_billing_period.ends_at) : null,
-    },
-    collectionMode: data.collection_mode || 'automatic',
-    importMeta: data.import_meta || null,
-    scheduledChange: data.scheduled_change || null,
-  };
-
-  // Store the transaction data in the transactions collection
-  const transRef = db.collection('users').doc(userId).collection('transactions').doc(transactionId);
-  await transRef.set(transactionData, { merge: true });
-
-  // Also update the user document with subscription info
-  const userRef = db.collection('users').doc(userId);
-  await userRef.set({
-    hasActiveSubscription: true,
-    currentSubscriptionId: subscriptionId,
-    subscriptionStatus: data.status || 'active',
-    currentPlan: item?.product?.id || '',
-    nextBillDate: data.next_billed_at ? new Date(data.next_billed_at) : null,
-    paddleCustomerId: customerId,
-    lastTransactionDate: new Date()
-  }, { merge: true });
-}
-
-async function handleSubscriptionCancellation(data: any) {
-  let userId = data.custom_data?.userId;
-  const customerId = data.customer_id;
-  const subscriptionId = data.id;
-  const transactionId = data.transaction_id || subscriptionId;
-
-  if (!userId && !customerId) {
-    console.error('Missing required user identification data');
-    
-    // Try to find userId from existing transactions
-    if (customerId) {
-      // Lookup all transactions to find one with this customerId
-      const subsQuery = await db.collectionGroup('transactions')
-        .where('customerId', '==', customerId)
-        .limit(1)
-        .get();
-        
-      if (!subsQuery.empty) {
-        // Get the parent path to extract userId
-        const docPath = subsQuery.docs[0].ref.path;
-        const pathParts = docPath.split('/');
-        // Path format: users/{userId}/transactions/{transactionId}
-        if (pathParts.length >= 4 && pathParts[0] === 'users') {
-          userId = pathParts[1];
-          console.log(`Found userId ${userId} from existing transaction for customerId ${customerId}`);
-        }
-      }
-    }
-    
-    if (!userId) {
-      console.error('Cannot process cancellation: No userId found');
-      return;
-    }
-  }
-
-  const cancellationData = {
-    status: 'canceled',
-    canceledAt: data.canceled_at ? new Date(data.canceled_at) : new Date(),
-    updatedAt: new Date(),
-  };
-
-  // Update the transaction record
-  const transRef = db.collection('users').doc(userId).collection('transactions').doc(transactionId);
-  await transRef.set(cancellationData, { merge: true });
-
-  // Update the user's subscription status
-  const userRef = db.collection('users').doc(userId);
-  await userRef.set({
-    hasActiveSubscription: false,
-    subscriptionStatus: 'canceled',
-    subscriptionCanceledAt: admin.firestore.FieldValue.serverTimestamp(),
-  }, { merge: true });
 } 

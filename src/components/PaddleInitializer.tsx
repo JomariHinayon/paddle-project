@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { PADDLE_CONFIG } from '@/lib/paddle-config';
 
 declare global {
   interface Window {
@@ -52,7 +53,7 @@ export default function PaddleInitializer({
 
       // Setup Paddle
       window.Paddle.Setup({
-        vendor: vendorId,
+        seller: parseInt(PADDLE_CONFIG.sellerId),
         environment: environment,
         eventCallback: handlePaddleEvent
       });

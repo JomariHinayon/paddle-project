@@ -479,32 +479,39 @@ __turbopack_context__.s({
 });
 const PADDLE_CONFIG = {
     clientToken: ("TURBOPACK compile-time value", "test_2c55b94e5180a69d07a0a04db62") || '',
+    sellerId: ("TURBOPACK compile-time value", "29289") || '',
     prices: {
         standard: {
-            month: "pri_01jqpptmznh4vswj791kdk56q3",
-            year: "pri_01jqppvckqd321w7vv04yadp72"
+            month: 'pri_01jqpptmznh4vswj791kdk56q3',
+            year: 'pri_01jqppvckqd321w7vv04yadp72'
         },
         premium: {
-            month: "pri_01jrcyb5gnfxn2s012n83a2gcf",
-            year: "pri_01jrcyfgfqb3p51a7sfy2y5mav"
+            month: 'pri_01jrcyb5gnfxn2s012n83a2gcf',
+            year: 'pri_01jrcyfgfqb3p51a7sfy2y5mav'
         }
     },
     planDetails: {
         standard: {
             name: 'Standard Plan',
             features: [
-                'Basic features',
-                'Email support'
+                'Core application features',
+                'Email support',
+                'Basic analytics'
             ]
         },
         premium: {
             name: 'Premium Plan',
             features: [
-                'All features',
-                'Priority support'
+                'All Standard features',
+                'Priority support',
+                'Advanced analytics',
+                'Custom integrations',
+                'Team collaboration tools'
             ]
         }
-    }
+    },
+    checkoutUrl: 'https://checkout.paddle.com/checkout',
+    customerPortalUrl: 'https://checkout.paddle.com/customer'
 };
 const identifyPriceId = (priceId)=>{
     for (const [plan, cycles] of Object.entries(PADDLE_CONFIG.prices)){
@@ -563,45 +570,80 @@ const matchTransactionPlan = (productId)=>{
 var { g: global, __dirname } = __turbopack_context__;
 {
 __turbopack_context__.s({
-    "PADDLE_PLANS": (()=>PADDLE_PLANS),
+    "createCheckoutUrl": (()=>createCheckoutUrl),
+    "formatPrice": (()=>formatPrice),
     "getTransactionDetails": (()=>getTransactionDetails),
     "identifyPlan": (()=>identifyPlan)
 });
-const PADDLE_PLANS = {
-    'pri_01jqxf4pd45rpn0h4t': {
-        name: 'Standard Plan',
-        features: [
-            'Basic features',
-            'Email support'
-        ]
-    },
-    'pri_01jqxf4pd45rpn0h4t2': {
-        name: 'Premium Plan',
-        features: [
-            'All features',
-            'Priority support'
-        ]
-    },
-    'pro_01jrcyajvbkf83y5ycbnr055hf': {
-        name: 'Premium Monthly',
-        features: [
-            'All features',
-            'Priority support'
-        ]
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/paddle-config.ts [app-ssr] (ecmascript)");
+;
+function identifyPlan(planId) {
+    // Check standard plans
+    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month) {
+        return {
+            name: 'Standard Monthly',
+            tier: 'standard',
+            interval: 'month',
+            description: 'Basic features with monthly billing',
+            features: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features
+        };
     }
-};
-const identifyPlan = (productId)=>{
-    if (!productId) return {
-        name: 'Free Plan',
-        features: [
-            'Basic access'
-        ]
-    };
-    return PADDLE_PLANS[productId] || {
-        name: 'Unknown Plan',
-        features: []
-    };
-};
+    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.year) {
+        return {
+            name: 'Standard Yearly',
+            tier: 'standard',
+            interval: 'year',
+            description: 'Basic features with yearly billing (save 16%)',
+            features: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features
+        };
+    }
+    // Check premium plans
+    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.month) {
+        return {
+            name: 'Premium Monthly',
+            tier: 'premium',
+            interval: 'month',
+            description: 'Advanced features with monthly billing',
+            features: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features
+        };
+    }
+    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.year) {
+        return {
+            name: 'Premium Yearly',
+            tier: 'premium',
+            interval: 'year',
+            description: 'Advanced features with yearly billing (save 16%)',
+            features: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features
+        };
+    }
+    return null;
+}
+function formatPrice(amount, currencyCode = 'USD') {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 2
+    }).format(amount / 100);
+}
+function createCheckoutUrl(priceId, customerId, customerEmail) {
+    const baseUrl = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].checkoutUrl;
+    const queryParams = new URLSearchParams();
+    // Add the price ID as an item
+    queryParams.append('items[0][priceId]', priceId);
+    queryParams.append('items[0][quantity]', '1');
+    // Add customer ID if provided
+    if (customerId) {
+        queryParams.append('customer[id]', customerId);
+    }
+    // Add customer email if provided
+    if (customerEmail) {
+        queryParams.append('customer[email]', customerEmail);
+    }
+    // Add success and cancel URLs if needed
+    // queryParams.append('successUrl', window.location.origin + '/checkout/success');
+    // queryParams.append('cancelUrl', window.location.origin + '/checkout/cancel');
+    return `${baseUrl}?${queryParams.toString()}`;
+}
 const getTransactionDetails = (transaction)=>{
     const productId = transaction.items?.[0]?.price?.product_id;
     const plan = identifyPlan(productId);
