@@ -24,7 +24,27 @@ export default function Dashboard() {
   const [paddleLoaded, setPaddleLoaded] = useState(false);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('month');
   const [prices, setPrices] = useState<{[key in PlanType]?: string}>({});
-  const [subscription, setSubscription] = useState<any>(null);
+  
+  // Add type definition for subscription state
+  interface SubscriptionState {
+    hasActive: boolean;
+    plan?: string | null;
+    status: string;
+    lastTransaction?: Date | null;
+    product?: any;
+    customerId?: string | null;
+    subscriptionId?: string | null;
+    nextBillDate?: Date | null;
+    canceledAt?: Date | null;
+    scheduled_change?: {
+      action?: string;
+      effective_at?: string;
+      resume_at?: string | null;
+    } | null;
+    cancellationEffectiveDate?: Date | null;
+  }
+  
+  const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -205,7 +225,8 @@ export default function Dashboard() {
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        setSubscription({
+        
+        const subscriptionData = {
           hasActive: userData.hasActiveSubscription || false,
           plan: userData.currentPlan || null,
           status: userData.subscriptionStatus || 'inactive',
@@ -214,9 +235,12 @@ export default function Dashboard() {
           customerId: userData.paddleCustomerId || null,
           subscriptionId: userData.currentSubscriptionId || null,
           nextBillDate: userData.nextBillDate?.toDate() || null,
-          canceledAt: userData.subscriptionCanceledAt?.toDate() || null
-        });
-        console.log('Subscription status:', userData);
+          canceledAt: userData.subscriptionCanceledAt?.toDate() || null,
+          scheduled_change: userData.scheduled_change || null,
+          cancellationEffectiveDate: userData.cancellationEffectiveDate?.toDate() || null
+        };
+        
+        setSubscription(subscriptionData);
       }
     } catch (error) {
       console.error('Error fetching subscription:', error);
@@ -231,25 +255,468 @@ export default function Dashboard() {
       const q = query(transactionsRef, orderBy('timestamp', 'desc'), limit(1));
       const transactionsSnap = await getDocs(q);
       
-      const logs = transactionsSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        planDetails: identifyPlan(doc.data().product.id)
-      }));
+      const logs = transactionsSnap.docs.map(doc => {
+        const data = doc.data();
+        
+        // Check for rawData field which might contain the scheduled_change
+        if (data.rawData) {
+          // The rawData might be stored as a string in some cases
+          let rawDataObj = data.rawData;
+          if (typeof rawDataObj === 'string') {
+            try {
+              rawDataObj = JSON.parse(rawDataObj);
+            } catch (e) {
+              console.error('Failed to parse rawData string:', e);
+            }
+          }
+          
+          // Check for scheduled_change in rawData
+          if (rawDataObj.scheduled_change) {
+            // Update the subscription state with the scheduled change data
+            if (subscription && data.subscriptionId === subscription.subscriptionId) {
+              setSubscription(prev => {
+                const updatedSubscription = {
+                  ...prev as SubscriptionState,
+                  scheduled_change: rawDataObj.scheduled_change
+                };
+                return updatedSubscription;
+              });
+            }
+          }
+        }
+        
+        // Check if there's a direct scheduled_change
+        if (data.scheduled_change) {
+          // Update the subscription state with the scheduled change data
+          if (subscription && data.subscriptionId === subscription.subscriptionId) {
+            setSubscription(prev => {
+              const updatedSubscription = {
+                ...prev as SubscriptionState,
+                scheduled_change: data.scheduled_change
+              };
+              return updatedSubscription;
+            });
+          }
+        }
+        
+        return {
+          id: doc.id,
+          ...data,
+          planDetails: identifyPlan(data.product?.id)
+        };
+      });
       
       setTransactions(logs);
-      console.log('Transaction logs:', logs);
+
+      // Now, check subscription collections for the latest state
+      if (subscription?.subscriptionId) {
+        const subscriptionRef = doc(db, 'users', userId, 'subscriptions', subscription.subscriptionId);
+        const subscriptionDoc = await getDoc(subscriptionRef);
+        
+        if (subscriptionDoc.exists()) {
+          const subscriptionData = subscriptionDoc.data();
+          
+          // Check for rawData field in the subscription document
+          if (subscriptionData.rawData) {
+            let rawDataObj = subscriptionData.rawData;
+            if (typeof rawDataObj === 'string') {
+              try {
+                rawDataObj = JSON.parse(rawDataObj);
+              } catch (e) {
+                console.error('Failed to parse subscription rawData string:', e);
+              }
+            }
+            
+            if (rawDataObj.scheduled_change) {
+              setSubscription(prev => {
+                const updatedSubscription = {
+                  ...prev as SubscriptionState,
+                  scheduled_change: rawDataObj.scheduled_change
+                };
+                return updatedSubscription;
+              });
+            }
+          }
+          
+          // Update the subscription state with any cancellation data
+          if (subscriptionData.scheduled_change || subscriptionData.cancellationEffectiveDate) {
+            setSubscription(prev => {
+              const updatedSubscription = {
+                ...prev as SubscriptionState,
+                scheduled_change: subscriptionData.scheduled_change || prev?.scheduled_change,
+                cancellationEffectiveDate: subscriptionData.cancellationEffectiveDate?.toDate() || prev?.cancellationEffectiveDate
+              };
+              return updatedSubscription;
+            });
+          }
+        }
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
   };
 
+  const fetchSubscriptionDetails = async (userId: string, subscriptionId: string) => {
+    try {
+      const db = getFirestore();
+      
+      // Check in transactions collection
+      const transactionRef = doc(db, 'users', userId, 'transactions', subscriptionId);
+      const transactionDoc = await getDoc(transactionRef);
+      
+      if (transactionDoc.exists()) {
+        const data = transactionDoc.data();
+        console.log("Direct transaction data fetch:", data);
+        
+        // If this transaction has rawData with scheduled_change, update subscription
+        if (data.rawData?.scheduled_change || data.scheduled_change) {
+          const scheduled_change = data.rawData?.scheduled_change || data.scheduled_change;
+          console.log("Found scheduled_change in transaction:", scheduled_change);
+          
+          setSubscription(prev => {
+            const updatedSubscription = {
+              ...prev as SubscriptionState,
+              scheduled_change: scheduled_change
+            };
+            console.log('Updated subscription with direct scheduled_change:', updatedSubscription);
+            return updatedSubscription;
+          });
+          
+          return;
+        }
+      }
+      
+      // Also check subscriptions collection
+      const subscriptionRef = doc(db, 'users', userId, 'subscriptions', subscriptionId);
+      const subscriptionDoc = await getDoc(subscriptionRef);
+      
+      if (subscriptionDoc.exists()) {
+        const data = subscriptionDoc.data();
+        console.log("Direct subscription data fetch:", data);
+        
+        if (data.scheduled_change || data.cancellationEffectiveDate) {
+          setSubscription(prev => {
+            const updatedSubscription = {
+              ...prev as SubscriptionState,
+              scheduled_change: data.scheduled_change || prev?.scheduled_change,
+              cancellationEffectiveDate: data.cancellationEffectiveDate?.toDate() || prev?.cancellationEffectiveDate
+            };
+            console.log('Updated subscription with direct subscription data:', updatedSubscription);
+            return updatedSubscription;
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching subscription details:", error);
+    }
+  };
+
   useEffect(() => {
     if (user?.uid) {
-      fetchSubscriptionStatus(user.uid);
-      fetchTransactionLogs(user.uid);
+      // Define an async function to load all data in sequence
+      const loadAllData = async () => {
+        try {
+          // Step 1: Get basic subscription info
+          await fetchSubscriptionStatus(user.uid);
+          
+          // Step 2: Get transaction data that might have scheduled_change 
+          await fetchTransactionLogs(user.uid);
+          
+          // Step 3: After the subscription is loaded, check for detailed info
+          const db = getFirestore();
+          
+          // Step 3a: Check the user document directly for a scheduled_change
+          const userRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            
+            // Look for scheduled_change directly on the user document
+            if (userData.scheduled_change) {
+              setSubscription(prev => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  scheduled_change: userData.scheduled_change
+                };
+              });
+            }
+            
+            // Also check rawData if it exists
+            if (userData.rawData) {
+              let rawDataObj = userData.rawData;
+              if (typeof rawDataObj === 'string') {
+                try {
+                  rawDataObj = JSON.parse(rawDataObj);
+                } catch (e) {
+                  console.error('Failed to parse user rawData');
+                }
+              }
+              
+              if (rawDataObj?.scheduled_change) {
+                setSubscription(prev => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    scheduled_change: rawDataObj.scheduled_change
+                  };
+                });
+              }
+            }
+          }
+          
+          // Step 3b: Check subscriptions collection if we have a subscription ID
+          if (subscription?.subscriptionId) {
+            const subscriptionRef = doc(db, 'users', user.uid, 'subscriptions', subscription.subscriptionId);
+            const subscriptionDoc = await getDoc(subscriptionRef);
+            
+            if (subscriptionDoc.exists()) {
+              const subscriptionData = subscriptionDoc.data();
+              
+              // Direct check for scheduled_change
+              if (subscriptionData.scheduled_change) {
+                setSubscription(prev => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    scheduled_change: subscriptionData.scheduled_change
+                  };
+                });
+              }
+              
+              // Check in rawData
+              if (subscriptionData.rawData) {
+                let rawDataObj = subscriptionData.rawData;
+                if (typeof rawDataObj === 'string') {
+                  try {
+                    rawDataObj = JSON.parse(rawDataObj);
+                  } catch (e) {
+                    console.error('Failed to parse subscription rawData');
+                  }
+                }
+                
+                if (rawDataObj?.scheduled_change) {
+                  setSubscription(prev => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      scheduled_change: rawDataObj.scheduled_change
+                    };
+                  });
+                }
+              }
+            }
+          }
+          
+          // Step 3c: Directly query transactions with this user's ID to find scheduled changes
+          const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+          const transactionsSnap = await getDocs(transactionsRef);
+          
+          // Process each transaction looking for scheduled_change
+          for (const doc of transactionsSnap.docs) {
+            const data = doc.data();
+            
+            // Check each potential location for scheduled_change data
+            let scheduled_change = null;
+            
+            // Check in rawData
+            if (data.rawData) {
+              let rawDataObj = data.rawData;
+              if (typeof rawDataObj === 'string') {
+                try {
+                  rawDataObj = JSON.parse(rawDataObj);
+                } catch (e) {
+                  console.error('Failed to parse rawData');
+                }
+              }
+              
+              if (rawDataObj?.scheduled_change) {
+                scheduled_change = rawDataObj.scheduled_change;
+              }
+            }
+            
+            // Check direct scheduled_change
+            if (data.scheduled_change) {
+              scheduled_change = data.scheduled_change;
+            }
+            
+            // If we found scheduled_change data, update subscription state
+            if (scheduled_change) {
+              setSubscription(prev => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  scheduled_change: scheduled_change
+                };
+              });
+              break; // Stop processing once we find valid data
+            }
+          }
+        } catch (error) {
+          console.error('Error loading subscription data:', error);
+        }
+      };
+      
+      // Execute the function
+      loadAllData();
     }
-  }, [user]);
+  }, [user, subscription?.subscriptionId]);
+  
+  // Remove the separate effects that were causing race conditions
+  // Instead, load all data in sequence in the single effect above
+
+  const extractScheduledChangeFromRawData = (data: any) => {
+    try {
+      console.log("Attempting to extract scheduled_change from raw data:", data);
+      
+      // Handle the nested rawData structure from the example - might be a string or object
+      if (data.rawData) {
+        let rawDataObj = data.rawData;
+        if (typeof rawDataObj === 'string') {
+          try {
+            rawDataObj = JSON.parse(rawDataObj);
+          } catch (e) {
+            console.error('Failed to parse rawData string:', e);
+          }
+        }
+        
+        if (rawDataObj.scheduled_change) {
+          return rawDataObj.scheduled_change;
+        }
+      }
+      
+      // Handle direct scheduled_change property
+      if (data.scheduled_change) {
+        return data.scheduled_change;
+      }
+      
+      // Handle when data itself is the raw structure (like in the example)
+      if (data.status && data.action === 'cancel' && data.effective_at) {
+        return {
+          action: data.action,
+          effective_at: data.effective_at,
+          resume_at: data.resume_at
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error extracting scheduled_change:", error);
+      return null;
+    }
+  };
+
+  const syncRawDataToSubscription = (rawData: any) => {
+    try {
+      console.log("Attempting to sync raw data to subscription:", rawData);
+      
+      if (!rawData) return;
+      
+      // Look for scheduled_change in various places
+      const scheduled_change = extractScheduledChangeFromRawData(rawData);
+      
+      if (scheduled_change) {
+        console.log("Found scheduled_change in raw data:", scheduled_change);
+        
+        setSubscription(prev => {
+          const updatedSubscription = {
+            ...prev as SubscriptionState,
+            scheduled_change: scheduled_change
+          };
+          console.log('Updated subscription with raw data scheduled_change:', updatedSubscription);
+          return updatedSubscription;
+        });
+      }
+    } catch (error) {
+      console.error("Error syncing raw data:", error);
+    }
+  };
+
+  // Add a button to test with the exact provided example structure
+  const testWithProvidedExample = () => {
+    const exampleData = {
+      amount: 1599,
+      billingCycle: {
+        frequency: 1,
+        interval: "month"
+      },
+      canceledAt: null,
+      createdAt: new Date("2025-04-21T07:06:00.951Z"),
+      currency: "USD",
+      currentPeriod: {
+        end: new Date("2025-05-21T07:06:00.292545Z"),
+        start: new Date("2025-04-21T07:06:00.292545Z")
+      },
+      customData: {
+        userId: "FE0qnQDim5Thj6wXey4oGdKN7hy1"
+      },
+      customerId: "ctm_01jrhz1tf0r5wx62mx6cby456r",
+      nextBillDate: null,
+      pausedAt: null,
+      planId: "pro_01jrcyajvbkf83y5ycbnr055hf",
+      planName: "monthlyPremium",
+      priceId: "pri_01jrcyb5gnfxn2s012n83a2gcf",
+      rawData: {
+        address_id: "add_01jsbjn5nr0mbc0kaxgmpmdagj",
+        billing_cycle: {
+          frequency: 1,
+          interval: "month"
+        },
+        billing_details: null,
+        business_id: null,
+        canceled_at: null,
+        collection_mode: "automatic",
+        created_at: "2025-04-21T07:06:00.951Z",
+        currency_code: "USD",
+        current_billing_period: {
+          ends_at: "2025-05-21T07:06:00.292545Z",
+          starts_at: "2025-04-21T07:06:00.292545Z"
+        },
+        custom_data: {
+          userId: "FE0qnQDim5Thj6wXey4oGdKN7hy1"
+        },
+        customer_id: "ctm_01jrhz1tf0r5wx62mx6cby456r",
+        discount: null,
+        first_billed_at: "2025-04-21T07:06:00.292545Z",
+        id: "sub_01jsbjp2vqp0ends3ytwb0paej",
+        import_meta: null,
+        items: [
+          {
+            // Item details omitted for brevity
+          }
+        ],
+        next_billed_at: null,
+        paused_at: null,
+        scheduled_change: {
+          action: "cancel",
+          effective_at: "2025-05-21T07:06:00.292545Z",
+          resume_at: null
+        },
+        started_at: "2025-04-21T07:06:00.292545Z",
+        status: "active",
+        transaction_id: "txn_01jsbjn4a16qagqf32vq4jzwwm",
+        updated_at: "2025-04-21T07:07:22.738Z"
+      },
+      startDate: new Date("2025-04-21T07:06:00.292545Z"),
+      status: "active",
+      subscriptionId: "sub_01jsbjp2vqp0ends3ytwb0paej",
+      updatedAt: new Date("2025-04-21T07:07:24.000Z"),
+      userId: "FE0qnQDim5Thj6wXey4oGdKN7hy1"
+    };
+    
+    syncRawDataToSubscription(exampleData);
+    
+    // Also update the entire subscription object
+    setSubscription(prev => {
+      return {
+        ...prev as SubscriptionState,
+        hasActive: true,
+        status: "active",
+        subscriptionId: exampleData.subscriptionId
+      };
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -284,6 +751,140 @@ export default function Dashboard() {
       </nav>
       
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Debug Banner - Hidden in production */}
+        {false && subscription && (
+          <div className="mb-4 bg-gray-100 border border-gray-300 p-4 rounded-md">
+            <h3 className="text-sm font-semibold mb-2">Debug Info:</h3>
+            <div className="text-xs font-mono overflow-auto max-h-40">
+              <p className="mb-1"><strong>hasActive:</strong> {String(subscription.hasActive)}</p>
+              <p className="mb-1"><strong>status:</strong> {subscription.status}</p>
+              <p className="mb-1">
+                <strong>scheduled_change:</strong> {subscription.scheduled_change ? 
+                  JSON.stringify(subscription.scheduled_change, null, 2) : 'null'}
+              </p>
+              
+              {/* Explicit condition checks */}
+              <p className="mb-1"><strong>Condition 1 - hasActive:</strong> {String(Boolean(subscription.hasActive))}</p>
+              <p className="mb-1"><strong>Condition 2 - has scheduled_change object:</strong> {String(Boolean(subscription.scheduled_change))}</p>
+              <p className="mb-1"><strong>Condition 3 - action is cancel:</strong> {String(Boolean(subscription.scheduled_change?.action === "cancel"))}</p>
+              <p className="mb-1"><strong>Condition 4 - has effective_at:</strong> {String(Boolean(subscription.scheduled_change?.effective_at))}</p>
+              
+              <p className="mb-1 font-bold text-red-500">
+                <strong>ALL CONDITIONS MET:</strong> {String(
+                  Boolean(subscription.hasActive && 
+                  subscription.scheduled_change && 
+                  subscription.scheduled_change.action === "cancel" && 
+                  subscription.scheduled_change.effective_at)
+                )}
+              </p>
+              
+              {/* Add a test banner to check if banners are visible at all */}
+              <div className="mt-2 mb-1 p-2 bg-amber-50 border-l-4 border-amber-400 text-amber-800">
+                Test banner - if you can see this, banners are rendering correctly
+              </div>
+              
+              {subscription.scheduled_change && (
+                <>
+                  <p className="mb-1"><strong>action:</strong> {subscription.scheduled_change.action}</p>
+                  <p className="mb-1"><strong>effective_at:</strong> {subscription.scheduled_change.effective_at}</p>
+                </>
+              )}
+              
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button 
+                  className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
+                  onClick={() => {
+                    if (user?.uid) {
+                      fetchSubscriptionStatus(user.uid);
+                      fetchTransactionLogs(user.uid);
+                      if (subscription?.subscriptionId) {
+                        fetchSubscriptionDetails(user.uid, subscription.subscriptionId);
+                      }
+                    }
+                  }}
+                >
+                  Refresh Data
+                </button>
+                
+                {/* Test button to manually set the example data */}
+                <button 
+                  className="px-2 py-1 bg-green-500 text-white text-xs rounded"
+                  onClick={() => {
+                    // Manually inject the example data structure for testing
+                    setSubscription(prev => {
+                      const testData = {
+                        ...prev as SubscriptionState,
+                        hasActive: true,
+                        status: 'active',
+                        scheduled_change: {
+                          action: 'cancel',
+                          effective_at: '2025-05-21T07:06:00.292545Z',
+                          resume_at: null
+                        }
+                      };
+                      console.log('Manually set test data:', testData);
+                      return testData;
+                    });
+                  }}
+                >
+                  Test With Example Data
+                </button>
+                
+                {/* Test with the exact example provided */}
+                <button 
+                  className="px-2 py-1 bg-purple-500 text-white text-xs rounded"
+                  onClick={testWithProvidedExample}
+                >
+                  Test With Full Example
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Clean banner component without debug logs */}
+        {(() => {
+          if(subscription && subscription.hasActive) {            
+            if(subscription.scheduled_change && 
+               subscription.scheduled_change.action === "cancel" && 
+               subscription.scheduled_change.effective_at) {
+              
+              // Return the banner component for scheduled cancel
+              return (
+                <div className="mb-4 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-md shadow-sm">
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-amber-800">
+                      This subscription is scheduled to be canceled on {new Date(subscription.scheduled_change.effective_at).toLocaleDateString()}.
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Backup check for cancellationEffectiveDate
+            if(subscription.cancellationEffectiveDate) {
+              return (
+                <div className="mb-4 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-md shadow-sm">
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-amber-800">
+                      This subscription is scheduled to be canceled on {subscription.cancellationEffectiveDate.toLocaleDateString()}.
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+          }
+          
+          // No banner needed
+          return null;
+        })()}
+        
         {subscription && subscription.hasActive && (
           <div className="mb-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-md overflow-hidden">
             <div className="px-6 py-8 md:px-8 md:py-8 relative">
@@ -616,7 +1217,7 @@ export default function Dashboard() {
                     </div>
                     <button
                       onClick={() => handleSubscription('standard')}
-                      disabled={!paddleLoaded || (subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active')}
+                      disabled={Boolean(!paddleLoaded || (subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active'))}
                       className={`w-full py-3 px-4 rounded-xl transition-all ${
                         !paddleLoaded 
                           ? 'bg-slate-200 cursor-not-allowed text-slate-500'
@@ -668,7 +1269,7 @@ export default function Dashboard() {
                     </div>
                     <button
                       onClick={() => handleSubscription('premium')}
-                      disabled={!paddleLoaded || (subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active')}
+                      disabled={Boolean(!paddleLoaded || (subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active'))}
                       className={`w-full py-3 px-4 rounded-xl transition-all ${
                         !paddleLoaded 
                           ? 'bg-slate-200 cursor-not-allowed text-slate-500'
