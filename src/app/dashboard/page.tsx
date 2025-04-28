@@ -19,12 +19,173 @@ declare global {
   }
 }
 
+// Create a theme context
+import { createContext, useContext } from 'react';
+
+type ThemeType = 'light' | 'dark';
+type ThemeContextType = {
+  theme: ThemeType;
+  setTheme: (theme: ThemeType) => void;
+};
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<ThemeType>('light');
+
+  useEffect(() => {
+    // Load theme from localStorage if available
+    const savedTheme = localStorage.getItem('theme') as ThemeType;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      // Use system preference as fallback
+      setTheme('dark');
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  const changeTheme = (newTheme: ThemeType) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme: changeTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+}
+
+// Settings Modal Component
+function SettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { theme, setTheme } = useTheme();
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden transform transition-all">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Settings</h3>
+            <button 
+              onClick={onClose}
+              className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="space-y-6">
+            {/* Theme Settings */}
+            <div>
+              <h4 className="text-md font-medium text-slate-700 dark:text-slate-200 mb-3">Theme</h4>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setTheme('light')}
+                  className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all ${
+                    theme === 'light' 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center mb-2 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Light Mode</span>
+                </button>
+                
+                <button
+                  onClick={() => setTheme('dark')}
+                  className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all ${
+                    theme === 'dark' 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-2 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Dark Mode</span>
+                </button>
+              </div>
+            </div>
+            
+            {/* About Section */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+              <h4 className="text-md font-medium text-slate-700 dark:text-slate-200 mb-3">About</h4>
+              <div className="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-lg">
+                <div className="flex items-center mb-3">
+                  <Image 
+                    src="/paFire_logo.png" 
+                    alt="paFire Logo" 
+                    width={24} 
+                    height={24}
+                    className="mr-2"
+                  />
+                  <h5 className="font-semibold text-slate-900 dark:text-white">paFire</h5>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Version 1.0.0
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
+                  A Firebase & Paddle integration showcase application.
+                </p>
+                <div className="mt-4">
+                  <a 
+                    href="https://github.com/username/pademo"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    View on GitHub
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(auth.currentUser);
   const [paddleLoaded, setPaddleLoaded] = useState(false);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('month');
   const [prices, setPrices] = useState<{[key in PlanType]?: string}>({});
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Add type definition for subscription state
   interface SubscriptionState {
@@ -846,632 +1007,596 @@ export default function Dashboard() {
     }).format(numericAmount / 100);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <Script 
-        src="https://cdn.paddle.com/paddle/v2/paddle.js"
-        onLoad={() => {
-          if (typeof window !== 'undefined' && window.Paddle) {
-            window.Paddle.Environment.set('sandbox');
-            window.Paddle.Setup({ 
-              token: PADDLE_CONFIG.clientToken,
-              eventCallback: handlePaddleEvent
-            });
-            setPaddleLoaded(true);
-          }
-        }}
-      />
-      
-      {/* Modern Navigation Bar with Glass Effect */}
-      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <Image 
-                src="/paFire_logo.png" 
-                alt="paFire Logo" 
-                width={32} 
-                height={32} 
-              />
-              <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Dashboard
-              </span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <LogoutButton className="text-slate-700 hover:text-slate-900" />
+  const DashboardContent = () => {
+    const { theme } = useTheme();
+    
+    return (
+      <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-slate-900' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`}>
+        <Script 
+          src="https://cdn.paddle.com/paddle/v2/paddle.js"
+          onLoad={() => {
+            if (typeof window !== 'undefined' && window.Paddle) {
+              window.Paddle.Environment.set('sandbox');
+              window.Paddle.Setup({ 
+                token: PADDLE_CONFIG.clientToken,
+                eventCallback: handlePaddleEvent
+              });
+              setPaddleLoaded(true);
+            }
+          }}
+        />
+        
+        {/* Modern Navigation Bar with Glass Effect */}
+        <nav className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-700/80">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-3">
+                <Image 
+                  src="/paFire_logo.png" 
+                  alt="paFire Logo" 
+                  width={32} 
+                  height={32} 
+                />
+                <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Dashboard
+                </span>
+              </div>
+              <div className="flex items-center space-x-4">
+                {/* Settings Button */}
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="p-2 rounded-full text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                  aria-label="Settings"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <LogoutButton className="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white" />
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
-      
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Debug Banner - Hidden in production */}
-        {false && subscription && (
-          <div className="mb-4 bg-gray-100 border border-gray-300 p-4 rounded-md">
-            <h3 className="text-sm font-semibold mb-2">Debug Info:</h3>
-            <div className="text-xs font-mono overflow-auto max-h-40">
-              <p className="mb-1"><strong>hasActive:</strong> {String(subscription.hasActive)}</p>
-              <p className="mb-1"><strong>status:</strong> {subscription.status}</p>
-              <p className="mb-1">
-                <strong>scheduled_change:</strong> {subscription.scheduled_change ? 
-                  JSON.stringify(subscription.scheduled_change, null, 2) : 'null'}
-              </p>
-              
-              {/* Explicit condition checks */}
-              <p className="mb-1"><strong>Condition 1 - hasActive:</strong> {String(Boolean(subscription.hasActive))}</p>
-              <p className="mb-1"><strong>Condition 2 - has scheduled_change object:</strong> {String(Boolean(subscription.scheduled_change))}</p>
-              <p className="mb-1"><strong>Condition 3 - action is cancel:</strong> {String(Boolean(subscription.scheduled_change?.action === "cancel"))}</p>
-              <p className="mb-1"><strong>Condition 4 - has effective_at:</strong> {String(Boolean(subscription.scheduled_change?.effective_at))}</p>
-              
-              <p className="mb-1 font-bold text-red-500">
-                <strong>ALL CONDITIONS MET:</strong> {String(
-                  Boolean(subscription.hasActive && 
-                  subscription.scheduled_change && 
-                  subscription.scheduled_change.action === "cancel" && 
-                  subscription.scheduled_change.effective_at)
+        </nav>
+        
+        <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          {/* Debug Banner - Hidden in production */}
+          {false && subscription && (
+            <div className="mb-4 bg-gray-100 border border-gray-300 p-4 rounded-md">
+              <h3 className="text-sm font-semibold mb-2">Debug Info:</h3>
+              <div className="text-xs font-mono overflow-auto max-h-40">
+                <p className="mb-1"><strong>hasActive:</strong> {String(subscription.hasActive)}</p>
+                <p className="mb-1"><strong>status:</strong> {subscription.status}</p>
+                <p className="mb-1">
+                  <strong>scheduled_change:</strong> {subscription.scheduled_change ? 
+                    JSON.stringify(subscription.scheduled_change, null, 2) : 'null'}
+                </p>
+                
+                {/* Explicit condition checks */}
+                <p className="mb-1"><strong>Condition 1 - hasActive:</strong> {String(Boolean(subscription.hasActive))}</p>
+                <p className="mb-1"><strong>Condition 2 - has scheduled_change object:</strong> {String(Boolean(subscription.scheduled_change))}</p>
+                <p className="mb-1"><strong>Condition 3 - action is cancel:</strong> {String(Boolean(subscription.scheduled_change?.action === "cancel"))}</p>
+                <p className="mb-1"><strong>Condition 4 - has effective_at:</strong> {String(Boolean(subscription.scheduled_change?.effective_at))}</p>
+                
+                <p className="mb-1 font-bold text-red-500">
+                  <strong>ALL CONDITIONS MET:</strong> {String(
+                    Boolean(subscription.hasActive && 
+                    subscription.scheduled_change && 
+                    subscription.scheduled_change.action === "cancel" && 
+                    subscription.scheduled_change.effective_at)
+                  )}
+                </p>
+                
+                {/* Add a test banner to check if banners are visible at all */}
+                <div className="mt-2 mb-1 p-2 bg-amber-50 border-l-4 border-amber-400 text-amber-800">
+                  Test banner - if you can see this, banners are rendering correctly
+                </div>
+                
+                {subscription.scheduled_change && (
+                  <>
+                    <p className="mb-1"><strong>action:</strong> {subscription.scheduled_change.action}</p>
+                    <p className="mb-1"><strong>effective_at:</strong> {subscription.scheduled_change.effective_at}</p>
+                  </>
                 )}
-              </p>
-              
-              {/* Add a test banner to check if banners are visible at all */}
-              <div className="mt-2 mb-1 p-2 bg-amber-50 border-l-4 border-amber-400 text-amber-800">
-                Test banner - if you can see this, banners are rendering correctly
-              </div>
-              
-              {subscription.scheduled_change && (
-                <>
-                  <p className="mb-1"><strong>action:</strong> {subscription.scheduled_change.action}</p>
-                  <p className="mb-1"><strong>effective_at:</strong> {subscription.scheduled_change.effective_at}</p>
-                </>
-              )}
-              
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button 
-                  className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
-                  onClick={() => {
-                    if (user?.uid) {
-                      fetchSubscriptionStatus(user.uid);
-                      fetchTransactionLogs(user.uid);
-                      if (subscription?.subscriptionId) {
-                        fetchSubscriptionDetails(user.uid, subscription.subscriptionId);
-                      }
-                    }
-                  }}
-                >
-                  Refresh Data
-                </button>
                 
-                {/* Test button to manually set the example data */}
-                <button 
-                  className="px-2 py-1 bg-green-500 text-white text-xs rounded"
-                  onClick={() => {
-                    // Manually inject the example data structure for testing
-                    setSubscription(prev => {
-                      const testData = {
-                        ...prev as SubscriptionState,
-                        hasActive: true,
-                        status: 'active',
-                        scheduled_change: {
-                          action: 'cancel',
-                          effective_at: '2025-05-21T07:06:00.292545Z',
-                          resume_at: null
-                        }
-                      };
-                      console.log('Manually set test data:', testData);
-                      return testData;
-                    });
-                  }}
-                >
-                  Test With Example Data
-                </button>
-                
-                {/* Test with the exact example provided */}
-                <button 
-                  className="px-2 py-1 bg-purple-500 text-white text-xs rounded"
-                  onClick={testWithProvidedExample}
-                >
-                  Test With Full Example
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Clean banner component without debug logs */}
-        {(() => {
-          if(subscription && subscription.hasActive) {            
-            if(subscription.scheduled_change && 
-               subscription.scheduled_change.action === "cancel" && 
-               subscription.scheduled_change.effective_at) {
-              
-              // Return the banner component for scheduled cancel
-              return (
-                <div className="mb-4 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-md shadow-sm">
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    <p className="text-sm text-amber-800">
-                      This subscription is scheduled to be canceled on {new Date(subscription.scheduled_change.effective_at).toLocaleDateString()}.
-                    </p>
-                  </div>
-                </div>
-              );
-            }
-            
-            // Backup check for cancellationEffectiveDate
-            if(subscription.cancellationEffectiveDate) {
-              return (
-                <div className="mb-4 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-md shadow-sm">
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    <p className="text-sm text-amber-800">
-                      This subscription is scheduled to be canceled on {subscription.cancellationEffectiveDate.toLocaleDateString()}.
-                    </p>
-                  </div>
-                </div>
-              );
-            }
-          }
-          
-          // No banner needed
-          return null;
-        })()}
-        
-        {subscription && subscription.hasActive && (
-          <div className="mb-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-md overflow-hidden">
-            <div className="px-6 py-8 md:px-8 md:py-8 relative">
-              <div className="absolute top-0 right-0 w-64 h-64 -translate-y-24 translate-x-24 rounded-full bg-white/10 opacity-50" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 translate-y-20 -translate-x-16 rounded-full bg-white/5 opacity-50" />
-              
-              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                  <h1 className="text-2xl font-bold text-white mb-2">
-                    Welcome, {user?.displayName || user?.email?.split('@')[0]}!
-                  </h1>
-                  <p className="text-blue-100 max-w-md">
-                    Your subscription is active. 
-                    Enjoy full access to all premium features.
-                  </p>
-                </div>
-                {/* <div className="flex flex-wrap gap-3">
-                  {subscription.nextBillDate && (
-                    <div className="bg-white/15 backdrop-blur-sm px-4 py-2 rounded-lg">
-                      <p className="text-xs text-blue-100 font-medium">NEXT BILLING</p>
-                      <p className="text-white font-medium">
-                        {new Date(subscription.nextBillDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                  <div className="bg-white/15 backdrop-blur-sm px-4 py-2 rounded-lg">
-                    <p className="text-xs text-blue-100 font-medium">STATUS</p>
-                    <p className="text-white font-medium capitalize">{subscription.status}</p>
-                  </div>
-                  {transactions.length > 0 && transactions[0].amountPaid && (
-                    <div className="bg-white/15 backdrop-blur-sm px-4 py-2 rounded-lg">
-                      <p className="text-xs text-blue-100 font-medium">PLAN</p>
-                      <p className="text-white font-medium">
-                        {transactions[0].planDetails?.name || subscription.plan}
-                      </p>
-                    </div>
-                  )}
-                </div> */}
-                 <div className="mt-6 pt-4 ">
-                      <a 
-                        href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors "
-                      >
-                        Manage Subscription
-                      </a>
-                    </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {(!subscription || !subscription.hasActive) && (
-          <div className="mb-8 bg-gradient-to-r from-slate-700 to-slate-800 rounded-2xl shadow-md overflow-hidden">
-            <div className="px-6 py-8 md:px-8 md:py-8 relative">
-              <div className="absolute top-0 right-0 w-64 h-64 -translate-y-24 translate-x-24 rounded-full bg-white/10 opacity-20" />
-              
-              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                <div>
-                  <h1 className="text-2xl font-bold text-white mb-2">
-                    Welcome to Your Dashboard
-                  </h1>
-                  <p className="text-slate-300 max-w-md mb-4">
-                    Unlock all premium features by subscribing to one of our plans below.
-                    Get started today and experience the full power of our platform.
-                  </p>
-                  <button
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button 
+                    className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
                     onClick={() => {
-                      // Scroll to the subscription plans section
-                      document.getElementById('subscription-plans')?.scrollIntoView({ 
-                        behavior: 'smooth',
-                        block: 'center'
+                      if (user?.uid) {
+                        fetchSubscriptionStatus(user.uid);
+                        fetchTransactionLogs(user.uid);
+                        if (subscription?.subscriptionId) {
+                          fetchSubscriptionDetails(user.uid, subscription.subscriptionId);
+                        }
+                      }
+                    }}
+                  >
+                    Refresh Data
+                  </button>
+                  
+                  {/* Test button to manually set the example data */}
+                  <button 
+                    className="px-2 py-1 bg-green-500 text-white text-xs rounded"
+                    onClick={() => {
+                      // Manually inject the example data structure for testing
+                      setSubscription(prev => {
+                        const testData = {
+                          ...prev as SubscriptionState,
+                          hasActive: true,
+                          status: 'active',
+                          scheduled_change: {
+                            action: 'cancel',
+                            effective_at: '2025-05-21T07:06:00.292545Z',
+                            resume_at: null
+                          }
+                        };
+                        console.log('Manually set test data:', testData);
+                        return testData;
                       });
                     }}
-                    className="px-6 py-2.5 bg-white text-slate-800 hover:bg-slate-100 rounded-lg font-medium transition-colors"
                   >
-                    View Plans
+                    Test With Example Data
                   </button>
-                </div>
-                <div className="bg-white/10 backdrop-blur-sm p-5 rounded-xl hidden md:block">
-                  <div className="flex items-center space-x-3 text-white mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span>Access all premium features</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-white mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span>Priority customer support</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span>Cancel anytime</span>
-                  </div>
+                  
+                  {/* Test with the exact example provided */}
+                  <button 
+                    className="px-2 py-1 bg-purple-500 text-white text-xs rounded"
+                    onClick={testWithProvidedExample}
+                  >
+                    Test With Full Example
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile and Subscription Info Section */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-6">
-              <UserProfileCard user={user} />
+          )}
+          
+          {/* Clean banner component without debug logs */}
+          {(() => {
+            if(subscription && subscription.hasActive) {            
+              if(subscription.scheduled_change && 
+                 subscription.scheduled_change.action === "cancel" && 
+                 subscription.scheduled_change.effective_at) {
+                
+                // Return the banner component for scheduled cancel
+                return (
+                  <div className="mb-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4 rounded-md shadow-sm">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        This subscription is scheduled to be canceled on {new Date(subscription.scheduled_change.effective_at).toLocaleDateString()}.
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
               
-              {/* {subscription && (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 -translate-y-8 translate-x-8">
-                    <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 opacity-50" />
+              // Backup check for cancellationEffectiveDate
+              if(subscription.cancellationEffectiveDate) {
+                return (
+                  <div className="mb-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4 rounded-md shadow-sm">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        This subscription is scheduled to be canceled on {subscription.cancellationEffectiveDate.toLocaleDateString()}.
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+            }
+            
+            // No banner needed
+            return null;
+          })()}
+          
+          {subscription && subscription.hasActive && (
+            <div className="mb-8 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-2xl shadow-md overflow-hidden">
+              <div className="px-6 py-8 md:px-8 md:py-8 relative">
+                <div className="absolute top-0 right-0 w-64 h-64 -translate-y-24 translate-x-24 rounded-full bg-white/10 opacity-50" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 translate-y-20 -translate-x-16 rounded-full bg-white/5 opacity-50" />
+                
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div>
+                    <h1 className="text-2xl font-bold text-white mb-2">
+                      Welcome, {user?.displayName || user?.email?.split('@')[0]}!
+                    </h1>
+                    <p className="text-blue-100 max-w-md">
+                      Your subscription is active. 
+                      Enjoy full access to all premium features.
+                    </p>
+                  </div>
+                  <div className="mt-6 pt-4 ">
+                    <a 
+                      href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors "
+                    >
+                      Manage Subscription
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {(!subscription || !subscription.hasActive) && (
+            <div className="mb-8 bg-gradient-to-r from-slate-700 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-2xl shadow-md overflow-hidden">
+              <div className="px-6 py-8 md:px-8 md:py-8 relative">
+                <div className="absolute top-0 right-0 w-64 h-64 -translate-y-24 translate-x-24 rounded-full bg-white/10 opacity-20" />
+                
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div>
+                    <h1 className="text-2xl font-bold text-white mb-2">
+                      Welcome to Your Dashboard
+                    </h1>
+                    <p className="text-slate-300 max-w-md mb-4">
+                      Unlock all premium features by subscribing to one of our plans below.
+                      Get started today and experience the full power of our platform.
+                    </p>
+                    <button
+                      onClick={() => {
+                        // Scroll to the subscription plans section
+                        document.getElementById('subscription-plans')?.scrollIntoView({ 
+                          behavior: 'smooth',
+                          block: 'center'
+                        });
+                      }}
+                      className="px-6 py-2.5 bg-white text-slate-800 hover:bg-slate-100 dark:bg-slate-100 dark:hover:bg-white rounded-lg font-medium transition-colors"
+                    >
+                      View Plans
+                    </button>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm p-5 rounded-xl hidden md:block">
+                    <div className="flex items-center space-x-3 text-white mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Access all premium features</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-white mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Priority customer support</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Cancel anytime</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Profile and Subscription Info Section */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 space-y-6">
+                <UserProfileCard user={user} />
+              </div>
+            </div>
+
+            {/* Main Content Section */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Subscription Details Card */}
+              {subscriptionDetails && (
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/50 p-6 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-48 h-48 -translate-y-12 translate-x-12">
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-900/10 dark:to-blue-900/10 opacity-50" />
                   </div>
                   
-                  <h2 className="text-lg font-semibold text-slate-800 mb-4 relative">Subscription Status</h2>
-                  <div className="space-y-4 relative">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Status</span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        subscription.status === 'active' 
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : subscription.status === 'canceled'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-slate-100 text-slate-800'
-                      }`}>
-                        {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
-                      </span>
-                    </div>
-                    
-                    {subscriptionDetails && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Plan</span>
-                          <span className="font-medium text-sm px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
-                            {subscriptionDetails.planName || subscriptionDetails.items?.[0]?.price?.product_name || 'Unknown Plan'}
+                  <div className="flex items-center justify-between mb-6 relative">
+                    <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Subscription Details</h2>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium 
+                      ${subscriptionDetails.status === 'active' 
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200' 
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'}`
+                    }>
+                      {subscriptionDetails.status ? subscriptionDetails.status.charAt(0).toUpperCase() + subscriptionDetails.status.slice(1) : 'Active'}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Plan</p>
+                        <div className="flex items-center">
+                          <span className="text-lg font-medium text-slate-900 dark:text-white mr-2">
+                            {subscriptionDetails.planName || 
+                             subscriptionDetails.items?.[0]?.price?.product_name || 
+                             identifyPlan(subscriptionDetails.planId)?.name || 
+                             'Standard'}
                           </span>
+                         
                         </div>
-
-                       
-                        {subscriptionDetails.priceAmount && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-600">Price</span>
-                            <span className="font-medium text-slate-800">
-                              {formatPrice(subscriptionDetails.priceAmount, subscriptionDetails.priceCurrency)}
-                            </span>
-                          </div>
-                        )}
-
-                        {subscriptionDetails.formattedPrice && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-600">Price</span>
-                            <span className="font-medium text-slate-800">
-                              {subscriptionDetails.formattedPrice}
-                            </span>
-                          </div>
-                        )}
-
-                        {!subscriptionDetails.priceAmount && !subscriptionDetails.formattedPrice && (subscriptionDetails.price || subscriptionDetails.items?.[0]?.price?.unit_price) && (
-                          <div>
-                            <p className="text-sm text-slate-500 mb-1">Price</p>
-                            <p className="text-lg font-medium text-slate-900">
-                              {subscriptionDetails.price 
-                                ? (typeof subscriptionDetails.price === 'object' 
-                                   ? formatPrice(subscriptionDetails.price.amount, subscriptionDetails.price.currency) 
-                                   : formatPrice(subscriptionDetails.price, subscriptionDetails.priceCurrency || 'USD'))
-                                : formatPrice(subscriptionDetails.items[0].price.unit_price.amount, subscriptionDetails.items[0].price.unit_price.currency_code)
-                              }
-                            </p>
-                          </div>
-                        )}
-
-                        {subscriptionDetails.createdAt && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-600">Created On</span>
-                            <span className="font-medium text-slate-800">
-                              {typeof subscriptionDetails.createdAt.toDate === 'function' 
-                                ? subscriptionDetails.createdAt.toDate().toLocaleDateString() 
-                                : new Date(subscriptionDetails.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
-
-                        {subscriptionDetails.nextBillDate && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-600">Next Billing</span>
-                            <span className="font-medium text-slate-800">
-                              {typeof subscriptionDetails.nextBillDate.toDate === 'function'
-                                ? subscriptionDetails.nextBillDate.toDate().toLocaleDateString()
-                                : new Date(subscriptionDetails.nextBillDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    <div className="mt-6 pt-4 border-t border-slate-100">
-                      <a 
-                        href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                      >
-                        Manage Subscription
-                      </a>
+                      </div>
+                      
+                      {subscriptionDetails.priceAmount && (
+                        <div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Price</p>
+                          <p className="text-lg font-medium text-slate-900 dark:text-white">
+                            {formatPrice(subscriptionDetails.priceAmount, subscriptionDetails.priceCurrency)}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {subscriptionDetails.formattedPrice && (
+                        <div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Price</p>
+                          <p className="text-lg font-medium text-slate-900 dark:text-white">
+                            {subscriptionDetails.formattedPrice}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {!subscriptionDetails.priceAmount && !subscriptionDetails.formattedPrice && (subscriptionDetails.price || subscriptionDetails.items?.[0]?.price?.unit_price) && (
+                        <div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Price</p>
+                          <p className="text-lg font-medium text-slate-900 dark:text-white">
+                            {subscriptionDetails.price 
+                              ? (typeof subscriptionDetails.price === 'object' 
+                                 ? formatPrice(subscriptionDetails.price.amount, subscriptionDetails.price.currency) 
+                                 : formatPrice(subscriptionDetails.price, subscriptionDetails.priceCurrency || 'USD'))
+                              : formatPrice(subscriptionDetails.items[0].price.unit_price.amount, subscriptionDetails.items[0].price.unit_price.currency_code)
+                            }
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Subscription Date</p>
+                        <p className="text-lg font-medium text-slate-900 dark:text-white">
+                          {subscriptionDetails.createdAt 
+                            ? (typeof subscriptionDetails.createdAt.toDate === 'function'
+                               ? subscriptionDetails.createdAt.toDate().toLocaleDateString()
+                               : new Date(subscriptionDetails.createdAt).toLocaleDateString())
+                            : 'N/A'}
+                        </p>
+                      </div>
+                      
+                      {subscriptionDetails.startedAt && (
+                        <div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Subscription Start</p>
+                          <p className="text-lg font-medium text-slate-900 dark:text-white">
+                            {typeof subscriptionDetails.startedAt.toDate === 'function'
+                              ? subscriptionDetails.startedAt.toDate().toLocaleDateString()
+                              : new Date(subscriptionDetails.startedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Subscription ID</p>
+                        <p className="text-sm font-mono text-slate-600 dark:text-slate-400 break-all">
+                          {subscriptionDetails.subscriptionId || subscriptionDetails.id}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              )} */}
-            </div>
-          </div>
+              )}
 
-          {/* Main Content Section */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Subscription Details Card */}
-            {subscriptionDetails && (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-48 h-48 -translate-y-12 translate-x-12">
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-50 to-blue-50 opacity-50" />
+              {/* Subscription Plans */}
+              <div id="subscription-plans" className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/50 p-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 -translate-y-48 translate-x-48">
+                  <div className="w-full h-full rounded-full bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/10 dark:to-purple-900/10 opacity-50" />
                 </div>
-                
-                <div className="flex items-center justify-between mb-6 relative">
-                  <h2 className="text-xl font-semibold text-slate-800">Subscription Details</h2>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium 
-                    ${subscriptionDetails.status === 'active' 
-                      ? 'bg-emerald-100 text-emerald-800' 
-                      : 'bg-blue-100 text-blue-800'}`
-                  }>
-                    {subscriptionDetails.status ? subscriptionDetails.status.charAt(0).toUpperCase() + subscriptionDetails.status.slice(1) : 'Active'}
-                  </span>
+
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 relative">
+                  <div>
+                    <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Subscription Plans</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Choose the perfect plan for your needs</p>
+                  </div>
+                  <div className="flex p-1 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                    <button
+                      onClick={() => setBillingCycle('month')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        billingCycle === 'month'
+                          ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-white'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white'
+                      }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => setBillingCycle('year')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        billingCycle === 'year'
+                          ? 'bg-white dark:bg-slate-600 shadow-sm text-slate-800 dark:text-white'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white'
+                      }`}
+                    >
+                      Yearly
+                    </button>
+                  </div>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Plan</p>
-                      <div className="flex items-center">
-                        <span className="text-lg font-medium text-slate-900 mr-2">
-                          {subscriptionDetails.planName || 
-                           subscriptionDetails.items?.[0]?.price?.product_name || 
-                           identifyPlan(subscriptionDetails.planId)?.name || 
-                           'Standard'}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                  {/* Standard Plan */}
+                  <div className={`group relative border ${subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' ? 'border-blue-300 bg-blue-50/30 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'} rounded-2xl p-6 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300`}>
+                    {subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && (
+                      <div className="absolute -top-3 right-6">
+                        <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
+                          Current Plan
                         </span>
-                       
-                      </div>
-                    </div>
-                    
-                    {subscriptionDetails.priceAmount && (
-                      <div>
-                        <p className="text-sm text-slate-500 mb-1">Price</p>
-                        <p className="text-lg font-medium text-slate-900">
-                          {formatPrice(subscriptionDetails.priceAmount, subscriptionDetails.priceCurrency)}
-                        </p>
                       </div>
                     )}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-50 dark:from-blue-900/10 dark:to-slate-800/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
                     
-                    {subscriptionDetails.formattedPrice && (
-                      <div>
-                        <p className="text-sm text-slate-500 mb-1">Price</p>
-                        <p className="text-lg font-medium text-slate-900">
-                          {subscriptionDetails.formattedPrice}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {!subscriptionDetails.priceAmount && !subscriptionDetails.formattedPrice && (subscriptionDetails.price || subscriptionDetails.items?.[0]?.price?.unit_price) && (
-                      <div>
-                        <p className="text-sm text-slate-500 mb-1">Price</p>
-                        <p className="text-lg font-medium text-slate-900">
-                          {subscriptionDetails.price 
-                            ? (typeof subscriptionDetails.price === 'object' 
-                               ? formatPrice(subscriptionDetails.price.amount, subscriptionDetails.price.currency) 
-                               : formatPrice(subscriptionDetails.price, subscriptionDetails.priceCurrency || 'USD'))
-                            : formatPrice(subscriptionDetails.items[0].price.unit_price.amount, subscriptionDetails.items[0].price.unit_price.currency_code)
-                          }
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Subscription Date</p>
-                      <p className="text-lg font-medium text-slate-900">
-                        {subscriptionDetails.createdAt 
-                          ? (typeof subscriptionDetails.createdAt.toDate === 'function'
-                             ? subscriptionDetails.createdAt.toDate().toLocaleDateString()
-                             : new Date(subscriptionDetails.createdAt).toLocaleDateString())
-                          : 'N/A'}
+                    <div className="relative">
+                      <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-2">Standard Plan</h3>
+                      <p className="text-slate-600 dark:text-slate-300 mb-4">
+                        {billingCycle === 'month' 
+                          ? 'Perfect for getting started' 
+                          : 'Save more with yearly billing'}
                       </p>
-                    </div>
-                    
-                    {subscriptionDetails.startedAt && (
-                      <div>
-                        <p className="text-sm text-slate-500 mb-1">Subscription Start</p>
-                        <p className="text-lg font-medium text-slate-900">
-                          {typeof subscriptionDetails.startedAt.toDate === 'function'
-                            ? subscriptionDetails.startedAt.toDate().toLocaleDateString()
-                            : new Date(subscriptionDetails.startedAt).toLocaleDateString()}
-                        </p>
+                      <div className="mb-6">
+                        <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                          {prices.standard || 'Loading...'}
+                        </span>
+                        <span className="text-slate-600 dark:text-slate-400">/{billingCycle}</span>
                       </div>
-                    )}
-                    
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Subscription ID</p>
-                      <p className="text-sm font-mono text-slate-600 break-all">
-                        {subscriptionDetails.subscriptionId || subscriptionDetails.id}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Subscription Plans */}
-            <div id="subscription-plans" className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 -translate-y-48 translate-x-48">
-                <div className="w-full h-full rounded-full bg-gradient-to-br from-violet-50 to-purple-50 opacity-50" />
-              </div>
-
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 relative">
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-800">Subscription Plans</h2>
-                  <p className="text-slate-500 mt-1">Choose the perfect plan for your needs</p>
-                </div>
-                <div className="flex p-1 bg-slate-100 rounded-lg">
-                  <button
-                    onClick={() => setBillingCycle('month')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                      billingCycle === 'month'
-                        ? 'bg-white shadow-sm text-slate-800'
-                        : 'text-slate-600 hover:text-slate-800'
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    onClick={() => setBillingCycle('year')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                      billingCycle === 'year'
-                        ? 'bg-white shadow-sm text-slate-800'
-                        : 'text-slate-600 hover:text-slate-800'
-                    }`}
-                  >
-                    Yearly
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                {/* Standard Plan */}
-                <div className={`group relative border ${subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' ? 'border-blue-300 bg-blue-50/30' : 'border-slate-200'} rounded-2xl p-6 hover:shadow-md hover:border-slate-300 transition-all duration-300`}>
-                  {subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && (
-                    <div className="absolute -top-3 right-6">
-                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-                        Current Plan
-                      </span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                  
-                  <div className="relative">
-                    <h3 className="text-xl font-semibold text-slate-800 mb-2">Standard Plan</h3>
-                    <p className="text-slate-600 mb-4">
-                      {billingCycle === 'month' 
-                        ? 'Perfect for getting started' 
-                        : 'Save more with yearly billing'}
-                    </p>
-                    <div className="mb-6">
-                      <span className="text-3xl font-bold text-slate-900">
-                        {prices.standard || 'Loading...'}
-                      </span>
-                      <span className="text-slate-600">/{billingCycle}</span>
-                    </div>
-                    <button
-                      onClick={() => handleSubscription('standard')}
-                      disabled={Boolean(!paddleLoaded || (subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active'))}
-                      className={`w-full py-3 px-4 rounded-xl transition-all ${
-                        !paddleLoaded 
-                          ? 'bg-slate-200 cursor-not-allowed text-slate-500'
+                      
+                      {/* Feature list for Standard Plan */}
+                      <div className="mb-6 space-y-3">
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300">Access to basic features</span>
+                        </div>
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300">5 projects</span>
+                        </div>
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300">Email support</span>
+                        </div>
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300">1GB storage</span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleSubscription('standard')}
+                        disabled={Boolean(!paddleLoaded || (subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active'))}
+                        className={`w-full py-3 px-4 rounded-xl transition-all ${
+                          !paddleLoaded 
+                            ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed text-slate-500 dark:text-slate-400'
+                            : subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active'
+                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 cursor-not-allowed'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow group-hover:shadow-md'
+                        }`}
+                      >
+                        {!paddleLoaded 
+                          ? 'Loading...' 
                           : subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active'
-                            ? 'bg-blue-100 text-blue-800 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow group-hover:shadow-md'
-                      }`}
-                    >
-                      {!paddleLoaded 
-                        ? 'Loading...' 
-                        : subscription?.plan && identifyPlan(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active'
-                          ? 'Current Plan'
-                          : `Get Standard ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}`
-                      }
-                    </button>
+                            ? 'Current Plan'
+                            : `Get Standard ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}`
+                        }
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Premium Plan */}
-                <div className={`group relative border-2 ${subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' ? 'border-violet-300 bg-violet-50/30' : 'border-violet-200'} rounded-2xl p-6 hover:shadow-md hover:border-violet-300 transition-all duration-300`}>
-                  {subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' ? (
-                    <div className="absolute -top-3 right-6">
-                      <span className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-                        Current Plan
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="absolute -top-4 left-4">
-                      <span className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-sm">
-                        Popular
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-indigo-50 opacity-50 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                  
-                  <div className="relative">
-                    <h3 className="text-xl font-semibold text-slate-800 mb-2">Premium Plan</h3>
-                    <p className="text-slate-600 mb-4">
-                      {billingCycle === 'month' 
-                        ? 'Access all premium features' 
-                        : 'Best value for full access'}
-                    </p>
-                    <div className="mb-6">
-                      <span className="text-3xl font-bold text-slate-900">
-                        {prices.premium || 'Loading...'}
-                      </span>
-                      <span className="text-slate-600">/{billingCycle}</span>
-                    </div>
-                    <button
-                      onClick={() => handleSubscription('premium')}
-                      disabled={Boolean(!paddleLoaded || (subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active'))}
-                      className={`w-full py-3 px-4 rounded-xl transition-all ${
-                        !paddleLoaded 
-                          ? 'bg-slate-200 cursor-not-allowed text-slate-500'
+                  {/* Premium Plan */}
+                  <div className={`group relative border-2 ${subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' ? 'border-violet-300 bg-violet-50/30 dark:bg-violet-900/20' : 'border-violet-200 dark:border-violet-700'} rounded-2xl p-6 hover:shadow-md hover:border-violet-300 dark:hover:border-violet-600 transition-all duration-300`}>
+                    {subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' ? (
+                      <div className="absolute -top-3 right-6">
+                        <span className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm">
+                          Current Plan
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="absolute -top-4 left-4">
+                        <span className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-sm">
+                          Popular
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/10 dark:to-indigo-900/10 opacity-50 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                    
+                    <div className="relative">
+                      <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-2">Premium Plan</h3>
+                      <p className="text-slate-600 dark:text-slate-300 mb-4">
+                        {billingCycle === 'month' 
+                          ? 'Access all premium features' 
+                          : 'Best value for full access'}
+                      </p>
+                      <div className="mb-6">
+                        <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                          {prices.premium || 'Loading...'}
+                        </span>
+                        <span className="text-slate-600 dark:text-slate-400">/{billingCycle}</span>
+                      </div>
+                      
+                      {/* Feature list for Premium Plan */}
+                      <div className="mb-6 space-y-3">
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300"><strong>All Standard features</strong>, plus:</span>
+                        </div>
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300">Unlimited projects</span>
+                        </div>
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300">Priority support</span>
+                        </div>
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300">10GB storage</span>
+                        </div>
+                        <div className="flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-slate-700 dark:text-slate-300">Advanced analytics</span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleSubscription('premium')}
+                        disabled={Boolean(!paddleLoaded || (subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active'))}
+                        className={`w-full py-3 px-4 rounded-xl transition-all ${
+                          !paddleLoaded 
+                            ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed text-slate-500 dark:text-slate-400'
+                            : subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active'
+                              ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm hover:shadow group-hover:shadow-md'
+                        }`}
+                      >
+                        {!paddleLoaded 
+                          ? 'Loading...' 
                           : subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active'
-                            ? 'bg-violet-100 text-violet-800 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm hover:shadow group-hover:shadow-md'
-                      }`}
-                    >
-                      {!paddleLoaded 
-                        ? 'Loading...' 
-                        : subscription?.plan && identifyPlan(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active'
-                          ? 'Current Plan'
-                          : `Get Premium ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}`
-                      }
-                    </button>
+                            ? 'Current Plan'
+                            : `Get Premium ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}`
+                        }
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+        
+        {/* Settings Modal */}
+        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      </div>
+    );
+  };
+
+  return (
+    <ThemeProvider>
+      <DashboardContent />
+    </ThemeProvider>
   );
 }
