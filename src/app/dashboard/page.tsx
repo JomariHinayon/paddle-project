@@ -8,7 +8,7 @@ import LogoutButton from '@/components/LogoutButton';
 import UserProfileCard from '@/components/UserProfileCard';
 import Script from 'next/script';
 import { PADDLE_CONFIG, type PlanType, type BillingCycle } from '@/lib/paddle-config';
-import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { identifyPlan } from '@/lib/paddle-utils';
 
@@ -46,6 +46,7 @@ export default function Dashboard() {
   
   const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -411,6 +412,112 @@ export default function Dashboard() {
     }
   };
 
+  const fetchSubscriptionData = async (userId: string) => {
+    try {
+      const db = getFirestore();
+      
+      // If we have a subscription ID, fetch it directly
+      if (subscription?.subscriptionId) {
+        const subscriptionsRef = doc(db, 'users', userId, 'subscriptions', subscription.subscriptionId);
+        const subscriptionDoc = await getDoc(subscriptionsRef);
+        
+        if (subscriptionDoc.exists()) {
+          const data = subscriptionDoc.data();
+          
+          // Format price data if it exists in different formats
+          let formattedData: any = {
+            ...data,
+            id: subscriptionDoc.id
+          };
+          
+          // Check for different price formats and normalize them
+          if (data.items?.[0]?.price?.unit_price) {
+            formattedData.priceAmount = data.items[0].price.unit_price.amount;
+            formattedData.priceCurrency = data.items[0].price.unit_price.currency_code;
+          } else if (data.price) {
+            if (typeof data.price === 'object') {
+              formattedData.priceAmount = data.price.amount;
+              formattedData.priceCurrency = data.price.currency;
+            } else if (typeof data.price === 'string') {
+              formattedData.formattedPrice = data.price;
+            } else if (typeof data.price === 'number') {
+              formattedData.priceAmount = data.price;
+              formattedData.priceCurrency = data.currency || 'USD';
+            }
+          } else if (data.amount) {
+            formattedData.priceAmount = data.amount;
+            formattedData.priceCurrency = data.currency || 'USD';
+          }
+          
+          // Also check if there are specific billing details
+          if (data.billing_details || data.billingDetails) {
+            const billingDetails = data.billing_details || data.billingDetails;
+            if (billingDetails.amount || billingDetails.total) {
+              formattedData.priceAmount = billingDetails.amount || billingDetails.total;
+              formattedData.priceCurrency = billingDetails.currency || 'USD';
+            }
+          }
+          
+          setSubscriptionDetails(formattedData);
+          return;
+        }
+      }
+      
+      // If no specific subscription ID or it wasn't found, find the most recent active subscription
+      const subscriptionsRef = collection(db, 'users', userId, 'subscriptions');
+      const q = query(
+        subscriptionsRef,
+        where('status', '==', 'active'),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+      );
+      
+      const subscriptionsSnap = await getDocs(q);
+      
+      if (!subscriptionsSnap.empty) {
+        const data = subscriptionsSnap.docs[0].data();
+        
+        // Format price data if it exists in different formats
+        let formattedData: any = {
+          ...data,
+          id: subscriptionsSnap.docs[0].id
+        };
+        
+        // Check for different price formats and normalize them
+        if (data.items?.[0]?.price?.unit_price) {
+          formattedData.priceAmount = data.items[0].price.unit_price.amount;
+          formattedData.priceCurrency = data.items[0].price.unit_price.currency_code;
+        } else if (data.price) {
+          if (typeof data.price === 'object') {
+            formattedData.priceAmount = data.price.amount;
+            formattedData.priceCurrency = data.price.currency;
+          } else if (typeof data.price === 'string') {
+            formattedData.formattedPrice = data.price;
+          } else if (typeof data.price === 'number') {
+            formattedData.priceAmount = data.price;
+            formattedData.priceCurrency = data.currency || 'USD';
+          }
+        } else if (data.amount) {
+          formattedData.priceAmount = data.amount;
+          formattedData.priceCurrency = data.currency || 'USD';
+        }
+        
+        // Also check if there are specific billing details
+        if (data.billing_details || data.billingDetails) {
+          const billingDetails = data.billing_details || data.billingDetails;
+          if (billingDetails.amount || billingDetails.total) {
+            formattedData.priceAmount = billingDetails.amount || billingDetails.total;
+            formattedData.priceCurrency = billingDetails.currency || 'USD';
+          }
+        }
+        
+        setSubscriptionDetails(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription data:', error);
+    }
+  };
+
   useEffect(() => {
     if (user?.uid) {
       // Define an async function to load all data in sequence
@@ -419,13 +526,15 @@ export default function Dashboard() {
           // Step 1: Get basic subscription info
           await fetchSubscriptionStatus(user.uid);
           
-          // Step 2: Get transaction data that might have scheduled_change 
+          // Step 2: Get subscription data from the subscriptions collection
+          await fetchSubscriptionData(user.uid);
+          
+          // Step 3: Get transaction data that might have scheduled_change
           await fetchTransactionLogs(user.uid);
           
-          // Step 3: After the subscription is loaded, check for detailed info
+          // Step 3a: Check the user document directly for a scheduled_change
           const db = getFirestore();
           
-          // Step 3a: Check the user document directly for a scheduled_change
           const userRef = doc(db, 'users', user.uid);
           const userDoc = await getDoc(userRef);
           
@@ -718,6 +827,24 @@ export default function Dashboard() {
     });
   };
 
+  const formatPrice = (amount: number | string, currency: string = 'USD') => {
+    // If it's already a string with formatting, return it
+    if (typeof amount === 'string' && amount.includes('.')) {
+      return amount;
+    }
+    
+    // Convert to number if it's a string
+    const numericAmount = typeof amount === 'string' ? parseInt(amount, 10) : amount;
+    
+    // Format with decimal places - assuming amount is in cents/lowest denomination
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(numericAmount / 100);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <Script 
@@ -901,7 +1028,7 @@ export default function Dashboard() {
                     Enjoy full access to all premium features.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                {/* <div className="flex flex-wrap gap-3">
                   {subscription.nextBillDate && (
                     <div className="bg-white/15 backdrop-blur-sm px-4 py-2 rounded-lg">
                       <p className="text-xs text-blue-100 font-medium">NEXT BILLING</p>
@@ -922,7 +1049,17 @@ export default function Dashboard() {
                       </p>
                     </div>
                   )}
-                </div>
+                </div> */}
+                 <div className="mt-6 pt-4">
+                      <a 
+                        href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                      >
+                        Manage Subscription
+                      </a>
+                    </div>
               </div>
             </div>
           </div>
@@ -986,7 +1123,7 @@ export default function Dashboard() {
             <div className="sticky top-24 space-y-6">
               <UserProfileCard user={user} />
               
-              {subscription && (
+              {/* {subscription && (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
                   <div className="absolute top-0 right-0 w-32 h-32 -translate-y-8 translate-x-8">
                     <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 opacity-50" />
@@ -1007,42 +1144,70 @@ export default function Dashboard() {
                       </span>
                     </div>
                     
-                    {transactions.length > 0 && (
+                    {subscriptionDetails && (
                       <>
                         <div className="flex items-center justify-between">
                           <span className="text-slate-600">Plan</span>
                           <span className="font-medium text-sm px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
-                            {transactions[0].planDetails?.name || 'Unknown Plan'}
+                            {subscriptionDetails.planName || subscriptionDetails.items?.[0]?.price?.product_name || 'Unknown Plan'}
                           </span>
                         </div>
 
-                        {transactions[0].subscriptionId && (
+                       
+                        {subscriptionDetails.priceAmount && (
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-600">Subscription ID</span>
-                            <span className="font-mono text-xs text-slate-600 truncate max-w-[150px]" title={transactions[0].subscriptionId}>
-                              {transactions[0].subscriptionId}
+                            <span className="text-slate-600">Price</span>
+                            <span className="font-medium text-slate-800">
+                              {formatPrice(subscriptionDetails.priceAmount, subscriptionDetails.priceCurrency)}
                             </span>
                           </div>
                         )}
 
-                        {transactions[0].nextBillDate && (
+                        {subscriptionDetails.formattedPrice && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">Price</span>
+                            <span className="font-medium text-slate-800">
+                              {subscriptionDetails.formattedPrice}
+                            </span>
+                          </div>
+                        )}
+
+                        {!subscriptionDetails.priceAmount && !subscriptionDetails.formattedPrice && (subscriptionDetails.price || subscriptionDetails.items?.[0]?.price?.unit_price) && (
+                          <div>
+                            <p className="text-sm text-slate-500 mb-1">Price</p>
+                            <p className="text-lg font-medium text-slate-900">
+                              {subscriptionDetails.price 
+                                ? (typeof subscriptionDetails.price === 'object' 
+                                   ? formatPrice(subscriptionDetails.price.amount, subscriptionDetails.price.currency) 
+                                   : formatPrice(subscriptionDetails.price, subscriptionDetails.priceCurrency || 'USD'))
+                                : formatPrice(subscriptionDetails.items[0].price.unit_price.amount, subscriptionDetails.items[0].price.unit_price.currency_code)
+                              }
+                            </p>
+                          </div>
+                        )}
+
+                        {subscriptionDetails.createdAt && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">Created On</span>
+                            <span className="font-medium text-slate-800">
+                              {typeof subscriptionDetails.createdAt.toDate === 'function' 
+                                ? subscriptionDetails.createdAt.toDate().toLocaleDateString() 
+                                : new Date(subscriptionDetails.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+
+                        {subscriptionDetails.nextBillDate && (
                           <div className="flex items-center justify-between">
                             <span className="text-slate-600">Next Billing</span>
                             <span className="font-medium text-slate-800">
-                              {new Date(transactions[0].nextBillDate.seconds * 1000).toLocaleDateString()}
+                              {typeof subscriptionDetails.nextBillDate.toDate === 'function'
+                                ? subscriptionDetails.nextBillDate.toDate().toLocaleDateString()
+                                : new Date(subscriptionDetails.nextBillDate).toLocaleDateString()}
                             </span>
                           </div>
                         )}
                       </>
-                    )}
-                    
-                    {subscription.lastTransaction && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600">Last Payment</span>
-                        <span className="font-medium text-slate-800">
-                          {new Date(subscription.lastTransaction).toLocaleDateString()}
-                        </span>
-                      </div>
                     )}
 
                     <div className="mt-6 pt-4 border-t border-slate-100">
@@ -1057,14 +1222,14 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
 
           {/* Main Content Section */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Recent Transaction Card */}
-            {transactions.length > 0 && (
+            {/* Subscription Details Card */}
+            {subscriptionDetails && (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-48 h-48 -translate-y-12 translate-x-12">
                   <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-50 to-blue-50 opacity-50" />
@@ -1073,11 +1238,11 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between mb-6 relative">
                   <h2 className="text-xl font-semibold text-slate-800">Subscription Details</h2>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium 
-                    ${transactions[0].paymentStatus === 'active' 
+                    ${subscriptionDetails.status === 'active' 
                       ? 'bg-emerald-100 text-emerald-800' 
                       : 'bg-blue-100 text-blue-800'}`
                   }>
-                    {transactions[0].paymentStatus || 'Active'}
+                    {subscriptionDetails.status ? subscriptionDetails.status.charAt(0).toUpperCase() + subscriptionDetails.status.slice(1) : 'Active'}
                   </span>
                 </div>
                 
@@ -1086,23 +1251,44 @@ export default function Dashboard() {
                     <div>
                       <p className="text-sm text-slate-500 mb-1">Plan</p>
                       <div className="flex items-center">
-                        <span className="text-lg font-medium text-slate-900 mr-2">{transactions[0].planDetails?.name || 'Standard'}</span>
-                        {transactions[0].product?.id && (
-                          <span className="text-xs px-2 py-1 bg-slate-100 rounded-md text-slate-600">ID: {transactions[0].product.id}</span>
-                        )}
+                        <span className="text-lg font-medium text-slate-900 mr-2">
+                          {subscriptionDetails.planName || 
+                           subscriptionDetails.items?.[0]?.price?.product_name || 
+                           identifyPlan(subscriptionDetails.planId)?.name || 
+                           'Standard'}
+                        </span>
+                       
                       </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">Amount Paid</p>
-                      <p className="text-lg font-medium text-slate-900">
-                        {transactions[0].amountPaid} {transactions[0].currency}
-                      </p>
-                    </div>
-                    {transactions[0].nextBillDate && (
+                    
+                    {subscriptionDetails.priceAmount && (
                       <div>
-                        <p className="text-sm text-slate-500 mb-1">Next Billing Date</p>
+                        <p className="text-sm text-slate-500 mb-1">Price</p>
                         <p className="text-lg font-medium text-slate-900">
-                          {new Date(transactions[0].nextBillDate.seconds * 1000).toLocaleDateString()}
+                          {formatPrice(subscriptionDetails.priceAmount, subscriptionDetails.priceCurrency)}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {subscriptionDetails.formattedPrice && (
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1">Price</p>
+                        <p className="text-lg font-medium text-slate-900">
+                          {subscriptionDetails.formattedPrice}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {!subscriptionDetails.priceAmount && !subscriptionDetails.formattedPrice && (subscriptionDetails.price || subscriptionDetails.items?.[0]?.price?.unit_price) && (
+                      <div>
+                        <p className="text-sm text-slate-500 mb-1">Price</p>
+                        <p className="text-lg font-medium text-slate-900">
+                          {subscriptionDetails.price 
+                            ? (typeof subscriptionDetails.price === 'object' 
+                               ? formatPrice(subscriptionDetails.price.amount, subscriptionDetails.price.currency) 
+                               : formatPrice(subscriptionDetails.price, subscriptionDetails.priceCurrency || 'USD'))
+                            : formatPrice(subscriptionDetails.items[0].price.unit_price.amount, subscriptionDetails.items[0].price.unit_price.currency_code)
+                          }
                         </p>
                       </div>
                     )}
@@ -1110,46 +1296,33 @@ export default function Dashboard() {
                   
                   <div className="space-y-6">
                     <div>
-                      <p className="text-sm text-slate-500 mb-1">Purchase Date</p>
+                      <p className="text-sm text-slate-500 mb-1">Subscription Date</p>
                       <p className="text-lg font-medium text-slate-900">
-                        {new Date(transactions[0].timestamp.toDate()).toLocaleDateString()}
+                        {subscriptionDetails.createdAt 
+                          ? (typeof subscriptionDetails.createdAt.toDate === 'function'
+                             ? subscriptionDetails.createdAt.toDate().toLocaleDateString()
+                             : new Date(subscriptionDetails.createdAt).toLocaleDateString())
+                          : 'N/A'}
                       </p>
                     </div>
-                    {transactions[0].startDate && (
+                    
+                    {subscriptionDetails.startedAt && (
                       <div>
                         <p className="text-sm text-slate-500 mb-1">Subscription Start</p>
                         <p className="text-lg font-medium text-slate-900">
-                          {new Date(transactions[0].startDate.seconds * 1000).toLocaleDateString()}
+                          {typeof subscriptionDetails.startedAt.toDate === 'function'
+                            ? subscriptionDetails.startedAt.toDate().toLocaleDateString()
+                            : new Date(subscriptionDetails.startedAt).toLocaleDateString()}
                         </p>
                       </div>
                     )}
+                    
                     <div>
                       <p className="text-sm text-slate-500 mb-1">Subscription ID</p>
                       <p className="text-sm font-mono text-slate-600 break-all">
-                        {transactions[0].subscriptionId}
+                        {subscriptionDetails.subscriptionId || subscriptionDetails.id}
                       </p>
                     </div>
-                  </div>
-                </div>
-                
-                <div className="mt-8 pt-6 border-t border-slate-100">
-                  <p className="text-sm text-slate-500 mb-4">Thank you for your subscription! Your access is now active.</p>
-                  <div className="flex flex-wrap gap-3">
-                    <button 
-                      onClick={() => {
-                        const portalUrl = `${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`;
-                        window.open(portalUrl, '_blank');
-                      }}
-                      className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-                    >
-                      Manage Subscription
-                    </button>
-                    <button 
-                      onClick={() => fetchTransactionLogs(user!.uid)}
-                      className="inline-flex items-center px-4 py-2 bg-slate-50 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium"
-                    >
-                      Refresh Data
-                    </button>
                   </div>
                 </div>
               </div>
