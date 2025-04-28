@@ -14,7 +14,16 @@ export default function Home() {
         <div className="w-[40%] bg-transparent h-full flex justify-center align-center items-center">
           <div className="w-full h-[70%] p-8 justify-center items-center">
             <div className="bg-violet-100 h-full w-full p-4 opacity-90 rounded-lg border-2 border-violet-200 shadow-lg flex flex-col justify-center items-center space-y-4">
-              <h1 className="text-2xl font-bold text-violet-800 mb-6">Welcome to Paddle</h1>
+              <div className="flex flex-col items-center mb-4">
+                <Image 
+                  src="/paFire_logo.png" 
+                  alt="paFire Logo" 
+                  width={80} 
+                  height={80} 
+                  className="mb-2"
+                />
+                <h1 className="text-2xl font-bold text-violet-800">Welcome to paFire</h1>
+              </div>
               
               <div className="flex flex-col space-y-3 w-full max-w-xs">
                 <Link 

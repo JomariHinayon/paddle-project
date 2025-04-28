@@ -11,6 +11,7 @@ import { PADDLE_CONFIG, type PlanType, type BillingCycle } from '@/lib/paddle-co
 import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { identifyPlan } from '@/lib/paddle-utils';
+import Image from 'next/image';
 
 declare global {
   interface Window {
@@ -862,10 +863,16 @@ export default function Dashboard() {
       />
       
       {/* Modern Navigation Bar with Glass Effect */}
-      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200/80">
+      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
+              <Image 
+                src="/paFire_logo.png" 
+                alt="paFire Logo" 
+                width={32} 
+                height={32} 
+              />
               <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Dashboard
               </span>
@@ -1024,7 +1031,7 @@ export default function Dashboard() {
                     Welcome, {user?.displayName || user?.email?.split('@')[0]}!
                   </h1>
                   <p className="text-blue-100 max-w-md">
-                    Your {subscription.plan && identifyPlan(subscription.plan)?.name} subscription is active. 
+                    Your subscription is active. 
                     Enjoy full access to all premium features.
                   </p>
                 </div>
@@ -1050,12 +1057,12 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div> */}
-                 <div className="mt-6 pt-4">
+                 <div className="mt-6 pt-4 ">
                       <a 
                         href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                        className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors "
                       >
                         Manage Subscription
                       </a>
