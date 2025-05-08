@@ -3,6 +3,9 @@ node_modules/
 package-lock.json
 yarn.lock
 
+# Next.js build output
+.next/
+
 # Expo-specific files
 .expo/
 .expo-shared/
