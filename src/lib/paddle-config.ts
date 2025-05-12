@@ -3,12 +3,12 @@ export const PADDLE_CONFIG = {
   sellerId: process.env.NEXT_PUBLIC_PADDLE_SELLER_ID || '',
   prices: {
     standard: {
-      month: 'pri_01jqpptmznh4vswj791kdk56q3',
-      year: 'pri_01jqppvckqd321w7vv04yadp72'
+      month: 'pri_01jv178w9jst683rgyjb6w18qx',
+      year: 'pri_01jv17anj5xnsta6hvv209sdyq'
     },
     premium: {
-      month: 'pri_01jrcyb5gnfxn2s012n83a2gcf',
-      year: 'pri_01jrcyfgfqb3p51a7sfy2y5mav'
+      month: 'pri_01jv17e3xm8mdsd22866ce8417',
+      year: 'pri_01jv17f8370m2vyvspr2btg84s'
     }
   },
   planDetails: {

@@ -4,7 +4,7 @@ const axios = require('axios');
 require('dotenv').config({ path: '.env.local' });
 
 const PUBLIC_KEY = process.env.PADDLE_PUBLIC_KEY;
-const WEBHOOK_URL = 'http://localhost:3000/api/webhook/paddle'; // Update with your local or ngrok URL
+const WEBHOOK_URL = 'https://fdb1-112-200-169-199.ngrok-free.app/paddle/webhook'; // Update with your local or ngrok URL
 
 // Sample event payload
 const payload = {

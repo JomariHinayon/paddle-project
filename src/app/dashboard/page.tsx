@@ -1064,25 +1064,25 @@ export default function Dashboard() {
             <div className="mb-4 bg-gray-100 border border-gray-300 p-4 rounded-md">
               <h3 className="text-sm font-semibold mb-2">Debug Info:</h3>
               <div className="text-xs font-mono overflow-auto max-h-40">
-                <p className="mb-1"><strong>hasActive:</strong> {String(subscription.hasActive)}</p>
-                <p className="mb-1"><strong>status:</strong> {subscription.status}</p>
+                <p className="mb-1"><strong>hasActive:</strong> {String(subscription?.hasActive)}</p>
+                <p className="mb-1"><strong>status:</strong> {subscription?.status}</p>
                 <p className="mb-1">
-                  <strong>scheduled_change:</strong> {subscription.scheduled_change ? 
-                    JSON.stringify(subscription.scheduled_change, null, 2) : 'null'}
+                  <strong>scheduled_change:</strong> {subscription?.scheduled_change ? 
+                    JSON.stringify(subscription?.scheduled_change, null, 2) : 'null'}
                 </p>
                 
                 {/* Explicit condition checks */}
-                <p className="mb-1"><strong>Condition 1 - hasActive:</strong> {String(Boolean(subscription.hasActive))}</p>
-                <p className="mb-1"><strong>Condition 2 - has scheduled_change object:</strong> {String(Boolean(subscription.scheduled_change))}</p>
-                <p className="mb-1"><strong>Condition 3 - action is cancel:</strong> {String(Boolean(subscription.scheduled_change?.action === "cancel"))}</p>
-                <p className="mb-1"><strong>Condition 4 - has effective_at:</strong> {String(Boolean(subscription.scheduled_change?.effective_at))}</p>
+                <p className="mb-1"><strong>Condition 1 - hasActive:</strong> {String(Boolean(subscription?.hasActive))}</p>
+                <p className="mb-1"><strong>Condition 2 - has scheduled_change object:</strong> {String(Boolean(subscription?.scheduled_change))}</p>
+                <p className="mb-1"><strong>Condition 3 - action is cancel:</strong> {String(Boolean(subscription?.scheduled_change?.action === "cancel"))}</p>
+                <p className="mb-1"><strong>Condition 4 - has effective_at:</strong> {String(Boolean(subscription?.scheduled_change?.effective_at))}</p>
                 
                 <p className="mb-1 font-bold text-red-500">
                   <strong>ALL CONDITIONS MET:</strong> {String(
-                    Boolean(subscription.hasActive && 
-                    subscription.scheduled_change && 
-                    subscription.scheduled_change.action === "cancel" && 
-                    subscription.scheduled_change.effective_at)
+                    Boolean(subscription?.hasActive && 
+                    subscription?.scheduled_change && 
+                    subscription?.scheduled_change?.action === "cancel" && 
+                    subscription?.scheduled_change?.effective_at)
                   )}
                 </p>
                 
@@ -1091,10 +1091,10 @@ export default function Dashboard() {
                   Test banner - if you can see this, banners are rendering correctly
                 </div>
                 
-                {subscription.scheduled_change && (
+                {subscription?.scheduled_change && (
                   <>
-                    <p className="mb-1"><strong>action:</strong> {subscription.scheduled_change.action}</p>
-                    <p className="mb-1"><strong>effective_at:</strong> {subscription.scheduled_change.effective_at}</p>
+                    <p className="mb-1"><strong>action:</strong> {subscription?.scheduled_change?.action}</p>
+                    <p className="mb-1"><strong>effective_at:</strong> {subscription?.scheduled_change?.effective_at}</p>
                   </>
                 )}
                 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import admin from 'firebase-admin';
+import { headers } from 'next/headers';
 
 // Get Firebase private key in the correct format
 const getFirebasePrivateKey = () => {
@@ -34,41 +35,32 @@ const verifyPaddleSignature = (rawBody: string, signature: string) => {
   return hash === signature;
 };
 
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const rawBody = await req.text();
-    const signature = req.headers.get('paddle-signature');
+    const headersList = await headers();
+    const paddleSignature = headersList.get('paddle-signature');
 
-    console.log('Incoming webhook payload:', rawBody);
-
-    if (!signature || !verifyPaddleSignature(rawBody, signature)) {
-      return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
+    if (!paddleSignature) {
+      return NextResponse.json(
+        { error: 'No Paddle signature found' },
+        { status: 400 }
+      );
     }
 
-    const { event_type, data } = JSON.parse(rawBody);
-    const normalizedEvent = event_type.replace('.', '_');
+    const body = await request.json();
+    
+    // TODO: Verify the webhook signature using Paddle public key
+    // TODO: Process the webhook event based on event_type
+    
+    console.log('Received Paddle webhook:', body);
 
-    switch (normalizedEvent) {
-      case 'subscription_created':
-        await handleSubscriptionTransaction(data);
-        break;
-      case 'subscription_updated':
-        await handleSubscriptionTransaction(data);
-        break;
-      case 'subscription_canceled':
-        await handleSubscriptionCancellation(data);
-        break;
-      case 'checkout_completed':
-        await handleCheckoutCompleted(data);
-        break;
-      default:
-        console.log(`Unhandled event type: ${event_type}`);
-    }
-
-    return NextResponse.json({ message: 'Webhook processed' });
+    return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Webhook Error:', error);
-    return NextResponse.json({ message: 'Webhook processing failed' }, { status: 400 });
+    console.error('Error processing webhook:', error);
+    return NextResponse.json(
+      { error: 'Error processing webhook' },
+      { status: 500 }
+    );
   }
 }
 

@@ -23,6 +23,53 @@ interface PlanInfo {
   features?: string[];
 }
 
+export interface PaddlePlan {
+  name: string;
+  features: string[];
+  description?: string;
+  tier?: 'standard' | 'premium';
+  interval?: 'month' | 'year';
+}
+
+// Export the PADDLE_PLANS object
+export const PADDLE_PLANS: Record<string, PaddlePlan> = {
+  // Standard monthly plan
+  [PADDLE_CONFIG.prices.standard.month]: {
+    name: 'Standard Monthly',
+    tier: 'standard',
+    interval: 'month',
+    description: 'Basic features with monthly billing',
+    features: PADDLE_CONFIG.planDetails.standard.features
+  },
+  
+  // Standard yearly plan
+  [PADDLE_CONFIG.prices.standard.year]: {
+    name: 'Standard Yearly',
+    tier: 'standard',
+    interval: 'year',
+    description: 'Basic features with yearly billing (save 16%)',
+    features: PADDLE_CONFIG.planDetails.standard.features
+  },
+  
+  // Premium monthly plan
+  [PADDLE_CONFIG.prices.premium.month]: {
+    name: 'Premium Monthly',
+    tier: 'premium',
+    interval: 'month',
+    description: 'Advanced features with monthly billing',
+    features: PADDLE_CONFIG.planDetails.premium.features
+  },
+  
+  // Premium yearly plan
+  [PADDLE_CONFIG.prices.premium.year]: {
+    name: 'Premium Yearly',
+    tier: 'premium',
+    interval: 'year',
+    description: 'Advanced features with yearly billing (save 16%)',
+    features: PADDLE_CONFIG.planDetails.premium.features
+  }
+};
+
 /**
  * Identifies a plan based on the planId from Paddle
  * 

@@ -1129,7 +1129,7 @@
   }
 
   .transform {
-    transform: var(--tw-rotate-x) var(--tw-rotate-y) var(--tw-rotate-z) var(--tw-skew-x) var(--tw-skew-y);
+    transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );
   }
 
   .animate-pulse {
@@ -1577,16 +1577,6 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-black\/50 {
       background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
-    }
-  }
-
-  .bg-black\/70 {
-    background-color: #000000b3;
-  }
-
-  @supports (color: color-mix(in lab, red, red)) {
-    .bg-black\/70 {
-      background-color: color-mix(in oklab, var(--color-black) 70%, transparent);
     }
   }
 
@@ -2633,7 +2623,7 @@
   }
 
   .transition {
-    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter;
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, visibility, content-visibility, overlay, pointer-events;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
@@ -2747,12 +2737,6 @@
   @media (hover: hover) {
     .hover\:bg-green-700:hover {
       background-color: var(--color-green-700);
-    }
-  }
-
-  @media (hover: hover) {
-    .hover\:bg-red-600:hover {
-      background-color: var(--color-red-600);
     }
   }
 
@@ -3365,18 +3349,6 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    .dark\:bg-gray-700 {
-      background-color: var(--color-gray-700);
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .dark\:bg-gray-800 {
-      background-color: var(--color-gray-800);
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
     .dark\:bg-indigo-900\/30 {
       background-color: #312c854d;
     }
@@ -3396,18 +3368,6 @@
     @supports (color: color-mix(in lab, red, red)) {
       .dark\:bg-red-900\/20 {
         background-color: color-mix(in oklab, var(--color-red-900) 20%, transparent);
-      }
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .dark\:bg-red-900\/30 {
-      background-color: #82181a4d;
-    }
-
-    @supports (color: color-mix(in lab, red, red)) {
-      .dark\:bg-red-900\/30 {
-        background-color: color-mix(in oklab, var(--color-red-900) 30%, transparent);
       }
     }
   }
@@ -3679,24 +3639,6 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    .dark\:text-gray-200 {
-      color: var(--color-gray-200);
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .dark\:text-gray-300 {
-      color: var(--color-gray-300);
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .dark\:text-gray-400 {
-      color: var(--color-gray-400);
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
     .dark\:text-indigo-400 {
       color: var(--color-indigo-400);
     }
@@ -3786,14 +3728,6 @@
 
   @media (prefers-color-scheme: dark) {
     @media (hover: hover) {
-      .dark\:hover\:bg-gray-600:hover {
-        background-color: var(--color-gray-600);
-      }
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    @media (hover: hover) {
       .dark\:hover\:bg-slate-700\/50:hover {
         background-color: #31415880;
       }
@@ -3810,14 +3744,6 @@
     @media (hover: hover) {
       .dark\:hover\:bg-white:hover {
         background-color: var(--color-white);
-      }
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    @media (hover: hover) {
-      .dark\:hover\:text-gray-200:hover {
-        color: var(--color-gray-200);
       }
     }
   }
@@ -3895,32 +3821,27 @@ body {
 
 @property --tw-rotate-x {
   syntax: "*";
-  inherits: false;
-  initial-value: rotateX(0);
+  inherits: false
 }
 
 @property --tw-rotate-y {
   syntax: "*";
-  inherits: false;
-  initial-value: rotateY(0);
+  inherits: false
 }
 
 @property --tw-rotate-z {
   syntax: "*";
-  inherits: false;
-  initial-value: rotateZ(0);
+  inherits: false
 }
 
 @property --tw-skew-x {
   syntax: "*";
-  inherits: false;
-  initial-value: skewX(0);
+  inherits: false
 }
 
 @property --tw-skew-y {
   syntax: "*";
-  inherits: false;
-  initial-value: skewY(0);
+  inherits: false
 }
 
 @property --tw-space-y-reverse {
@@ -4265,11 +4186,11 @@ body {
       --tw-scale-x: 1;
       --tw-scale-y: 1;
       --tw-scale-z: 1;
-      --tw-rotate-x: rotateX(0);
-      --tw-rotate-y: rotateY(0);
-      --tw-rotate-z: rotateZ(0);
-      --tw-skew-x: skewX(0);
-      --tw-skew-y: skewY(0);
+      --tw-rotate-x: initial;
+      --tw-rotate-y: initial;
+      --tw-rotate-z: initial;
+      --tw-skew-x: initial;
+      --tw-skew-y: initial;
       --tw-space-y-reverse: 0;
       --tw-space-x-reverse: 0;
       --tw-divide-y-reverse: 0;

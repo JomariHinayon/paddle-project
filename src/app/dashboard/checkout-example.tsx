@@ -2,17 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import PaddleInitializer from '@/components/PaddleInitializer';
 import PaddleCheckoutHandler from '@/components/PaddleCheckoutHandler';
 import { hasActiveSubscription, getUserSubscription } from '@/lib/subscription-utils';
-import { PADDLE_PLANS } from '@/lib/paddle-utils';
+import { PADDLE_PLANS, PaddlePlan } from '@/lib/paddle-utils';
+
+interface Subscription {
+  status: string;
+  planId: string;
+  nextBillDate?: string;
+  id?: string;
+  // Add any other fields your subscription data might include
+}
+
+// Declare Paddle global variable
+interface Window {
+  Paddle?: any;
+}
 
 export default function CheckoutExample() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState<any>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
   
   // Initialize auth listener
@@ -23,8 +36,12 @@ export default function CheckoutExample() {
       setUser(user);
       if (user) {
         try {
-          const subscription = await getUserSubscription();
-          setSubscription(subscription);
+          // Fix the type mismatch by properly typing the result or casting it
+          const subData = await getUserSubscription();
+          // Make sure the returned data has the required fields to match Subscription interface
+          if (subData) {
+            setSubscription(subData as Subscription);
+          }
         } catch (error) {
           console.error('Error fetching subscription:', error);
         }
@@ -42,9 +59,12 @@ export default function CheckoutExample() {
     
     // Refresh subscription data
     getUserSubscription()
-      .then(subscription => {
-        setSubscription(subscription);
-        setCheckoutStatus('Subscription activated!');
+      .then(subscriptionData => {
+        if (subscriptionData) {
+          // Cast to Subscription type to ensure compatibility
+          setSubscription(subscriptionData as Subscription);
+          setCheckoutStatus('Subscription activated!');
+        }
       })
       .catch(error => {
         console.error('Error fetching updated subscription:', error);
@@ -169,11 +189,11 @@ export default function CheckoutExample() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Available Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(PADDLE_PLANS).map(([planId, plan]) => (
+          {Object.entries(PADDLE_PLANS).map(([planId, plan]: [string, PaddlePlan]) => (
             <div key={planId} className="bg-white shadow-md rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
               <ul className="mb-4">
-                {plan.features.map((feature, index) => (
+                {plan.features.map((feature: string, index: number) => (
                   <li key={index} className="mb-1 flex items-center">
                     <span className="mr-2">✓</span> {feature}
                   </li>
