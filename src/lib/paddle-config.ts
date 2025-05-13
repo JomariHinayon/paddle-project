@@ -23,7 +23,7 @@ export const PADDLE_CONFIG = {
   },
   checkoutUrl: 'https://checkout.paddle.com/checkout',
   customerPortalUrl: 'https://checkout.paddle.com/customer',
-  customerPortalLink: process.env.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_LINK || 'https://sandbox-customer-portal.paddle.com'
+  customerPortalLink: process.env.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_LINK || 'https://sandbox-customer-portal.paddle.com/cpl_01jtqjeq79c64enc8qy3cs3zrm'
 };
 
 export type PlanType = keyof typeof PADDLE_CONFIG.prices;

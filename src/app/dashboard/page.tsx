@@ -511,6 +511,7 @@ export default function Dashboard() {
           cancellationEffectiveDate: userData.cancellationEffectiveDate?.toDate() || null
         };
         
+        console.log('Fetched subscription status:', subscriptionData);
         setSubscription(subscriptionData);
       }
     } catch (error) {
@@ -1181,17 +1182,21 @@ export default function Dashboard() {
       
       // 2. Update user profile with a fake subscription for testing
       const userRef = doc(db, 'users', user.uid);
+      
+      // Generate fake customer ID if needed - could be email or email+timestamp
+      const paddleCustomerId = user.email || `user-${new Date().getTime()}@example.com`;
+      
       await setDoc(userRef, {
         hasActiveSubscription: true,
         lastTransactionDate: new Date(),
         currentPlan: PADDLE_CONFIG.prices.standard.month,  // Using the standard plan price ID
         subscriptionStatus: 'active',
         currentSubscriptionId: 'manual-' + new Date().getTime(),
-        paddleCustomerId: user.email,
+        paddleCustomerId: paddleCustomerId,
         lastUpdated: new Date()
       }, { merge: true });
       
-      console.log('Manually updated subscription status');
+      console.log('Manually updated subscription status with customer ID:', paddleCustomerId);
       setCheckoutStatus('Subscription status manually updated. Refreshing data...');
       
       // 3. Now fetch the updated subscription data
@@ -1204,6 +1209,41 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error in manual subscription update:', error);
       setCheckoutStatus('Error updating subscription: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  };
+
+  // Add this function after the manualCheckSubscriptionStatus function, before formatPrice
+  const openCustomerPortal = async () => {
+    console.log('Opening customer portal with subscription data:', subscription);
+    
+    if (!user) {
+      setCheckoutStatus('No logged in user found');
+      return;
+    }
+    
+    try {
+      setCheckoutStatus('Opening customer portal...');
+      
+      // Log customer info for debugging
+      console.log('Customer info for portal:', {
+        email: user.email,
+        customerId: subscription?.customerId
+      });
+      
+      // Use the specific CPL ID for the customer portal
+      const portalUrl = 'https://sandbox-customer-portal.paddle.com/cpl_01jtqjeq79c64enc8qy3cs3zrm';
+      console.log('Using portal URL:', portalUrl);
+      
+      // Open in new tab
+      window.open(portalUrl, '_blank');
+      
+      // Clear status after a moment
+      setTimeout(() => {
+        setCheckoutStatus(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      setCheckoutStatus('Error opening customer portal: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -1492,14 +1532,12 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="mt-6 pt-4 ">
-                    <a 
-                      href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors "
+                    <button 
+                      onClick={openCustomerPortal}
+                      className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                     >
                       Manage Subscription
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1654,14 +1692,12 @@ export default function Dashboard() {
                       
                       {/* Portal access button */}
                       <div className="mt-4">
-                        <a 
-                          href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button 
+                          onClick={openCustomerPortal}
                           className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                         >
                           Manage Subscription
-                        </a>
+                        </button>
                       </div>
                     </div>
                   </div>
