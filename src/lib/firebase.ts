@@ -7,7 +7,7 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { getPerformance } from "firebase/performance";
+import { getPerformance, initializePerformance } from "firebase/performance";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -46,11 +46,41 @@ export const storage = getStorage(app);
 // Cloud Functions
 export const functions = getFunctions(app);
 
-// Analytics (only initialize in client-side)
-export const analytics = typeof window !== 'undefined' && isSupported() ? getAnalytics(app) : null;
+// Analytics - only initialize in browser environment
+export const initAnalytics = async () => {
+  if (typeof window !== 'undefined') {
+    const analyticsSupported = await isSupported();
+    if (analyticsSupported) {
+      return getAnalytics(app);
+    }
+  }
+  return null;
+};
 
-// Performance Monitoring
-export const performance = typeof window !== 'undefined' ? getPerformance(app) : null;
+// Performance monitoring is disabled to avoid attribute errors
+// If you need to enable it in the future, you can uncomment and modify the code below
+/*
+export const initPerformance = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const perf = getPerformance(app);
+      return perf;
+    } catch (error) {
+      console.warn('Firebase Performance initialization error:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
+// Initialize Performance with proper config when in browser
+if (typeof window !== 'undefined') {
+  // We'll initialize performance monitoring but with a delay to ensure the DOM is loaded
+  setTimeout(() => {
+    initPerformance();
+  }, 2000);
+}
+*/
 
 // Emulator setup (for development)
 if (process.env.NODE_ENV === 'development') {
