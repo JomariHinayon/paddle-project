@@ -194,12 +194,12 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$firebase$2f$
 ;
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: ("TURBOPACK compile-time value", "AIzaSyAZgykutTrEf_s4X53uL0e5g5IeU9LN7Ao"),
-    authDomain: ("TURBOPACK compile-time value", "paddle-f3c68.firebaseapp.com"),
-    projectId: ("TURBOPACK compile-time value", "paddle-f3c68"),
-    storageBucket: ("TURBOPACK compile-time value", "paddle-f3c68.firebasestorage.app"),
-    messagingSenderId: ("TURBOPACK compile-time value", "226043314594"),
-    appId: ("TURBOPACK compile-time value", "1:226043314594:web:95d919cb8c5ded72ebf2fb"),
+    apiKey: ("TURBOPACK compile-time value", "AIzaSyAx0PxN59MqrmedLsjEiTqVvt7eq5S2GeQ"),
+    authDomain: ("TURBOPACK compile-time value", "paddle-bda5d.firebaseapp.com"),
+    projectId: ("TURBOPACK compile-time value", "paddle-bda5d"),
+    storageBucket: ("TURBOPACK compile-time value", "paddle-bda5d.firebasestorage.app"),
+    messagingSenderId: ("TURBOPACK compile-time value", "911290966881"),
+    appId: ("TURBOPACK compile-time value", "1:911290966881:web:084733c0aa07f473c8db20"),
     measurementId: "G-1R6HX54FVL"
 };
 // Initialize Firebase

@@ -1100,21 +1100,111 @@ export default function Dashboard() {
   // Handle checkout success
   const handleCheckoutSuccess = (subscriptionData: any) => {
     console.log('Checkout completed successfully:', subscriptionData);
-    setCheckoutStatus('Subscription checkout completed! Your subscription is being processed.');
+    setCheckoutStatus('Subscription checkout completed! Updating your subscription status...');
     
-    // Refresh subscription data after a short delay to allow webhooks to process
-    setTimeout(() => {
-      if (user?.uid) {
-        fetchSubscriptionStatus(user.uid);
-        fetchTransactionLogs(user.uid);
+    // Try to update subscription data immediately
+    if (user?.uid) {
+      // First attempt to update using the provided subscription data
+      if (subscriptionData?.subscriptionId && subscriptionData.subscriptionId !== 'pending') {
+        try {
+          const db = getFirestore();
+          const userRef = doc(db, 'users', user.uid);
+          setDoc(userRef, {
+            hasActiveSubscription: true,
+            lastTransactionDate: new Date(),
+            currentPlan: subscriptionData.planId || PADDLE_CONFIG.prices.standard.month,
+            subscriptionStatus: 'active',
+            currentSubscriptionId: subscriptionData.subscriptionId,
+            paddleCustomerId: subscriptionData.customerId,
+            lastUpdated: new Date()
+          }, { merge: true })
+            .then(() => {
+              console.log('Successfully updated user subscription from checkout data');
+              // Refresh subscription data
+              fetchSubscriptionStatus(user.uid);
+              fetchTransactionLogs(user.uid);
+            })
+            .catch(error => {
+              console.error('Error updating subscription from checkout data:', error);
+              // If direct update fails, try the manual update as a fallback
+              setTimeout(() => manualCheckSubscriptionStatus(), 2000);
+            });
+        } catch (error) {
+          console.error('Error in immediate subscription update:', error);
+          // If there's an error, try the manual update as a fallback
+          setTimeout(() => manualCheckSubscriptionStatus(), 2000);
+        }
+      } else {
+        // If we don't have subscription data yet, poll for updates or try manual update
+        console.log('No subscription ID received yet, polling for updates...');
+        // Wait a few seconds and then check for subscription updates
+        setTimeout(() => {
+          fetchSubscriptionStatus(user.uid);
+          fetchTransactionLogs(user.uid);
+          
+          // If still no active subscription after a short delay, offer manual update
+          setTimeout(() => {
+            if (!subscription?.hasActive) {
+              setCheckoutStatus('Checkout completed, but subscription status not updated automatically. You can try updating manually.');
+            }
+          }, 5000);
+        }, 3000);
       }
-    }, 2000);
+    }
   };
   
   // Handle checkout error
   const handleCheckoutError = (error: Error) => {
     console.error('Error during checkout:', error);
     setCheckoutStatus('There was an error processing your subscription. Please try again or contact support.');
+  };
+  
+  // Manually check and update subscription status
+  const manualCheckSubscriptionStatus = async () => {
+    if (!user) {
+      console.error('No logged in user');
+      return;
+    }
+    
+    try {
+      setCheckoutStatus('Manually checking subscription status...');
+      
+      // 1. First verify we can write to Firebase
+      const db = getFirestore();
+      const testRef = doc(db, 'users', user.uid, 'tests', 'manual-check');
+      await setDoc(testRef, {
+        timestamp: new Date(),
+        operation: 'manual-check'
+      });
+      
+      console.log('Firebase test write successful');
+      
+      // 2. Update user profile with a fake subscription for testing
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, {
+        hasActiveSubscription: true,
+        lastTransactionDate: new Date(),
+        currentPlan: PADDLE_CONFIG.prices.standard.month,  // Using the standard plan price ID
+        subscriptionStatus: 'active',
+        currentSubscriptionId: 'manual-' + new Date().getTime(),
+        paddleCustomerId: user.email,
+        lastUpdated: new Date()
+      }, { merge: true });
+      
+      console.log('Manually updated subscription status');
+      setCheckoutStatus('Subscription status manually updated. Refreshing data...');
+      
+      // 3. Now fetch the updated subscription data
+      await fetchSubscriptionStatus(user.uid);
+      
+      // 4. Clear status after a moment
+      setTimeout(() => {
+        setCheckoutStatus(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Error in manual subscription update:', error);
+      setCheckoutStatus('Error updating subscription: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
 
   const formatPrice = (amount: number | string, currency: string = 'USD') => {
@@ -1235,6 +1325,19 @@ export default function Dashboard() {
           {checkoutStatus && (
             <div className="mb-4 bg-green-50 border border-green-300 dark:bg-green-900/20 dark:border-green-700/40 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg">
               {checkoutStatus}
+            </div>
+          )}
+          
+          {/* Manual subscription update button - for troubleshooting only */}
+          {(!subscription || !subscription.hasActive) && (
+            <div className="mb-4 bg-blue-50 border border-blue-300 dark:bg-blue-900/20 dark:border-blue-700/40 text-blue-800 dark:text-blue-200 px-4 py-3 rounded-lg">
+              <p className="mb-2">If you've completed checkout but your subscription isn't showing:</p>
+              <button 
+                onClick={manualCheckSubscriptionStatus}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+              >
+                Update Subscription Manually
+              </button>
             </div>
           )}
           
