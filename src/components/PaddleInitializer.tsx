@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { PADDLE_CONFIG } from '@/lib/paddle-config';
 
 declare global {
@@ -31,15 +30,19 @@ export default function PaddleInitializer({
         initializePaddle();
         return;
       }
-
+      
       // Create script element
       const script = document.createElement('script');
+      // Use the correct URL for sandbox vs production
       script.src = environment === 'sandbox'
-        ? 'https://cdn.paddle.com/paddle/paddle.js'
+        ? 'https://cdn.sandbox.paddle.com/paddle/paddle.js'
         : 'https://cdn.paddle.com/paddle/paddle.js';
       script.async = true;
       script.onload = initializePaddle;
-
+      script.onerror = (error) => {
+        console.error('Failed to load Paddle script:', error);
+      };
+      
       // Append script to body
       document.body.appendChild(script);
     };
@@ -48,35 +51,30 @@ export default function PaddleInitializer({
     const initializePaddle = () => {
       if (!window.Paddle) {
         console.error('Paddle not loaded correctly');
+        console.log('Window object keys:', Object.keys(window));
         return;
       }
-
-      // Setup Paddle
-      window.Paddle.Setup({
-        seller: parseInt(PADDLE_CONFIG.sellerId),
-        environment: environment,
-        eventCallback: handlePaddleEvent
-      });
-
-      console.log('Paddle initialized');
+      
+      // Setup Paddle with correct configuration
+      try {
+        window.Paddle.Setup({
+          vendor: parseInt(vendorId), // Use vendorId from props
+          environment: environment,
+          eventCallback: handlePaddleEvent
+        });
+        console.log('Paddle initialized successfully with vendor:', vendorId, 'and environment:', environment);
+      } catch (error) {
+        console.error('Error setting up Paddle:', error);
+      }
     };
 
     // Handle Paddle events
     const handlePaddleEvent = async (eventData: any) => {
-      console.log('Paddle event:', eventData.event);
-
-      // Handle checkout.completed event 
-      if (eventData.event === 'checkout.completed') {
-        console.log('Checkout completed:', eventData.eventData);
-        
-        const checkoutData = eventData.eventData;
-        const customerId = checkoutData.user?.id;
-        const checkoutId = checkoutData.checkout?.id;
-        
-        if (!customerId || !checkoutId) {
-          console.error('Missing customer or checkout ID in Paddle event');
-          return;
-        }
+      console.log('Paddle event received:', eventData);
+      
+      // Handle Checkout.Complete event 
+      if (eventData.event === 'Checkout.Complete') {
+        console.log('Checkout completed successfully:', eventData);
         
         try {
           const auth = getAuth();
@@ -87,25 +85,17 @@ export default function PaddleInitializer({
             return;
           }
           
-          // Instead of storing checkout data, we'll just temporarily reference it 
-          // for tracking purposes only until a subscription is created
-          console.log('Paddle checkout completed. Waiting for subscription.created webhook.');
-          
-          // We'll still store the customerId temporarily for use in later flows
-          // but without saving other checkout data to Firebase
-          sessionStorage.setItem('paddle_checkout_id', checkoutId);
-          sessionStorage.setItem('paddle_customer_id', customerId);
+          // Store checkout data temporarily
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('paddle_checkout_id', eventData.checkout?.id);
+          }
           
           // Call the callback if provided
           if (onCheckoutComplete) {
-            onCheckoutComplete({
-              checkoutId,
-              customerId,
-              paddleEventData: checkoutData
-            });
+            onCheckoutComplete(eventData);
           }
           
-          // Redirect to success page or clear URL parameters
+          // Clear URL parameters if they exist
           if (typeof window !== 'undefined' && window.location.search.includes('checkout_id')) {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
@@ -122,10 +112,10 @@ export default function PaddleInitializer({
 
     // Cleanup function
     return () => {
-      // No cleanup needed for Paddle script
+      // No specific cleanup needed
     };
   }, [environment, vendorId, onCheckoutComplete]);
 
   // This component doesn't render anything visible
   return null;
-} 
+}

@@ -179,6 +179,13 @@ function SettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   );
 }
 
+// Define a type for Firestore timestamp objects
+interface FirestoreTimestamp {
+  seconds: number;
+  nanoseconds: number;
+  toDate?: () => Date;
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(auth.currentUser);
@@ -192,18 +199,18 @@ export default function Dashboard() {
     hasActive: boolean;
     plan?: string | null;
     status: string;
-    lastTransaction?: Date | null;
+    lastTransaction?: Date | FirestoreTimestamp | null;
     product?: any;
     customerId?: string | null;
     subscriptionId?: string | null;
-    nextBillDate?: Date | null;
-    canceledAt?: Date | null;
+    nextBillDate?: Date | FirestoreTimestamp | null;
+    canceledAt?: Date | FirestoreTimestamp | null;
     scheduled_change?: {
       action?: string;
       effective_at?: string;
       resume_at?: string | null;
     } | null;
-    cancellationEffectiveDate?: Date | null;
+    cancellationEffectiveDate?: Date | FirestoreTimestamp | null;
   }
   
   const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
@@ -1007,6 +1014,27 @@ export default function Dashboard() {
     }).format(numericAmount / 100);
   };
 
+  // Helper function to safely format dates from Firestore Timestamps or Date objects
+  const formatDate = (date: Date | FirestoreTimestamp | string | null | undefined): string => {
+    if (!date) return 'N/A';
+    
+    if (date instanceof Date) {
+      return date.toLocaleDateString();
+    }
+    
+    // Handle Firestore Timestamp
+    if (typeof date === 'object' && 'seconds' in date) {
+      return new Date(date.seconds * 1000).toLocaleDateString();
+    }
+    
+    // Handle ISO date strings
+    if (typeof date === 'string') {
+      return new Date(date).toLocaleDateString();
+    }
+    
+    return 'N/A';
+  };
+
   const DashboardContent = () => {
     const { theme } = useTheme();
     
@@ -1165,7 +1193,7 @@ export default function Dashboard() {
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                       <p className="text-sm text-amber-800 dark:text-amber-200">
-                        This subscription is scheduled to be canceled on {new Date(subscription.scheduled_change.effective_at).toLocaleDateString()}.
+                        This subscription is scheduled to be canceled on {subscription.scheduled_change?.effective_at ? formatDate(subscription.scheduled_change.effective_at) : 'soon'}.
                       </p>
                     </div>
                   </div>
@@ -1181,7 +1209,7 @@ export default function Dashboard() {
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                       <p className="text-sm text-amber-800 dark:text-amber-200">
-                        This subscription is scheduled to be canceled on {subscription.cancellationEffectiveDate.toLocaleDateString()}.
+                        This subscription is scheduled to be canceled on {formatDate(subscription.cancellationEffectiveDate)}.
                       </p>
                     </div>
                   </div>
@@ -1281,6 +1309,111 @@ export default function Dashboard() {
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-6">
                 <UserProfileCard user={user} />
+                
+                {/* Subscription Status Card */}
+                {subscription && (
+                  <div className="mt-6">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200/80 dark:border-slate-700/50 p-5">
+                      <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Subscription Status</h3>
+                      
+                      {/* Current plan info */}
+                      <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Current Plan</span>
+                            <h4 className="text-xl font-bold text-slate-900 dark:text-white">
+                              {subscription.plan ? identifyPlan(subscription.plan)?.name || 'Standard Plan' : 'Free Plan'}
+                            </h4>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            subscription.status === 'active' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' 
+                              : subscription.status === 'paused'
+                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+                                : subscription.status === 'canceled' 
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                          }`}>
+                            {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4">
+                          {subscription.nextBillDate && (
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Next Billing Date</span>
+                              <span className="font-medium text-slate-700 dark:text-slate-300">
+                                {formatDate(subscription.nextBillDate)}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {subscription.lastTransaction && (
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Last Payment</span>
+                              <span className="font-medium text-slate-700 dark:text-slate-300">
+                                {formatDate(subscription.lastTransaction)}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {subscription.subscriptionId && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Subscription ID</span>
+                              <span className="font-mono text-xs text-slate-600 dark:text-slate-400">
+                                {subscription.subscriptionId.substring(0, 8)}...
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Display scheduled cancellation notice */}
+                        {subscription.scheduled_change && 
+                          subscription.scheduled_change.action === 'cancel' && 
+                          subscription.status === 'active' && (
+                          <div className="mt-4 bg-amber-50 border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800/30 text-amber-800 dark:text-amber-200 px-4 py-3 rounded-lg">
+                            <div className="flex items-start">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                              <div>
+                                <p className="font-medium">This subscription is scheduled to be canceled on {subscription.scheduled_change?.effective_at ? formatDate(subscription.scheduled_change.effective_at) : 'soon'}</p>
+                                <p className="text-sm mt-1">Your access will continue until this date.</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Display cancellation notice if already canceled */}
+                        {subscription.status === 'canceled' && (
+                          <div className="mt-4 bg-red-50 border border-red-100 dark:bg-red-900/20 dark:border-red-800/30 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg">
+                            <p className="text-sm">
+                              Your subscription has been canceled
+                              {subscription.canceledAt 
+                                ? ` on ${formatDate(subscription.canceledAt)}`
+                                : ''
+                              }.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Portal access button */}
+                      <div className="mt-4">
+                        <a 
+                          href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(user?.email || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                        >
+                          Manage Subscription
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Removed Subscription Plans Section */}
               </div>
             </div>
 
@@ -1356,11 +1489,7 @@ export default function Dashboard() {
                       <div>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Subscription Date</p>
                         <p className="text-lg font-medium text-slate-900 dark:text-white">
-                          {subscriptionDetails.createdAt 
-                            ? (typeof subscriptionDetails.createdAt.toDate === 'function'
-                               ? subscriptionDetails.createdAt.toDate().toLocaleDateString()
-                               : new Date(subscriptionDetails.createdAt).toLocaleDateString())
-                            : 'N/A'}
+                          {formatDate(subscriptionDetails.createdAt)}
                         </p>
                       </div>
                       
@@ -1368,9 +1497,7 @@ export default function Dashboard() {
                         <div>
                           <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Subscription Start</p>
                           <p className="text-lg font-medium text-slate-900 dark:text-white">
-                            {typeof subscriptionDetails.startedAt.toDate === 'function'
-                              ? subscriptionDetails.startedAt.toDate().toLocaleDateString()
-                              : new Date(subscriptionDetails.startedAt).toLocaleDateString()}
+                            {formatDate(subscriptionDetails.startedAt)}
                           </p>
                         </div>
                       )}
@@ -1386,7 +1513,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Subscription Plans */}
+              {/* Subscription Plans Section */}
               <div id="subscription-plans" className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/50 p-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 -translate-y-48 translate-x-48">
                   <div className="w-full h-full rounded-full bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/10 dark:to-purple-900/10 opacity-50" />
@@ -1416,7 +1543,7 @@ export default function Dashboard() {
                           : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white'
                       }`}
                     >
-                      Yearly
+                      Yearly <span className="text-green-400 text-xs ml-1">Save 17%</span>
                     </button>
                   </div>
                 </div>
@@ -1584,6 +1711,50 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Recent Transactions */}
+              {transactions && transactions.length > 0 && (
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/50 p-6 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-48 h-48 -translate-y-12 translate-x-12">
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/10 dark:to-teal-900/10 opacity-50" />
+                  </div>
+                  
+                  <div className="relative">
+                    <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-6">Recent Transactions</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {transactions.map(transaction => (
+                        <div key={transaction.id} className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                          <h4 className="text-md font-semibold text-slate-800 dark:text-white mb-2">{transaction.product?.name || 'Transaction'}</h4>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Status:</span>
+                              <span className={`text-sm font-medium ${
+                                transaction.paymentStatus === 'completed' || transaction.paymentStatus === 'paid'
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : 'text-amber-600 dark:text-amber-400'
+                              }`}>
+                                {transaction.paymentStatus ? transaction.paymentStatus.charAt(0).toUpperCase() + transaction.paymentStatus.slice(1) : 'Pending'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Amount:</span>
+                              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                {formatPrice(transaction.amountPaid || transaction.amount, transaction.currency || 'USD')}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Date:</span>
+                              <span className="text-sm text-slate-700 dark:text-slate-300">
+                                {formatDate(transaction.timestamp)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </main>
