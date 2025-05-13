@@ -10,15 +10,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'; script-src 'self' https://cdn.sandbox.paddle.com https://cdn.paddle.com; frame-src 'self' https://sandbox-buy.paddle.com https://*.paddle.com; connect-src 'self' https://*.paddle.com",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.paddle.com https://www.googletagmanager.com https://*.googleapis.com",
-              "connect-src 'self' https://*.paddle.com https://checkout-service.paddle.com https://*.googleapis.com https://firebaselogging-pa.googleapis.com https://identitytoolkit.googleapis.com https://*.google-analytics.com",
-              "style-src 'self' 'unsafe-inline' https://*.paddle.com",
-              "img-src 'self' data: https://*.paddle.com https://*.pinimg.com",
-              "frame-src 'self' https://*.paddle.com",
-              "frame-ancestors 'self' http://localhost:* https://*.paddle.com",
-            ].join('; ')
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.paddle.com https://cdn.paddle.com https://cdn.sandbox.paddle.com https://www.googletagmanager.com https://*.googleapis.com; connect-src 'self' https://*.paddle.com https://checkout-service.paddle.com https://sandbox-checkout-service.paddle.com https://*.googleapis.com https://firebaselogging-pa.googleapis.com https://identitytoolkit.googleapis.com https://*.google-analytics.com; style-src 'self' 'unsafe-inline' https://*.paddle.com; img-src 'self' data: https://*.paddle.com https://*.pinimg.com; frame-src 'self' https://*.paddle.com https://sandbox-buy.paddle.com; frame-ancestors 'self' http://localhost:* https://*.paddle.com;"
           }
         ]
       }

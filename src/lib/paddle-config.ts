@@ -3,12 +3,12 @@ export const PADDLE_CONFIG = {
   sellerId: process.env.NEXT_PUBLIC_PADDLE_SELLER_ID || '',
   prices: {
     standard: {
-      month: 'pri_01jv178w9jst683rgyjb6w18qx',
-      year: 'pri_01jv17anj5xnsta6hvv209sdyq'
+      month: process.env.NEXT_PUBLIC_PADDLE_STANDARD_MONTH_PRICE_ID || 'pri_01h8xz97pj0000000000000000',
+      year: process.env.NEXT_PUBLIC_PADDLE_STANDARD_YEAR_PRICE_ID || 'pri_01h8xz97pj0000000000000000'
     },
     premium: {
-      month: 'pri_01jv17e3xm8mdsd22866ce8417',
-      year: 'pri_01jv17f8370m2vyvspr2btg84s'
+      month: process.env.NEXT_PUBLIC_PADDLE_PREMIUM_MONTH_PRICE_ID || 'pri_01h8xz97pj0000000000000000',
+      year: process.env.NEXT_PUBLIC_PADDLE_PREMIUM_YEAR_PRICE_ID || 'pri_01h8xz97pj0000000000000000'
     }
   },
   planDetails: {

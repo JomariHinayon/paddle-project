@@ -12,6 +12,7 @@ import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs, query, 
 import { getAuth } from 'firebase/auth';
 import { identifyPlan } from '@/lib/paddle-utils';
 import Image from 'next/image';
+import PaddleCheckoutHandler from '@/components/PaddleCheckoutHandler';
 
 declare global {
   interface Window {
@@ -193,6 +194,7 @@ export default function Dashboard() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('month');
   const [prices, setPrices] = useState<{[key in PlanType]?: string}>({});
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
   
   // Add type definition for subscription state
   interface SubscriptionState {
@@ -218,16 +220,34 @@ export default function Dashboard() {
   const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
         router.replace('/login');
         return;
       }
-      setUser(user);
+      
+      setUser(currentUser);
+      const userId = currentUser.uid;
+      
+      // Fetch subscription status directly
+      fetchSubscriptionData(userId);
+      
+      // Wait for Paddle to be ready, then fetch prices
+      if (paddleLoaded) {
+        updatePrices();
+      }
+    });
+
+    // Log Paddle configuration for debugging
+    console.log('Paddle Config:', {
+      clientToken: PADDLE_CONFIG.clientToken ? `${PADDLE_CONFIG.clientToken.substring(0, 5)}...` : 'missing',
+      sellerId: PADDLE_CONFIG.sellerId,
+      standardMonthPrice: PADDLE_CONFIG.prices.standard.month,
+      premiumMonthPrice: PADDLE_CONFIG.prices.premium.month
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [paddleLoaded, router]);
 
   const updatePrices = async () => {
     if (!paddleLoaded) {
@@ -269,32 +289,113 @@ export default function Dashboard() {
   useEffect(() => {
     if (paddleLoaded) {
       updatePrices();
+      
+      // Debug check - print environment variables
+      console.log('Environment Price IDs:', {
+        standardMonth: process.env.NEXT_PUBLIC_PADDLE_STANDARD_MONTH_PRICE_ID,
+        standardYear: process.env.NEXT_PUBLIC_PADDLE_STANDARD_YEAR_PRICE_ID,
+        premiumMonth: process.env.NEXT_PUBLIC_PADDLE_PREMIUM_MONTH_PRICE_ID,
+        premiumYear: process.env.NEXT_PUBLIC_PADDLE_PREMIUM_YEAR_PRICE_ID
+      });
+      
+      console.log('Paddle Config Price IDs:', PADDLE_CONFIG.prices);
     }
   }, [paddleLoaded, billingCycle]);
 
   const handleSubscription = (plan: PlanType) => {
     if (!paddleLoaded) {
       console.error('Paddle is not loaded yet');
+      setCheckoutStatus('Error: Paddle is not loaded yet. Please refresh the page.');
       return;
     }
 
-    window.Paddle.Checkout.open({
-      items: [{
-        priceId: PADDLE_CONFIG.prices[plan][billingCycle],
-        quantity: 1
-      }],
-      settings: {
-        displayMode: 'overlay',
-        theme: 'light',
-        variant: 'one-page'
-      },
-      customer: {
-        email: user?.email || '',
-      },
-      customData: {
-        userId: user?.uid || ''
-      }
-    });
+    // Set checkout status to show loading
+    setCheckoutStatus('Opening checkout...');
+    
+    // Get price ID from config
+    const priceId = PADDLE_CONFIG.prices[plan][billingCycle];
+    
+    // Hardcoded fallback price ID for testing (Paddle sandbox test product)
+    const fallbackPriceId = 'pri_01h8xz97pj0000000000000000'; 
+    
+    console.log(`Starting checkout for plan: ${plan}, cycle: ${billingCycle}`);
+    console.log(`Using price ID: ${priceId} (fallback available: ${fallbackPriceId})`);
+    console.log('User data:', { email: user?.email, uid: user?.uid });
+
+    try {
+      // Display debug info in console
+      console.log('Paddle Config:', {
+        clientToken: PADDLE_CONFIG.clientToken ? `${PADDLE_CONFIG.clientToken.substring(0, 5)}...` : 'missing',
+        sellerId: PADDLE_CONFIG.sellerId,
+        priceId: priceId
+      });
+
+      window.Paddle.Checkout.open({
+        items: [{
+          priceId: priceId, // Use the configured price ID
+          quantity: 1
+        }],
+        settings: {
+          displayMode: 'overlay',
+          theme: 'light',
+          locale: 'en'
+        },
+        customer: {
+          email: user?.email || '',
+        },
+        customData: {
+          userId: user?.uid || ''
+        },
+        successCallback: (data: any) => {
+          console.log('Checkout success callback triggered', data);
+          setCheckoutStatus('Processing your subscription...');
+        },
+        closeCallback: (data: any) => {
+          console.log('Checkout closed', data);
+          // Only clear the message if user manually closes the checkout
+          setCheckoutStatus(null);
+        },
+        errorCallback: (error: any) => {
+          console.error('Checkout error:', error);
+          
+          // If we got a "product not found" error, try with the fallback price ID
+          if (error && (error.code === 'product_not_found' || error.message?.includes('product not found'))) {
+            console.log('Trying checkout with fallback price ID...');
+            
+            // Try with fallback price ID
+            setTimeout(() => {
+              try {
+                window.Paddle.Checkout.open({
+                  items: [{
+                    priceId: fallbackPriceId, // Use fallback price ID
+                    quantity: 1
+                  }],
+                  settings: {
+                    displayMode: 'overlay',
+                    theme: 'light',
+                    locale: 'en'
+                  },
+                  customer: {
+                    email: user?.email || '',
+                  },
+                  customData: {
+                    userId: user?.uid || ''
+                  }
+                });
+              } catch (fallbackError) {
+                console.error('Error with fallback price ID:', fallbackError);
+                setCheckoutStatus(`Error with fallback price ID: ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`);
+              }
+            }, 1000);
+          } else {
+            setCheckoutStatus(`Error during checkout: ${error.message || error.reason || 'Unknown error'}`);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error opening Paddle checkout:', error);
+      setCheckoutStatus(`Failed to open checkout: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const testFirebaseWrite = async () => {
@@ -996,6 +1097,26 @@ export default function Dashboard() {
     });
   };
 
+  // Handle checkout success
+  const handleCheckoutSuccess = (subscriptionData: any) => {
+    console.log('Checkout completed successfully:', subscriptionData);
+    setCheckoutStatus('Subscription checkout completed! Your subscription is being processed.');
+    
+    // Refresh subscription data after a short delay to allow webhooks to process
+    setTimeout(() => {
+      if (user?.uid) {
+        fetchSubscriptionStatus(user.uid);
+        fetchTransactionLogs(user.uid);
+      }
+    }, 2000);
+  };
+  
+  // Handle checkout error
+  const handleCheckoutError = (error: Error) => {
+    console.error('Error during checkout:', error);
+    setCheckoutStatus('There was an error processing your subscription. Please try again or contact support.');
+  };
+
   const formatPrice = (amount: number | string, currency: string = 'USD') => {
     // If it's already a string with formatting, return it
     if (typeof amount === 'string' && amount.includes('.')) {
@@ -1044,14 +1165,37 @@ export default function Dashboard() {
           src="https://cdn.paddle.com/paddle/v2/paddle.js"
           onLoad={() => {
             if (typeof window !== 'undefined' && window.Paddle) {
-              window.Paddle.Environment.set('sandbox');
-              window.Paddle.Setup({ 
-                token: PADDLE_CONFIG.clientToken,
-                eventCallback: handlePaddleEvent
-              });
-              setPaddleLoaded(true);
+              try {
+                // Use sandbox in development mode
+                console.log('Setting Paddle environment to sandbox');
+                window.Paddle.Environment.set('sandbox');
+                
+                console.log('Setting up Paddle with token:', 
+                  PADDLE_CONFIG.clientToken ? `${PADDLE_CONFIG.clientToken.substring(0, 5)}...` : 'missing');
+                
+                window.Paddle.Setup({ 
+                  token: PADDLE_CONFIG.clientToken,
+                  eventCallback: handlePaddleEvent
+                });
+                
+                console.log('Paddle initialized successfully');
+                setPaddleLoaded(true);
+              } catch (error) {
+                console.error('Error initializing Paddle:', error);
+              }
+            } else {
+              console.error('Paddle not available on window object');
             }
           }}
+          onError={() => {
+            console.error('Failed to load Paddle script');
+          }}
+        />
+        
+        {/* Add PaddleCheckoutHandler to handle checkout completion */}
+        <PaddleCheckoutHandler 
+          onSuccess={handleCheckoutSuccess}
+          onError={handleCheckoutError}
         />
         
         {/* Modern Navigation Bar with Glass Effect */}
@@ -1087,6 +1231,13 @@ export default function Dashboard() {
         </nav>
         
         <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          {/* Display checkout status if any */}
+          {checkoutStatus && (
+            <div className="mb-4 bg-green-50 border border-green-300 dark:bg-green-900/20 dark:border-green-700/40 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg">
+              {checkoutStatus}
+            </div>
+          )}
+          
           {/* Debug Banner - Hidden in production */}
           {false && subscription && (
             <div className="mb-4 bg-gray-100 border border-gray-300 p-4 rounded-md">
