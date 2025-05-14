@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, reload } from 'firebase/auth';
 import Link from 'next/link';
 
-export default function ConfirmSignup() {
+function ConfirmSignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
@@ -93,5 +93,17 @@ export default function ConfirmSignup() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ConfirmSignup() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <ConfirmSignupContent />
+    </Suspense>
   );
 }

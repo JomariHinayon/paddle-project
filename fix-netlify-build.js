@@ -186,6 +186,10 @@ const pagesWithSearchParams = [
   {
     path: path.join(__dirname, 'src', 'app', 'payment', 'page.tsx'),
     needsSuspense: true
+  },
+  {
+    path: path.join(__dirname, 'src', 'app', 'confirm-signup', 'page.tsx'),
+    needsSuspense: true
   }
 ];
 

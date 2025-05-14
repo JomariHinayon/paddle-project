@@ -14,7 +14,10 @@ const nextConfig = {
   },
   images: {
     domains: ['lh3.googleusercontent.com'],
+    unoptimized: true, // For static export
   },
+  output: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'export' : undefined,
+  distDir: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'out' : '.next',
   webpack: (config, { isServer }) => {
     // This helps resolve path aliases correctly
     config.resolve.fallback = { fs: false, net: false, tls: false }
