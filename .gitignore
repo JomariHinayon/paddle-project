@@ -19,6 +19,7 @@ yarn-error.log*
 
 # Environment files (if any)
 .env
+.env.local
 
 # Service account key file
 /config/serviceAccountKey.json
