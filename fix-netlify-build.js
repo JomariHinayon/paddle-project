@@ -435,4 +435,135 @@ exports.handler = async function(event, context) {
   }
 }
 
+// After API routes detection section, add this new code for handling API routes in App Router
+
+// For static export, we need to physically move API routes to avoid build errors
+if (process.env.NEXT_USE_STATIC_EXPORT === 'true' || process.env.NEXT_PUBLIC_SKIP_API_ROUTES === 'true') {
+  console.log('\n=== TEMPORARILY MOVING API ROUTES FOR STATIC EXPORT ===');
+  
+  // Create a directory to temporarily store API routes
+  const tempApiDir = path.join(__dirname, 'temp-api-backup');
+  if (!fs.existsSync(tempApiDir)) {
+    fs.mkdirSync(tempApiDir, { recursive: true });
+  }
+  
+  // Move API directory to temporary location
+  if (fs.existsSync(apiDir)) {
+    console.log(`Moving API directory from ${apiDir} to ${tempApiDir}`);
+    
+    // First, copy the directory
+    const copyDir = (src, dest) => {
+      const entries = fs.readdirSync(src, { withFileTypes: true });
+      if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+      }
+      
+      for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+        
+        if (entry.isDirectory()) {
+          copyDir(srcPath, destPath);
+        } else {
+          fs.copyFileSync(srcPath, destPath);
+        }
+      }
+    };
+    
+    copyDir(apiDir, path.join(tempApiDir, 'api'));
+    
+    // Create empty API directory to avoid imports breaking
+    fs.rmSync(apiDir, { recursive: true, force: true });
+    fs.mkdirSync(apiDir, { recursive: true });
+    
+    // Create a placeholder route.ts file that won't cause build errors
+    const placeholderRoutePath = path.join(apiDir, 'route.ts');
+    const placeholderRouteContent = `
+export const dynamic = 'force-static';
+
+export async function GET() {
+  return new Response(JSON.stringify({ 
+    message: 'This is a static placeholder for APIs. Real API functions are not available in the static export.' 
+  }), {
+    headers: {
+      'content-type': 'application/json',
+    },
+  });
+}
+    `.trim();
+    
+    fs.writeFileSync(placeholderRoutePath, placeholderRouteContent);
+    console.log('✅ Created placeholder API route for static export');
+    
+    // Write a build-cleanup script for post-build restoration
+    const cleanupScriptPath = path.join(__dirname, 'build-cleanup.js');
+    const cleanupScriptContent = `
+const fs = require('fs');
+const path = require('path');
+
+console.log('Cleaning up after static export build...');
+
+// Restore API directory if it was moved
+const tempApiDir = path.join(__dirname, 'temp-api-backup');
+const apiDir = path.join(__dirname, 'src', 'app', 'api');
+
+if (fs.existsSync(tempApiDir) && fs.existsSync(apiDir)) {
+  console.log('Restoring API directory...');
+  
+  // Remove the temporary placeholder
+  fs.rmSync(apiDir, { recursive: true, force: true });
+  
+  // Create API directory
+  fs.mkdirSync(apiDir, { recursive: true });
+  
+  // Copy from backup
+  const copyDir = (src, dest) => {
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+      
+      if (entry.isDirectory()) {
+        if (!fs.existsSync(destPath)) {
+          fs.mkdirSync(destPath, { recursive: true });
+        }
+        copyDir(srcPath, destPath);
+      } else {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
+  };
+  
+  copyDir(path.join(tempApiDir, 'api'), apiDir);
+  console.log('✅ API directory restored');
+  
+  // Remove the temporary backup
+  fs.rmSync(tempApiDir, { recursive: true, force: true });
+  console.log('✅ Temporary backup removed');
+}
+
+console.log('Cleanup complete!');
+    `.trim();
+    
+    fs.writeFileSync(cleanupScriptPath, cleanupScriptContent);
+    console.log('✅ Created build cleanup script at build-cleanup.js');
+    
+    // Add package.json script to run cleanup after build
+    try {
+      const packageJsonPath = path.join(__dirname, 'package.json');
+      const packageJson = require(packageJsonPath);
+      
+      // Add postbuild script if it doesn't exist
+      if (!packageJson.scripts.postbuild) {
+        packageJson.scripts.postbuild = 'node build-cleanup.js';
+        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+        console.log('✅ Added postbuild script to package.json');
+      }
+    } catch (error) {
+      console.error('Failed to update package.json:', error);
+    }
+  }
+}
+
 console.log('✅ Build fixes applied successfully'); 

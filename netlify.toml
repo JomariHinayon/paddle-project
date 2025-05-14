@@ -1,5 +1,5 @@
 [build]
-  command = "npm install --include=dev && npm run build:static"
+  command = "npm install --include=dev && npm run build:static && touch .skip-cleanup"
   publish = "out"
   functions = "netlify/functions"
 
