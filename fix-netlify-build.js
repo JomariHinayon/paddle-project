@@ -344,4 +344,95 @@ export function generateStaticParams() {
   }
 });
 
+// After the dynamic routes section, add API routes handling
+
+console.log('\n=== API ROUTES VERIFICATION ===');
+const apiDir = path.join(__dirname, 'src', 'app', 'api');
+
+// Check if the api directory exists
+if (fs.existsSync(apiDir)) {
+  const apiRoutes = [];
+  
+  // Find all API route files
+  const findApiRoutes = (dir) => {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    
+    entries.forEach(entry => {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        findApiRoutes(fullPath);
+      } else if (entry.name === 'route.ts' || entry.name === 'route.js' || entry.name === 'route.tsx') {
+        apiRoutes.push(fullPath);
+      }
+    });
+  };
+  
+  findApiRoutes(apiDir);
+  
+  console.log(`Found ${apiRoutes.length} API routes that may need attention for static export:`);
+  apiRoutes.forEach(route => console.log(`- ${route}`));
+  
+  // For static export mode, we'll update netlify.toml to handle API routes
+  if (process.env.NEXT_USE_STATIC_EXPORT === 'true' || process.env.NETLIFY) {
+    console.log('\nCreating Netlify redirects for API routes...');
+    
+    // Create or update _redirects file in the public directory
+    const publicDir = path.join(__dirname, 'public');
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    
+    // Create a _redirects file with fallbacks for API routes
+    const redirectsFile = path.join(publicDir, '_redirects');
+    const redirectsContent = `
+# Redirects for API routes in static export
+/api/*  /.netlify/functions/api/:splat  200
+/* /index.html 200
+    `.trim();
+    
+    fs.writeFileSync(redirectsFile, redirectsContent);
+    console.log('✅ Created Netlify redirects file at public/_redirects');
+    
+    // Create a netlify/functions directory for API handlers if needed
+    const netlifyFunctionsDir = path.join(__dirname, 'netlify', 'functions');
+    if (!fs.existsSync(netlifyFunctionsDir)) {
+      fs.mkdirSync(netlifyFunctionsDir, { recursive: true });
+    }
+    
+    // Create a simple API handler function
+    const apiFunctionPath = path.join(netlifyFunctionsDir, 'api.js');
+    const apiFunctionContent = `
+// This is a placeholder for handling API requests in a static export
+// You may need to customize this based on your specific API needs
+exports.handler = async function(event, context) {
+  const path = event.path.replace('/.netlify/functions/api', '');
+  
+  console.log('API request:', {
+    path,
+    httpMethod: event.httpMethod,
+    headers: event.headers,
+    queryStringParameters: event.queryStringParameters,
+    body: event.body
+  });
+  
+  // Return a placeholder response for static export
+  return {
+    statusCode: 200,
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: "This is a placeholder response for the static export. In a real deployment, you would need to implement proper API handlers.",
+      requestedPath: path
+    })
+  };
+};
+`.trim();
+    
+    fs.writeFileSync(apiFunctionPath, apiFunctionContent);
+    console.log('✅ Created Netlify function handler at netlify/functions/api.js');
+  }
+}
+
 console.log('✅ Build fixes applied successfully'); 

@@ -18,6 +18,19 @@ const nextConfig = {
   },
   output: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'export' : undefined,
   distDir: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'out' : '.next',
+  // For static export, skip API routes
+  exportPathMap: async function (defaultPathMap, { dev, dir, outDir, distDir, buildId }) {
+    if (process.env.NEXT_USE_STATIC_EXPORT !== 'true') return defaultPathMap;
+    
+    // Filter out API routes from the path map
+    const filteredPathMap = {};
+    for (const [path, config] of Object.entries(defaultPathMap)) {
+      if (!path.startsWith('/api/')) {
+        filteredPathMap[path] = config;
+      }
+    }
+    return filteredPathMap;
+  },
   webpack: (config, { isServer }) => {
     // This helps resolve path aliases correctly
     config.resolve.fallback = { fs: false, net: false, tls: false }
