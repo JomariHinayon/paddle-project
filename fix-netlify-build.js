@@ -73,8 +73,7 @@ fs.writeFileSync(path.join(__dirname, 'postcss.config.js'), postCssConfig);
 
 console.log('✅ Created PostCSS config file');
 
-// Check if any required component directories exist, create them if needed
-const componentsDir = path.join(__dirname, 'src/components');
+// Check if components directory exists, create it if needed
 if (!fs.existsSync(componentsDir)) {
   fs.mkdirSync(componentsDir, { recursive: true });
   console.log('✅ Created components directory');
