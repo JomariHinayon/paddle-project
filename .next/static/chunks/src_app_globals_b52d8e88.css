@@ -166,6 +166,8 @@
   html, :host {
     line-height: 1.5;
     -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
     tab-size: 4;
     font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
     font-feature-settings: var(--default-font-feature-settings, normal);
@@ -280,11 +282,25 @@
     margin-inline-end: 4px;
   }
 
+  ::-moz-placeholder {
+    opacity: 1;
+  }
+
   ::placeholder {
     opacity: 1;
   }
 
   @supports (not ((-webkit-appearance: -apple-pay-button))) or (contain-intrinsic-size: 1px) {
+    ::-moz-placeholder {
+      color: currentColor;
+    }
+
+    @supports (color: color-mix(in lab, red, red)) {
+      ::-moz-placeholder {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+
     ::placeholder {
       color: currentColor;
     }
@@ -326,6 +342,8 @@
   }
 
   button, input:where([type="button"], [type="reset"], [type="submit"]), ::file-selector-button {
+    -webkit-appearance: button;
+    -moz-appearance: button;
     appearance: button;
   }
 
@@ -1474,10 +1492,12 @@
   }
 
   .bg-clip-text {
+    -webkit-background-clip: text;
     background-clip: text;
   }
 
   .object-contain {
+    -o-object-fit: contain;
     object-fit: contain;
   }
 
@@ -1885,6 +1905,10 @@
   .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  .placeholder-gray-400::-moz-placeholder {
+    color: var(--color-gray-400);
   }
 
   .placeholder-gray-400::placeholder {

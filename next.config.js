@@ -15,6 +15,11 @@ const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com'],
   },
+  webpack: (config, { isServer }) => {
+    // This helps resolve path aliases correctly
+    config.resolve.fallback = { fs: false, net: false, tls: false }
+    return config
+  },
   async headers() {
     return [
       {
