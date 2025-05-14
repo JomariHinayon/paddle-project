@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { applyActionCode, auth } from '@/lib/firebase';
 import Link from 'next/link';
 
-export default function AuthAction() {
+function AuthActionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -77,5 +77,17 @@ export default function AuthAction() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AuthAction() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <AuthActionContent />
+    </Suspense>
   );
 }

@@ -8,6 +8,7 @@
   ESLINT_IGNORE_ERRORS = "true"
   NODE_ENV = "production"
   NPM_FLAGS = "--no-audit --no-fund"
+  NEXT_DISABLE_STATIC = "1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

@@ -41,6 +41,33 @@ requiredComponents.forEach(component => {
 const firebasePath = path.join(__dirname, 'src', 'lib', 'firebase.ts');
 if (fs.existsSync(firebasePath)) {
   console.log('✅ Firebase library found');
+  
+  // Check if Firebase module exports applyActionCode
+  const firebaseContent = fs.readFileSync(firebasePath, 'utf8');
+  if (!firebaseContent.includes('applyActionCode')) {
+    console.log('❌ applyActionCode missing in firebase.ts, adding it...');
+    
+    // Add applyActionCode to the imports and exports
+    let updatedFirebaseContent = firebaseContent
+      .replace(
+        "import { getAuth, GoogleAuthProvider, EmailAuthProvider } from \"firebase/auth\";",
+        "import { getAuth, GoogleAuthProvider, EmailAuthProvider, applyActionCode } from \"firebase/auth\";"
+      );
+      
+    // Add the export if it doesn't exist
+    if (!updatedFirebaseContent.includes('export { applyActionCode }')) {
+      // Find a good place to add the export (after auth declaration)
+      updatedFirebaseContent = updatedFirebaseContent.replace(
+        "auth.useDeviceLanguage(); // For better auth flows",
+        "auth.useDeviceLanguage(); // For better auth flows\n\n// Re-export applyActionCode for use in auth pages\nexport { applyActionCode };"
+      );
+    }
+    
+    fs.writeFileSync(firebasePath, updatedFirebaseContent);
+    console.log('✅ Added applyActionCode to firebase.ts');
+  } else {
+    console.log('✅ applyActionCode already exists in firebase.ts');
+  }
 } else {
   console.log('❌ Firebase library missing');
   
@@ -48,6 +75,45 @@ if (fs.existsSync(firebasePath)) {
   const libDir = path.join(__dirname, 'src', 'lib');
   console.log('Files in lib directory:');
   fs.readdirSync(libDir).forEach(file => console.log(`- ${file}`));
+  
+  // Create a basic firebase.ts file
+  const basicFirebaseContent = `"use client";
+
+// lib/firebase.ts
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth, GoogleAuthProvider, EmailAuthProvider, applyActionCode } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+
+// Initialize Firebase
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Authentication
+export const auth = getAuth(app);
+auth.useDeviceLanguage(); // For better auth flows
+
+// Re-export applyActionCode for use in auth pages
+export { applyActionCode };
+
+// Providers
+export const googleProvider = new GoogleAuthProvider();
+export const emailProvider = new EmailAuthProvider();
+
+// Firestore Database
+export const firestore = getFirestore(app);
+`;
+
+  fs.writeFileSync(firebasePath, basicFirebaseContent);
+  console.log('✅ Created firebase.ts file with necessary exports');
 }
 
 // Check PostCSS config
@@ -104,6 +170,73 @@ export default function ${componentName}() {
 `;
     fs.writeFileSync(componentPath, componentContent);
     console.log(`✅ Created placeholder for ${componentName}`);
+  }
+});
+
+// Ensure all client components with useSearchParams have Suspense boundaries
+const pagesWithSearchParams = [
+  {
+    path: path.join(__dirname, 'src', 'app', 'auth', 'verify-email', 'page.tsx'),
+    needsSuspense: true
+  },
+  {
+    path: path.join(__dirname, 'src', 'app', 'auth', 'action', 'page.tsx'),
+    needsSuspense: true
+  },
+  {
+    path: path.join(__dirname, 'src', 'app', 'payment', 'page.tsx'),
+    needsSuspense: true
+  }
+];
+
+pagesWithSearchParams.forEach(({ path: pagePath, needsSuspense }) => {
+  if (fs.existsSync(pagePath)) {
+    let content = fs.readFileSync(pagePath, 'utf8');
+    
+    // Check if the file uses useSearchParams but doesn't have Suspense
+    if (content.includes('useSearchParams') && !content.includes('Suspense')) {
+      console.log(`Adding Suspense boundary to ${pagePath}`);
+      
+      // Extract the main component name
+      const componentNameMatch = content.match(/export\s+default\s+function\s+(\w+)/);
+      if (componentNameMatch && componentNameMatch[1]) {
+        const componentName = componentNameMatch[1];
+        const contentComponentName = `${componentName}Content`;
+        
+        // Replace imports to include Suspense
+        content = content.replace(
+          /import\s+{([^}]*)}\s+from\s+'react'/,
+          (match, imports) => {
+            if (imports.includes('Suspense')) {
+              return match;
+            }
+            return `import {${imports}, Suspense} from 'react'`;
+          }
+        );
+        
+        if (!content.includes('Suspense')) {
+          content = content.replace(
+            /import\s+/,
+            "import { Suspense } from 'react';\nimport "
+          );
+        }
+        
+        // Replace the component definition
+        content = content.replace(
+          new RegExp(`export\\s+default\\s+function\\s+${componentName}\\s*\\([^)]*\\)\\s*{`),
+          `function ${contentComponentName}($&`
+        );
+        
+        // Add the wrapper component at the end
+        content = content.replace(
+          /}(\s*)$/,
+          `}$1\n\nexport default function ${componentName}() {\n  return (\n    <Suspense fallback={\n      <div className="min-h-screen flex items-center justify-center">\n        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>\n      </div>\n    }>\n      <${contentComponentName} />\n    </Suspense>\n  );\n}$1`
+        );
+        
+        fs.writeFileSync(pagePath, content);
+        console.log(`✅ Added Suspense boundary to ${pagePath}`);
+      }
+    }
   }
 });
 

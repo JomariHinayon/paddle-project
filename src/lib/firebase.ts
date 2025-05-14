@@ -2,7 +2,7 @@
 
 // lib/firebase.ts
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, EmailAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, EmailAuthProvider, applyActionCode } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
@@ -99,3 +99,6 @@ export const getCurrentUserToken = async (): Promise<string | null> => {
     return null;
   }
 };
+
+// Re-export applyActionCode for use in auth pages
+export { applyActionCode };
