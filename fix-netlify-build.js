@@ -244,4 +244,104 @@ pagesWithSearchParams.forEach(({ path: pagePath, needsSuspense }) => {
   }
 });
 
+// Check for dynamic routes that need generateStaticParams
+console.log('\n=== DYNAMIC ROUTES VERIFICATION ===');
+const findDynamicRoutes = (dir) => {
+  if (!fs.existsSync(dir)) return [];
+  
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const dynamicRoutes = [];
+  
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    
+    if (entry.isDirectory()) {
+      if (entry.name.startsWith('[') && entry.name.endsWith(']')) {
+        const pageFile = path.join(fullPath, 'page.tsx');
+        if (fs.existsSync(pageFile)) {
+          dynamicRoutes.push(pageFile);
+        }
+      }
+      
+      // Recursively check subdirectories
+      dynamicRoutes.push(...findDynamicRoutes(fullPath));
+    }
+  }
+  
+  return dynamicRoutes;
+};
+
+const appDir = path.join(__dirname, 'src', 'app');
+const dynamicRoutes = findDynamicRoutes(appDir);
+
+console.log(`Found ${dynamicRoutes.length} dynamic routes:`);
+dynamicRoutes.forEach(route => console.log(`- ${route}`));
+
+// Check and add generateStaticParams if needed
+dynamicRoutes.forEach(routePath => {
+  let content = fs.readFileSync(routePath, 'utf8');
+  
+  if (!content.includes('generateStaticParams')) {
+    console.log(`Adding generateStaticParams to ${routePath}`);
+    
+    // Extract the parameter name from the folder name
+    const segments = routePath.split(path.sep);
+    const dynamicSegment = segments.find(s => s.startsWith('[') && s.endsWith(']'));
+    const paramName = dynamicSegment.slice(1, -1); // Remove brackets
+    
+    const staticParamsFunction = `
+// Generate static params for build time
+// This is required when using static export with dynamic routes
+export function generateStaticParams() {
+  // Since ${paramName}s are dynamic, we provide a placeholder for static generation
+  return [
+    { ${paramName}: 'placeholder-id' },
+  ];
+}
+`;
+
+    // Add generateStaticParams after metadata or before the component definition
+    if (content.includes('export const metadata')) {
+      content = content.replace(
+        /export const metadata[^;]*;/,
+        match => `${match}\n${staticParamsFunction}`
+      );
+    } else {
+      content = content.replace(
+        /export default function/,
+        `${staticParamsFunction}\nexport default function`
+      );
+    }
+    
+    // Replace notFound() with fallback UI for static export
+    if (content.includes('notFound()')) {
+      content = content.replace(
+        /notFound\(\);/g,
+        `// For static export, we'll render a fallback rather than using notFound()
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <h1 className="text-3xl font-bold mb-4">Invalid ID</h1>
+          <p className="text-gray-600 mb-6">
+            The ID provided is not valid or does not exist.
+          </p>
+          <a 
+            href="/"
+            className="inline-block px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Return to Home
+          </a>
+        </div>
+      </div>
+    );`
+      );
+    }
+    
+    fs.writeFileSync(routePath, content);
+    console.log(`✅ Added generateStaticParams to ${routePath}`);
+  } else {
+    console.log(`✅ ${routePath} already has generateStaticParams`);
+  }
+});
+
 console.log('✅ Build fixes applied successfully'); 

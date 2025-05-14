@@ -16,6 +16,17 @@ export const metadata: Metadata = {
   description: 'Access your subscription details and billing information.',
 };
 
+// Generate static params for build time
+// This is required when using static export with dynamic routes
+export function generateStaticParams() {
+  // Since customer IDs are dynamic and likely come from a database,
+  // we'll provide a dummy/placeholder ID for static generation
+  // In a real app, you might fetch actual customer IDs from your database
+  return [
+    { customerId: 'placeholder-id' },
+  ];
+}
+
 export default function CustomerPortalPage({
   params,
   searchParams,
@@ -26,7 +37,23 @@ export default function CustomerPortalPage({
   // Validate the customerId to ensure it's in the expected format
   // This is a basic validation; you might want to implement more robust checks
   if (!customerId || customerId.length < 10) {
-    notFound();
+    // For static export, we'll render a fallback rather than using notFound()
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <h1 className="text-3xl font-bold mb-4">Invalid Customer ID</h1>
+          <p className="text-gray-600 mb-6">
+            The customer ID provided is not valid or does not exist.
+          </p>
+          <a 
+            href="/"
+            className="inline-block px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Return to Home
+          </a>
+        </div>
+      </div>
+    );
   }
   
   return (

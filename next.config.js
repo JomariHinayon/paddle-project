@@ -14,7 +14,7 @@ const nextConfig = {
   },
   images: {
     domains: ['lh3.googleusercontent.com'],
-    unoptimized: true, // For static export
+    unoptimized: process.env.NEXT_USE_STATIC_EXPORT === 'true', // Only unoptimize for static export
   },
   output: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'export' : undefined,
   distDir: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'out' : '.next',
@@ -23,7 +23,13 @@ const nextConfig = {
     config.resolve.fallback = { fs: false, net: false, tls: false }
     return config
   },
+  // Only apply headers in non-static mode
   async headers() {
+    // Skip headers for static export
+    if (process.env.NEXT_USE_STATIC_EXPORT === 'true') {
+      return [];
+    }
+    
     return [
       {
         source: '/:path*',
@@ -46,7 +52,9 @@ const nextConfig = {
         sizeLimit: '1mb',
       },
     },
-  }
+  },
+  // Handle dynamic routes in static export mode
+  trailingSlash: process.env.NEXT_USE_STATIC_EXPORT === 'true',
 };
 
 module.exports = nextConfig;

@@ -1,5 +1,5 @@
 [build]
-  command = "npm install --include=dev && npm run build"
+  command = "npm install --include=dev && npm run build:static"
   publish = "out"
 
 [build.environment]
