@@ -29,13 +29,20 @@ module.exports = mod;
 
 var { g: global, __dirname } = __turbopack_context__;
 {
+// Check if we're on Netlify
 __turbopack_context__.s({
     "default": (()=>__TURBOPACK__default__export__)
 });
+const isNetlify = process.env.NETLIFY === 'true';
 const __TURBOPACK__default__export__ = {
-    plugins: {
+    plugins: isNetlify ? {
+        // Netlify build (Tailwind v3)
+        'tailwindcss': {},
+        'autoprefixer': {}
+    } : {
+        // Local development (Tailwind v4)
         '@tailwindcss/postcss': {},
-        autoprefixer: {}
+        'autoprefixer': {}
     }
 };
 }}),

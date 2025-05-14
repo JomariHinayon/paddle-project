@@ -330,14 +330,14 @@ export default function Dashboard() {
         priceId: priceId
       });
 
-      window.Paddle.Checkout.open({
-        items: [{
+    window.Paddle.Checkout.open({
+      items: [{
           priceId: priceId, // Use the configured price ID
-          quantity: 1
-        }],
-        settings: {
-          displayMode: 'overlay',
-          theme: 'light',
+        quantity: 1
+      }],
+      settings: {
+        displayMode: 'overlay',
+        theme: 'light',
           locale: 'en'
         },
         customer: {
@@ -374,14 +374,14 @@ export default function Dashboard() {
                     displayMode: 'overlay',
                     theme: 'light',
                     locale: 'en'
-                  },
-                  customer: {
-                    email: user?.email || '',
-                  },
-                  customData: {
-                    userId: user?.uid || ''
-                  }
-                });
+      },
+      customer: {
+        email: user?.email || '',
+      },
+      customData: {
+        userId: user?.uid || ''
+      }
+    });
               } catch (fallbackError) {
                 console.error('Error with fallback price ID:', fallbackError);
                 setCheckoutStatus(`Error with fallback price ID: ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`);
@@ -1298,18 +1298,18 @@ export default function Dashboard() {
               try {
                 // Use sandbox in development mode
                 console.log('Setting Paddle environment to sandbox');
-                window.Paddle.Environment.set('sandbox');
+              window.Paddle.Environment.set('sandbox');
                 
                 console.log('Setting up Paddle with token:', 
                   PADDLE_CONFIG.clientToken ? `${PADDLE_CONFIG.clientToken.substring(0, 5)}...` : 'missing');
                 
-                window.Paddle.Setup({ 
-                  token: PADDLE_CONFIG.clientToken,
-                  eventCallback: handlePaddleEvent
-                });
+              window.Paddle.Setup({ 
+                token: PADDLE_CONFIG.clientToken,
+                eventCallback: handlePaddleEvent
+              });
                 
                 console.log('Paddle initialized successfully');
-                setPaddleLoaded(true);
+              setPaddleLoaded(true);
               } catch (error) {
                 console.error('Error initializing Paddle:', error);
               }

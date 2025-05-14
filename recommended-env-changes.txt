@@ -1,5 +1,5 @@
 # Add these lines to your .env.local file:
-
+ 
 # Paddle Price IDs - update these with your actual price IDs from Paddle dashboard
 NEXT_PUBLIC_PADDLE_STANDARD_MONTH_PRICE_ID=pri_01h8xmfqvbjc8eb45qhq65cj8n
 NEXT_PUBLIC_PADDLE_STANDARD_YEAR_PRICE_ID=pri_01h8xmg9f8z1tvbj1k78nj77mt

@@ -129,7 +129,7 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 to-white dark:from-violet-950 dark:to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-150 grid  bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl grid bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden">
         {/* Left side - Sign up form */}
         <div className="p-8 md:p-10">
           <div className="flex items-center mb-8">
