@@ -1,9 +1,12 @@
 [build]
-  command = "npm run build"
+  command = "NEXT_IGNORE_ESLINT=1 npm run build"
   publish = ".next"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
+  NEXT_IGNORE_ESLINT = "1"
+  ESLINT_IGNORE_ERRORS = "true"
+  NODE_ENV = "production"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

@@ -193,7 +193,7 @@ export default function Login() {
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600 dark:text-slate-400">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="font-medium text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">
               Sign up
             </Link>
