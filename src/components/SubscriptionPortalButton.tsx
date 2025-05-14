@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -42,12 +43,14 @@ export default function SubscriptionPortalButton() {
   };
 
   return (
-    <button
-      onClick={handleViewSubscriptions}
-      disabled={isLoading}
-      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
-    >
-      {isLoading ? 'Loading...' : 'View Subscriptions'}
-    </button>
+    <div>
+      <button
+        onClick={handleViewSubscriptions}
+        disabled={isLoading}
+        className="btn btn-secondary"
+      >
+        {isLoading ? 'Loading...' : 'Subscription Portal'}
+      </button>
+    </div>
   );
 } 
