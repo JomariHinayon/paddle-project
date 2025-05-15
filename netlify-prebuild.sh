@@ -12,7 +12,7 @@ npm config set legacy-peer-deps true
 
 # Install TypeScript and type definitions first
 echo "Installing TypeScript and required type definitions..."
-npm install --no-save typescript@4.9.5 @types/react@18.2.0 @types/react-dom@18.2.0 @types/node@18.16.0
+npm install --no-save --force typescript@4.9.5 @types/react@18.2.0 @types/react-dom@18.2.0 @types/node@18.16.0
 
 # Create a minimal tsconfig if needed
 if [ ! -f "tsconfig.json" ]; then
@@ -62,7 +62,7 @@ if [ -f "next.config.mjs" ] && [ ! -f "next.config.js" ]; then
   content=$(cat next.config.mjs)
   # Replace ES module syntax with CommonJS
   content=$(echo "$content" | sed 's/export default/module.exports =/')
-  content=$(echo "$content" | sed 's/import.meta.url/\'file:\/\/\' + __dirname/')
+  content=$(echo "$content" | sed "s/import.meta.url/'file:\/\/' + __dirname/")
   echo "$content" > next.config.js
 fi
 
@@ -93,11 +93,16 @@ fi
 # Install dependencies for functions
 echo "Installing function dependencies..."
 cd netlify/functions
-npm install
+npm install --force
 cd ../../
 
 # Prepare API backup directories for static export
 echo "Preparing API backup for static export..."
-./prepare-netlify-build.sh
+if [ -f "./prepare-netlify-build.sh" ]; then
+  chmod +x ./prepare-netlify-build.sh
+  ./prepare-netlify-build.sh
+else
+  echo "prepare-netlify-build.sh not found, skipping API backup preparation"
+fi
 
 echo "Netlify preparation complete!" 
