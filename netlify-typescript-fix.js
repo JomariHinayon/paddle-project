@@ -4,55 +4,62 @@ const { execSync } = require('child_process');
 
 console.log('=== TYPESCRIPT FIX FOR NETLIFY ===');
 
-// Check if TypeScript is installed
-try {
-  console.log('Checking for TypeScript...');
-  // Attempt to require TypeScript
-  require.resolve('typescript');
-  console.log('✅ TypeScript is installed');
-} catch (e) {
-  console.log('❌ TypeScript is not installed, installing...');
-  
+// Backup existing tsconfig if present
+const tsconfigPath = path.join(__dirname, 'tsconfig.json');
+if (fs.existsSync(tsconfigPath)) {
+  console.log('Backing up existing tsconfig.json...');
   try {
-    // Install TypeScript and related packages
-    console.log('Installing TypeScript and related packages...');
-    execSync('npm install --save-dev typescript@latest @types/react@latest @types/react-dom@latest @types/node@latest', {
-      stdio: 'inherit'
-    });
-    console.log('✅ TypeScript and related packages installed');
-  } catch (installError) {
-    console.error('Error installing TypeScript:', installError);
-    
-    // If installation fails, create a simplified tsconfig.json 
-    console.log('Creating simplified tsconfig.json as fallback...');
-    const simpleTsConfig = {
-      "compilerOptions": {
-        "target": "es5",
-        "lib": ["dom", "dom.iterable", "esnext"],
-        "allowJs": true,
-        "skipLibCheck": true,
-        "strict": false,
-        "forceConsistentCasingInFileNames": false,
-        "noEmit": true,
-        "incremental": true,
-        "esModuleInterop": true,
-        "module": "esnext",
-        "moduleResolution": "node",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "jsx": "preserve"
-      },
-      "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-      "exclude": ["node_modules"]
-    };
-    
-    fs.writeFileSync(
-      path.join(__dirname, 'tsconfig.json'),
-      JSON.stringify(simpleTsConfig, null, 2)
-    );
-    console.log('✅ Simplified tsconfig.json created');
+    fs.copyFileSync(tsconfigPath, path.join(__dirname, 'tsconfig.json.original'));
+    console.log('✅ tsconfig.json backed up to tsconfig.json.original');
+  } catch (e) {
+    console.error('Error backing up tsconfig.json:', e);
   }
 }
+
+// Always force install TypeScript and type definitions
+console.log('Force installing TypeScript and type definitions...');
+try {
+  execSync('npm install --no-save typescript@5.3.3 @types/react@19.0.12 @types/react-dom@19.0.4 @types/node@20.10.4', {
+    stdio: 'inherit'
+  });
+  console.log('✅ TypeScript and type definitions installed');
+} catch (installError) {
+  console.error('Error installing TypeScript packages:', installError);
+  console.log('Continuing with build process...');
+}
+
+// Create a compatible tsconfig.json
+console.log('Creating optimized tsconfig.json for Netlify build...');
+const tsConfig = {
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": false,
+    "noEmit": true,
+    "incremental": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+  "exclude": ["node_modules"]
+};
+
+fs.writeFileSync(
+  tsconfigPath,
+  JSON.stringify(tsConfig, null, 2)
+);
+console.log('✅ Created optimized tsconfig.json');
 
 // Create Next.js config JS version if mjs doesn't work
 if (fs.existsSync(path.join(__dirname, 'next.config.mjs'))) {

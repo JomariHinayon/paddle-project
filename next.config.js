@@ -14,9 +14,18 @@ const nextConfig = {
   distDir: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'out' : '.next',
   webpack: (config, { isServer }) => {
     // This helps resolve path aliases correctly
+    if (isServer) {
+      // For server-side code
+      const { dirname, join } = require('path');
+      if (process.env.NODE_ENV === 'production') {
+        // For Netlify builds
+        const tsConfigFile = join(dirname(require.resolve('typescript/package.json')), '../tsconfig.json');
+        console.log('Using TypeScript config file:', tsConfigFile);
+      }
+    }
+
     config.resolve.fallback = { fs: false, net: false, tls: false };
     
-    // Add alias for @ to src directory
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': new URL('./src', 'file://' + __dirname).pathname

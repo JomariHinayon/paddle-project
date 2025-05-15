@@ -11,8 +11,8 @@ export const dynamic = "force-static";
 function PaymentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const planParam = searchParams?.get('plan') || 'basic';
-  const billingParam = searchParams?.get('billing') || 'monthly';
+  const planParam = searchParams ? searchParams.get('plan') || 'basic' : 'basic';
+  const billingParam = searchParams ? searchParams.get('billing') || 'monthly' : 'monthly';
   
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
