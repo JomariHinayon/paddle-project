@@ -1,4 +1,4 @@
-// File: /Users/elevate/newPaddle/src/app/transactions/page.tsx
+// File: /Users/elevate/Desktop/paddle-project/src/app/transactions/page.tsx
 import * as entry from '../../../../src/app/transactions/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///Users/elevate/Desktop/paddle-project/src/components/ClientFirebaseWrapper.tsx"],"sourcesContent":["'use client';\n\nimport dynamic from 'next/dynamic';\n\n// Dynamic import of FirebaseInitializer with ssr: false\nconst FirebaseInitializer = dynamic(\n  () => import('./FirebaseInitializer'),\n  { ssr: false }\n);\n\n/**\n * Client Component wrapper for FirebaseInitializer\n */\nexport default function ClientFirebaseWrapper() {\n  return <FirebaseInitializer />;\n} "],"names":[],"mappings":";;;;AAEA;;AAFA;;;AAIA,wDAAwD;AACxD,MAAM,sBAAsB,CAAA,GAAA,kKAAA,CAAA,UAAO,AAAD,EAChC;;;;;;IACE,KAAK;;KAFH;AAQS,SAAS;IACtB,qBAAO,6LAAC;;;;;AACV;MAFwB","debugId":null}}]
-}

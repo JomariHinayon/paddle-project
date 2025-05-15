@@ -1,4 +1,4 @@
-// File: /Users/elevate/newPaddle/src/app/sandbox-portal/page.tsx
+// File: /Users/elevate/Desktop/paddle-project/src/app/sandbox-portal/page.tsx
 import * as entry from '../../../../src/app/sandbox-portal/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

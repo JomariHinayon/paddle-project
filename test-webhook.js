@@ -1,7 +1,7 @@
 // Test script for Paddle webhooks
 const crypto = require('crypto');
 const axios = require('axios');
-require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env' });
 
 const PUBLIC_KEY = process.env.PADDLE_PUBLIC_KEY;
 const WEBHOOK_URL = 'https://fdb1-112-200-169-199.ngrok-free.app/paddle/webhook'; // Update with your local or ngrok URL

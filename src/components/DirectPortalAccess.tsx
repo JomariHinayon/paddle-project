@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ManageSubscriptionButton from './ManageSubscriptionButton';
 
 interface DirectPortalAccessProps {
@@ -15,9 +15,22 @@ interface DirectPortalAccessProps {
  */
 export default function DirectPortalAccess({
   customerId,
-  returnUrl,
+  returnUrl: propReturnUrl,
   className,
 }: DirectPortalAccessProps) {
+  const [returnUrl, setReturnUrl] = useState(propReturnUrl);
+
+  // Get returnUrl from query parameters on the client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlReturnUrl = params.get('returnUrl');
+      if (urlReturnUrl) {
+        setReturnUrl(urlReturnUrl);
+      }
+    }
+  }, []);
+
   return (
     <div className={`flex flex-col items-center ${className || ''}`}>
       <h2 className="text-xl font-semibold mb-4">Manage Your Subscription</h2>

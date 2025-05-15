@@ -1,4 +1,4 @@
-// File: /Users/elevate/newPaddle/src/app/confirm-signup/page.tsx
+// File: /Users/elevate/Desktop/paddle-project/src/app/confirm-signup/page.tsx
 import * as entry from '../../../../src/app/confirm-signup/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

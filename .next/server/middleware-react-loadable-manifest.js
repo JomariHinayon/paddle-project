@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}";
+self.__REACT_LOADABLE_MANIFEST='{"components/ClientFirebaseWrapper.tsx -> ./FirebaseInitializer":{"id":7417,"files":["static/chunks/235-aa7b1b3361c47829.js","static/chunks/934-5468d481bfbeaee8.js","static/chunks/417.0667b2d1ae2d2449.js"]},"components/FirebaseInitializer.tsx -> firebase/analytics":{"id":6864,"files":[]}}';

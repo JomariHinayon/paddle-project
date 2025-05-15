@@ -1,0 +1,19 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/account/page": "/account",
+  "/auth/action/page": "/auth/action",
+  "/auth/verify-email/page": "/auth/verify-email",
+  "/dashboard/page": "/dashboard",
+  "/homeBoard/page": "/homeBoard",
+  "/login/page": "/login",
+  "/page": "/",
+  "/payment/success/page": "/payment/success",
+  "/pricing/page": "/pricing",
+  "/sandbox-portal/page": "/sandbox-portal",
+  "/signup/page": "/signup",
+  "/customer-portal/[customerId]/page": "/customer-portal/[customerId]",
+  "/confirm-signup/page": "/confirm-signup",
+  "/transactions/page": "/transactions",
+  "/payment/page": "/payment"
+}

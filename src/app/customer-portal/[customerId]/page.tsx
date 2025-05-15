@@ -6,15 +6,15 @@ interface CustomerPortalPageProps {
   params: {
     customerId: string;
   };
-  searchParams?: {
-    returnUrl?: string;
-  };
 }
 
 export const metadata: Metadata = {
   title: 'Manage Your Subscription | Paddle Customer Portal',
   description: 'Access your subscription details and billing information.',
 };
+
+// Make this route static
+export const dynamic = "force-static";
 
 // Generate static params for build time
 // This is required when using static export with dynamic routes
@@ -29,10 +29,8 @@ export function generateStaticParams() {
 
 export default function CustomerPortalPage({
   params,
-  searchParams,
 }: CustomerPortalPageProps) {
   const { customerId } = params;
-  const returnUrl = searchParams?.returnUrl;
   
   // Validate the customerId to ensure it's in the expected format
   // This is a basic validation; you might want to implement more robust checks
@@ -68,7 +66,6 @@ export default function CustomerPortalPage({
         
         <DirectPortalAccess 
           customerId={customerId}
-          returnUrl={returnUrl}
           className="mt-8"
         />
         

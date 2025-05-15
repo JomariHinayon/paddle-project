@@ -6,6 +6,9 @@ import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, reload } from 'firebase/auth';
 import Link from 'next/link';
 
+// Make this route static for export
+export const dynamic = "force-static";
+
 function ConfirmSignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();

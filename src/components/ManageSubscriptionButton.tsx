@@ -9,6 +9,7 @@ interface ManageSubscriptionButtonProps {
   size?: 'small' | 'medium' | 'large';
   showIcon?: boolean;
   returnUrl?: string;
+  customerId?: string;
 }
 
 export default function ManageSubscriptionButton({
@@ -17,6 +18,7 @@ export default function ManageSubscriptionButton({
   size = 'medium',
   showIcon = true,
   returnUrl,
+  customerId,
 }: ManageSubscriptionButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -58,9 +60,20 @@ export default function ManageSubscriptionButton({
     setIsLoading(true);
     try {
       // Build the URL with any return URL if provided
-      let url = '/api/subscriptions/portal-session';
+      let url = process.env.NEXT_PUBLIC_SKIP_API_ROUTES === 'true' 
+        ? '/.netlify/functions/api/subscriptions/portal-session' 
+        : '/api/subscriptions/portal-session';
+      
+      const params = new URLSearchParams();
       if (returnUrl) {
-        url += `?returnUrl=${encodeURIComponent(returnUrl)}`;
+        params.append('returnUrl', returnUrl);
+      }
+      if (customerId) {
+        params.append('customerId', customerId);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
       }
 
       const response = await fetch(url);

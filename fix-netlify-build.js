@@ -344,125 +344,53 @@ export function generateStaticParams() {
   }
 });
 
-// After the dynamic routes section, add API routes handling
-
+// Check for API routes and handle them for static export
 console.log('\n=== API ROUTES VERIFICATION ===');
-const apiDir = path.join(__dirname, 'src', 'app', 'api');
-
-// Check if the api directory exists
-if (fs.existsSync(apiDir)) {
-  const apiRoutes = [];
+const findApiRoutes = (dir) => {
+  if (!fs.existsSync(dir)) return [];
   
-  // Find all API route files
-  const findApiRoutes = (dir) => {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
+  let routes = [];
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
     
-    entries.forEach(entry => {
-      const fullPath = path.join(dir, entry.name);
-      
-      if (entry.isDirectory()) {
-        findApiRoutes(fullPath);
-      } else if (entry.name === 'route.ts' || entry.name === 'route.js' || entry.name === 'route.tsx') {
-        apiRoutes.push(fullPath);
-      }
-    });
-  };
-  
-  findApiRoutes(apiDir);
-  
-  console.log(`Found ${apiRoutes.length} API routes that may need attention for static export:`);
-  apiRoutes.forEach(route => console.log(`- ${route}`));
-  
-  // For static export mode, we'll update netlify.toml to handle API routes
-  if (process.env.NEXT_USE_STATIC_EXPORT === 'true' || process.env.NETLIFY) {
-    console.log('\nCreating Netlify redirects for API routes...');
-    
-    // Create or update _redirects file in the public directory
-    const publicDir = path.join(__dirname, 'public');
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
+    if (entry.isDirectory()) {
+      routes = routes.concat(findApiRoutes(fullPath));
+    } else if (entry.name === 'route.ts' || entry.name === 'route.js') {
+      routes.push(fullPath);
     }
-    
-    // Create a _redirects file with fallbacks for API routes
-    const redirectsFile = path.join(publicDir, '_redirects');
-    const redirectsContent = `
-# Redirects for API routes in static export
-/api/*  /.netlify/functions/api/:splat  200
-/* /index.html 200
-    `.trim();
-    
-    fs.writeFileSync(redirectsFile, redirectsContent);
-    console.log('✅ Created Netlify redirects file at public/_redirects');
-    
-    // Create a netlify/functions directory for API handlers if needed
-    const netlifyFunctionsDir = path.join(__dirname, 'netlify', 'functions');
-    if (!fs.existsSync(netlifyFunctionsDir)) {
-      fs.mkdirSync(netlifyFunctionsDir, { recursive: true });
-    }
-    
-    // Create a simple API handler function
-    const apiFunctionPath = path.join(netlifyFunctionsDir, 'api.js');
-    const apiFunctionContent = `
-// This is a placeholder for handling API requests in a static export
-// You may need to customize this based on your specific API needs
-exports.handler = async function(event, context) {
-  const path = event.path.replace('/.netlify/functions/api', '');
+  }
   
-  console.log('API request:', {
-    path,
-    httpMethod: event.httpMethod,
-    headers: event.headers,
-    queryStringParameters: event.queryStringParameters,
-    body: event.body
-  });
-  
-  // Return a placeholder response for static export
-  return {
-    statusCode: 200,
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      message: "This is a placeholder response for the static export. In a real deployment, you would need to implement proper API handlers.",
-      requestedPath: path
-    })
-  };
+  return routes;
 };
-`.trim();
-    
-    fs.writeFileSync(apiFunctionPath, apiFunctionContent);
-    console.log('✅ Created Netlify function handler at netlify/functions/api.js');
-  }
-}
 
-// After API routes detection section, add this new code for handling API routes in App Router
+const apiRoutes = findApiRoutes(path.join(__dirname, 'src', 'app', 'api'));
+console.log(`Found ${apiRoutes.length} API routes that may need attention for static export:`);
+apiRoutes.forEach(route => console.log(`- ${route}`));
 
-// For static export, we need to physically move API routes to avoid build errors
-if (process.env.NEXT_USE_STATIC_EXPORT === 'true' || process.env.NEXT_PUBLIC_SKIP_API_ROUTES === 'true') {
-  console.log('\n=== TEMPORARILY MOVING API ROUTES FOR STATIC EXPORT ===');
+// For static export, we'll temporarily move the API routes out of the way
+if (process.env.NEXT_USE_STATIC_EXPORT === 'true') {
+  // Create a backup of the API directory
+  const apiDir = path.join(__dirname, 'src', 'app', 'api');
+  const tempApiBackupDir = path.join(__dirname, 'temp-api-backup');
   
-  // Create a directory to temporarily store API routes
-  const tempApiDir = path.join(__dirname, 'temp-api-backup');
-  if (!fs.existsSync(tempApiDir)) {
-    fs.mkdirSync(tempApiDir, { recursive: true });
-  }
-  
-  // Move API directory to temporary location
   if (fs.existsSync(apiDir)) {
-    console.log(`Moving API directory from ${apiDir} to ${tempApiDir}`);
+    // Create temp backup directory
+    fs.mkdirSync(tempApiBackupDir, { recursive: true });
     
-    // First, copy the directory
+    // Copy API to backup
     const copyDir = (src, dest) => {
+      if (!fs.existsSync(src)) return;
+      
       const entries = fs.readdirSync(src, { withFileTypes: true });
-      if (!fs.existsSync(dest)) {
-        fs.mkdirSync(dest, { recursive: true });
-      }
       
       for (const entry of entries) {
         const srcPath = path.join(src, entry.name);
         const destPath = path.join(dest, entry.name);
         
         if (entry.isDirectory()) {
+          fs.mkdirSync(destPath, { recursive: true });
           copyDir(srcPath, destPath);
         } else {
           fs.copyFileSync(srcPath, destPath);
@@ -470,99 +398,39 @@ if (process.env.NEXT_USE_STATIC_EXPORT === 'true' || process.env.NEXT_PUBLIC_SKI
       }
     };
     
-    copyDir(apiDir, path.join(tempApiDir, 'api'));
+    copyDir(apiDir, path.join(tempApiBackupDir, 'api'));
     
-    // Create empty API directory to avoid imports breaking
+    // Replace API directory with placeholder routes that have force-static
     fs.rmSync(apiDir, { recursive: true, force: true });
     fs.mkdirSync(apiDir, { recursive: true });
     
-    // Create a placeholder route.ts file that won't cause build errors
-    const placeholderRoutePath = path.join(apiDir, 'route.ts');
-    const placeholderRouteContent = `
-export const dynamic = 'force-static';
+    // Create placeholder static API route for each API endpoint
+    apiRoutes.forEach(route => {
+      const relativePathFromApi = route.substring(apiDir.length + 1);
+      const routeDir = path.dirname(route);
+      const placeholderDir = path.join(apiDir, path.dirname(relativePathFromApi));
+      
+      fs.mkdirSync(placeholderDir, { recursive: true });
+      
+      const placeholderContent = `export const dynamic = "force-static";
 
-export async function GET() {
-  return new Response(JSON.stringify({ 
-    message: 'This is a static placeholder for APIs. Real API functions are not available in the static export.' 
-  }), {
-    headers: {
-      'content-type': 'application/json',
-    },
+export function GET() {
+  return Response.json({
+    message: "This API route is not available in the static export. Please use the server functions."
   });
 }
-    `.trim();
-    
-    fs.writeFileSync(placeholderRoutePath, placeholderRouteContent);
-    console.log('✅ Created placeholder API route for static export');
-    
-    // Write a build-cleanup script for post-build restoration
-    const cleanupScriptPath = path.join(__dirname, 'build-cleanup.js');
-    const cleanupScriptContent = `
-const fs = require('fs');
-const path = require('path');
 
-console.log('Cleaning up after static export build...');
-
-// Restore API directory if it was moved
-const tempApiDir = path.join(__dirname, 'temp-api-backup');
-const apiDir = path.join(__dirname, 'src', 'app', 'api');
-
-if (fs.existsSync(tempApiDir) && fs.existsSync(apiDir)) {
-  console.log('Restoring API directory...');
-  
-  // Remove the temporary placeholder
-  fs.rmSync(apiDir, { recursive: true, force: true });
-  
-  // Create API directory
-  fs.mkdirSync(apiDir, { recursive: true });
-  
-  // Copy from backup
-  const copyDir = (src, dest) => {
-    const entries = fs.readdirSync(src, { withFileTypes: true });
-    
-    for (const entry of entries) {
-      const srcPath = path.join(src, entry.name);
-      const destPath = path.join(dest, entry.name);
-      
-      if (entry.isDirectory()) {
-        if (!fs.existsSync(destPath)) {
-          fs.mkdirSync(destPath, { recursive: true });
-        }
-        copyDir(srcPath, destPath);
-      } else {
-        fs.copyFileSync(srcPath, destPath);
-      }
-    }
-  };
-  
-  copyDir(path.join(tempApiDir, 'api'), apiDir);
-  console.log('✅ API directory restored');
-  
-  // Remove the temporary backup
-  fs.rmSync(tempApiDir, { recursive: true, force: true });
-  console.log('✅ Temporary backup removed');
+export function POST() {
+  return Response.json({
+    message: "This API route is not available in the static export. Please use the server functions."
+  });
 }
-
-console.log('Cleanup complete!');
-    `.trim();
-    
-    fs.writeFileSync(cleanupScriptPath, cleanupScriptContent);
-    console.log('✅ Created build cleanup script at build-cleanup.js');
-    
-    // Add package.json script to run cleanup after build
-    try {
-      const packageJsonPath = path.join(__dirname, 'package.json');
-      const packageJson = require(packageJsonPath);
+`;
       
-      // Add postbuild script if it doesn't exist
-      if (!packageJson.scripts.postbuild) {
-        packageJson.scripts.postbuild = 'node build-cleanup.js';
-        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-        console.log('✅ Added postbuild script to package.json');
-      }
-    } catch (error) {
-      console.error('Failed to update package.json:', error);
-    }
+      fs.writeFileSync(path.join(placeholderDir, 'route.ts'), placeholderContent);
+    });
+    
+    console.log('✅ Temporarily moved API routes for static export');
   }
 }
 

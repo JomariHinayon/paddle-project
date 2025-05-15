@@ -1,5 +1,5 @@
 [build]
-  command = "npm install --include=dev && npm run build:static && touch .skip-cleanup"
+  command = "npm install --include=dev && cp -r netlify/prebuild-api-backup/api src/app/ && npm run build:static && rm -rf src/app/api && touch .skip-cleanup"
   publish = "out"
   functions = "netlify/functions"
 

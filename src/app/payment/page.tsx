@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
+// Make this route static for export
+export const dynamic = "force-static";
+
 function PaymentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
