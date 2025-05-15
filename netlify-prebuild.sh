@@ -1,4 +1,72 @@
 #!/bin/bash
+set -e
+
+echo "=== NETLIFY PREBUILD SCRIPT ==="
+
+# Check Node version
+echo "Node version: $(node -v)"
+echo "NPM version: $(npm -v)"
+
+# Set legacy peer deps to avoid dependency conflicts
+npm config set legacy-peer-deps true
+
+# Install TypeScript and type definitions first
+echo "Installing TypeScript and required type definitions..."
+npm install --no-save typescript@4.9.5 @types/react@18.2.0 @types/react-dom@18.2.0 @types/node@18.16.0
+
+# Create a minimal tsconfig if needed
+if [ ! -f "tsconfig.json" ]; then
+  echo "Creating minimal tsconfig.json..."
+  cat > tsconfig.json << EOF
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+  "exclude": ["node_modules"]
+}
+EOF
+fi
+
+# Create next-env.d.ts if missing
+if [ ! -f "next-env.d.ts" ]; then
+  echo "Creating next-env.d.ts..."
+  cat > next-env.d.ts << EOF
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.
+EOF
+fi
+
+# Ensure we have next.config.js (not just .mjs)
+if [ -f "next.config.mjs" ] && [ ! -f "next.config.js" ]; then
+  echo "Converting next.config.mjs to next.config.js..."
+  content=$(cat next.config.mjs)
+  # Replace ES module syntax with CommonJS
+  content=$(echo "$content" | sed 's/export default/module.exports =/')
+  content=$(echo "$content" | sed 's/import.meta.url/\'file:\/\/\' + __dirname/')
+  echo "$content" > next.config.js
+fi
+
+echo "=== NETLIFY PREBUILD SCRIPT COMPLETE ==="
 
 # Prepare for Netlify deployment
 echo "Preparing Netlify functions..."

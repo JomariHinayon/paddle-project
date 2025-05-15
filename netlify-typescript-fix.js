@@ -19,7 +19,11 @@ if (fs.existsSync(tsconfigPath)) {
 // Always force install TypeScript and type definitions
 console.log('Force installing TypeScript and type definitions...');
 try {
-  execSync('npm install --no-save typescript@5.3.3 @types/react@19.0.12 @types/react-dom@19.0.4 @types/node@20.10.4', {
+  // Set npm configuration for peer dependencies to avoid conflicts
+  execSync('npm config set legacy-peer-deps true', { stdio: 'inherit' });
+  
+  // Install compatible TypeScript versions
+  execSync('npm install --no-save typescript@4.9.5 @types/react@18.2.0 @types/react-dom@18.2.0 @types/node@18.16.0', {
     stdio: 'inherit'
   });
   console.log('✅ TypeScript and type definitions installed');
@@ -60,6 +64,20 @@ fs.writeFileSync(
   JSON.stringify(tsConfig, null, 2)
 );
 console.log('✅ Created optimized tsconfig.json');
+
+// Create a minimal next-env.d.ts file if it doesn't exist
+const nextEnvPath = path.join(__dirname, 'next-env.d.ts');
+if (!fs.existsSync(nextEnvPath)) {
+  console.log('Creating next-env.d.ts file...');
+  const nextEnvContent = `/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.
+`;
+  fs.writeFileSync(nextEnvPath, nextEnvContent);
+  console.log('✅ Created next-env.d.ts');
+}
 
 // Create Next.js config JS version if mjs doesn't work
 if (fs.existsSync(path.join(__dirname, 'next.config.mjs'))) {
