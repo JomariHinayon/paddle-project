@@ -1,87 +1,71 @@
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
+const axios = require('axios');
 
-// Set up a development server for local testing
-const dev = process.env.NODE_ENV !== 'production';
-const app = next({ dev, dir: '../../' });
-const handle = app.getRequestHandler();
-
-// This function handles all API calls through Netlify functions
+// This is a simplified API handler that doesn't use Next.js
 exports.handler = async function(event, context) {
-  // Wait until Next.js is initialized
-  await app.prepare();
-  
   try {
-    // Parse the path from the Netlify event
-    const path = event.path.replace('/.netlify/functions/api', '/api');
-    const { pathname, query } = parse(path, true);
+    const path = event.path.replace('/.netlify/functions/api', '');
+    const method = event.httpMethod;
+    const body = event.body ? JSON.parse(event.body) : {};
+    const params = event.queryStringParameters || {};
+
+    console.log(`API request: ${method} ${path}`, { params, body });
+
+    // Handle specific API endpoints
+    if (path === '/api/subscriptions/portal-session') {
+      // Example implementation for the portal session
+      // In a real app, you would implement actual Paddle integration here
+      if (!process.env.PADDLE_API_SECRET_KEY) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ 
+            error: 'Missing Paddle API key in environment variables' 
+          })
+        };
+      }
+
+      // Mock of creating a Paddle portal session
+      try {
+        // If you have Paddle API credentials, you could make a real API call here
+        const customerId = params.customerId || 'demo-customer';
+        const returnUrl = params.returnUrl || 'https://your-app-url.netlify.app/account';
+
+        // For demo purposes, return a mock URL
+        // In production, you would use the Paddle API to create a real portal URL
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            url: `https://sandbox-vendors.paddle.com/customer-portal/demo?customer_id=${customerId}&return_url=${encodeURIComponent(returnUrl)}`
+          })
+        };
+      } catch (error) {
+        console.error('Paddle API error:', error);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ 
+            error: 'Failed to create portal session',
+            details: error.message
+          })
+        };
+      }
+    }
+
+    // Default response for unhandled API routes
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ 
+        error: 'API endpoint not found', 
+        path: path 
+      })
+    };
     
-    // Create a mock request and response
-    return await new Promise((resolve, reject) => {
-      const req = {
-        method: event.httpMethod,
-        headers: event.headers,
-        url: path,
-        body: event.body ? JSON.parse(event.body) : undefined,
-        query: query,
-        cookies: parseCookies(event.headers.cookie || ''),
-      };
-      
-      const res = {
-        statusCode: 200,
-        headers: {},
-        body: '',
-        setHeader: (name, value) => {
-          res.headers[name.toLowerCase()] = value;
-        },
-        getHeader: (name) => res.headers[name.toLowerCase()],
-        end: (body) => {
-          res.body = body;
-          resolve({
-            statusCode: res.statusCode,
-            headers: res.headers,
-            body: res.body,
-          });
-        },
-        write: (chunk) => {
-          res.body += chunk;
-        },
-        writeHead: (status, headers) => {
-          res.statusCode = status;
-          if (headers) res.headers = { ...res.headers, ...headers };
-        },
-      };
-      
-      // Process the API request through Next.js
-      handle(req, res)
-        .catch(error => {
-          console.error('Error handling request:', error);
-          reject({
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Internal Server Error' })
-          });
-        });
-    });
   } catch (error) {
     console.error('Unhandled error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error' })
+      body: JSON.stringify({ 
+        error: 'Internal Server Error',
+        message: error.message
+      })
     };
   }
-};
-
-// Helper function to parse cookies
-function parseCookies(cookieString) {
-  const cookies = {};
-  if (cookieString) {
-    cookieString.split(';').forEach(cookie => {
-      const parts = cookie.split('=');
-      const name = parts[0].trim();
-      const value = parts.slice(1).join('=').trim();
-      if (name) cookies[name] = value;
-    });
-  }
-  return cookies;
-} 
+}; 
