@@ -78,13 +78,7 @@
     "i18n": null,
     "productionBrowserSourceMaps": false,
     "excludeDefaultMomentLocales": true,
-    "serverRuntimeConfig": {
-      "api": {
-        "bodyParser": {
-          "sizeLimit": "1mb"
-        }
-      }
-    },
+    "serverRuntimeConfig": {},
     "publicRuntimeConfig": {},
     "reactProductionProfiling": false,
     "reactStrictMode": null,
@@ -287,10 +281,7 @@
     },
     "htmlLimitedBots": "Mediapartners-Google|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview",
     "bundlePagesRouterDependencies": false,
-    "configFileName": "next.config.js",
-    "serverExternalPackages": [
-      "firebase-admin"
-    ]
+    "configFileName": "next.config.js"
   },
   "appDir": "/Users/elevate/Desktop/paddle-project",
   "relativeAppDir": "",

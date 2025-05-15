@@ -24,9 +24,6 @@ const nextConfig = {
     
     return config;
   },
-  experimental: {
-    esmExternals: 'loose'
-  },
   trailingSlash: process.env.NEXT_USE_STATIC_EXPORT === 'true',
 };
 

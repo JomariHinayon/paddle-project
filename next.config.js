@@ -1,15 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    // !! WARN !!
     ignoreBuildErrors: true,
   },
   images: {
@@ -18,44 +12,19 @@ const nextConfig = {
   },
   output: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'export' : undefined,
   distDir: process.env.NEXT_USE_STATIC_EXPORT === 'true' ? 'out' : '.next',
-  // We can't use exportPathMap with app directory, so we'll exclude routes in the build script itself
   webpack: (config, { isServer }) => {
     // This helps resolve path aliases correctly
-    config.resolve.fallback = { fs: false, net: false, tls: false }
-    return config
-  },
-  // Only apply headers in non-static mode
-  async headers() {
-    // Skip headers for static export
-    if (process.env.NEXT_USE_STATIC_EXPORT === 'true') {
-      return [];
-    }
+    config.resolve.fallback = { fs: false, net: false, tls: false };
     
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.paddle.com https://cdn.paddle.com https://cdn.sandbox.paddle.com https://www.googletagmanager.com https://*.googleapis.com; connect-src 'self' https://*.paddle.com https://checkout-service.paddle.com https://sandbox-checkout-service.paddle.com https://*.googleapis.com https://firebaselogging-pa.googleapis.com https://identitytoolkit.googleapis.com https://*.google-analytics.com; style-src 'self' 'unsafe-inline' https://*.paddle.com; img-src 'self' data: https://*.paddle.com https://*.pinimg.com; frame-src 'self' https://*.paddle.com https://sandbox-buy.paddle.com; frame-ancestors 'self' http://localhost:* https://*.paddle.com;"
-          }
-        ]
-      }
-    ]
+    // Add alias for @ to src directory
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': new URL('./src', 'file://' + __dirname).pathname
+    };
+    
+    return config;
   },
-  // External packages that should be processed by the server
-  serverExternalPackages: ['firebase-admin'],
-  // Set runtime configuration for specific routes
-  serverRuntimeConfig: {
-    // Force Node.js runtime for all API routes with Firebase Admin
-    api: {
-      bodyParser: {
-        sizeLimit: '1mb',
-      },
-    },
-  },
-  // Handle dynamic routes in static export mode
   trailingSlash: process.env.NEXT_USE_STATIC_EXPORT === 'true',
 };
 
-module.exports = nextConfig;
+module.exports = nextConfig; 

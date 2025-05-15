@@ -5,10 +5,11 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "node fix-netlify-build.js && NEXT_IGNORE_ESLINT=1 next build",
-    "build:static": "node fix-netlify-build.js && NEXT_IGNORE_ESLINT=1 SKIP_TYPE_CHECK=1 NEXT_USE_STATIC_EXPORT=true NEXT_PUBLIC_SKIP_API_ROUTES=true next build",
+    "build:static": "node netlify-typescript-fix.js && node fix-netlify-build.js && NEXT_IGNORE_ESLINT=1 SKIP_TYPE_CHECK=1 NEXT_USE_STATIC_EXPORT=true NEXT_PUBLIC_SKIP_API_ROUTES=true next build",
+    "netlify:static": "node fix-netlify-build.js && NEXT_IGNORE_ESLINT=1 NEXT_USE_STATIC_EXPORT=true NEXT_PUBLIC_SKIP_API_ROUTES=true SKIP_TYPE_CHECK=1 next build",
     "postbuild": "node build-cleanup.js",
     "netlify-prebuild": "chmod +x netlify-prebuild.sh && ./netlify-prebuild.sh",
-    "netlify-build": "npm run netlify-prebuild && SKIP_TYPE_CHECK=1 npm run build:static",
+    "netlify-build": "npm run netlify-prebuild && node netlify-typescript-fix.js && SKIP_TYPE_CHECK=1 npm run build:static",
     "netlify-install": "npm install",
     "start": "next start",
     "lint": "next lint"
@@ -27,6 +28,7 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.4.1",
     "tailwindcss": "^3.3.0",
+    "typescript": "^5",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -35,7 +37,6 @@
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
     "eslint": "^9",
-    "eslint-config-next": "15.2.4",
-    "typescript": "^5"
+    "eslint-config-next": "15.2.4"
   }
 }
