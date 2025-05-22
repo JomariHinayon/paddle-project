@@ -6,17 +6,8 @@ import { Suspense } from 'react';
 // Make this route static for export
 export const dynamic = "force-static";
 
-// Define transaction interface
-interface Transaction {
-  id: string;
-  date: string;
-  amount: number;
-  status: string;
-  description: string;
-}
-
 function TransactionsContent() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,7 +55,7 @@ function TransactionsContent() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {transactions.map((transaction: Transaction) => (
+              {transactions.map(transaction => (
                 <tr key={transaction.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(transaction.date).toLocaleDateString()}

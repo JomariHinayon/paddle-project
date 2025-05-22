@@ -30,7 +30,7 @@ export default function SignUp() {
     password: '',
     confirmPassword: ''
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
@@ -48,7 +48,7 @@ export default function SignUp() {
     return () => unsubscribe();
   }, [router]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -60,7 +60,7 @@ export default function SignUp() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
     
@@ -100,10 +100,10 @@ export default function SignUp() {
       // Redirect to confirmation page
       router.replace('/confirm-signup?email=' + encodeURIComponent(formData.email));
       
-    } catch (error: any) {
+    } catch (error) {
       setLoading(false);
       if (error instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
+        const newErrors = {};
         error.errors.forEach(err => {
           if (err.path) newErrors[err.path[0]] = err.message;
         });
@@ -114,7 +114,7 @@ export default function SignUp() {
     }
   };
 
-  const getAuthErrorMessage = (code: string) => {
+  const getAuthErrorMessage = (code) => {
     switch (code) {
       case 'auth/email-already-in-use':
         return 'Email already in use';

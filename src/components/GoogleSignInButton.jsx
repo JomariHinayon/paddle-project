@@ -30,7 +30,7 @@ export default function GoogleSignInButton() {
         // Try popup first
         try {
           result = await signInWithPopup(auth, googleProvider);
-        } catch (popupError: any) {
+        } catch (popupError) {
           if (popupError.code === 'auth/popup-blocked' || 
               popupError.code === 'auth/popup-closed-by-user' ||
               popupError.code === 'auth/cancelled-popup-request') {
@@ -58,7 +58,7 @@ export default function GoogleSignInButton() {
       }, { merge: true });
 
       router.replace('/dashboard');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error signing in with Google:', error);
       setError(error.message || 'Failed to sign in with Google');
     } finally {
@@ -87,7 +87,7 @@ export default function GoogleSignInButton() {
 
           router.replace('/dashboard');
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error handling redirect result:', error);
         setError(error.message || 'Failed to complete sign in');
       }
