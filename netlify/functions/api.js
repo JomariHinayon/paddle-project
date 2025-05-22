@@ -49,6 +49,7 @@ exports.handler = async function(event, context) {
       }
     }
 
+
     // Default response for unhandled API routes
     return {
       statusCode: 404,
