@@ -1,11 +1,11 @@
 {
-  "[project]/src/components/FirebaseInitializer.tsx [app-client] (ecmascript, next/dynamic entry)": {
-    "id": "[project]/src/components/FirebaseInitializer.tsx [app-client] (ecmascript, next/dynamic entry)",
+  "[project]/src/components/FirebaseInitializer.jsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/src/components/FirebaseInitializer.jsx [app-client] (ecmascript, next/dynamic entry)",
     "files": [
-      "static/chunks/node_modules_firebase_analytics_dist_esm_index_esm_715ab006.js",
-      "static/chunks/node_modules_e8c31788._.js",
-      "static/chunks/src_components_FirebaseInitializer_tsx_2881c7da._.js",
-      "static/chunks/src_components_FirebaseInitializer_tsx_3a2ce4ef._.js"
+      "static/chunks/node_modules_firebase_analytics_dist_esm_index_esm_ac62b986.js",
+      "static/chunks/node_modules_d15efa11._.js",
+      "static/chunks/src_components_FirebaseInitializer_jsx_2781df53._.js",
+      "static/chunks/src_components_FirebaseInitializer_jsx_1b0db8e0._.js"
     ]
   }
 }
