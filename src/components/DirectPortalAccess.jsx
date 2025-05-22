@@ -3,21 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import ManageSubscriptionButton from './ManageSubscriptionButton';
 
-interface DirectPortalAccessProps {
-  customerId: string;
-  returnUrl?: string;
-  className?: string;
-}
-
 /**
  * Component that allows direct access to a customer's Paddle portal session
  * without requiring them to be logged in
  */
-export default function DirectPortalAccess({
-  customerId,
-  returnUrl: propReturnUrl,
-  className,
-}: DirectPortalAccessProps) {
+export default function DirectPortalAccess({ customerId, returnUrl: propReturnUrl, className }) {
   const [returnUrl, setReturnUrl] = useState(propReturnUrl);
 
   // Get returnUrl from query parameters on the client side

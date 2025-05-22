@@ -2,10 +2,10 @@
   "[project]/src/components/FirebaseInitializer.tsx [app-client] (ecmascript, next/dynamic entry)": {
     "id": "[project]/src/components/FirebaseInitializer.tsx [app-client] (ecmascript, next/dynamic entry)",
     "files": [
-      "static/chunks/node_modules_firebase_analytics_dist_esm_index_esm_ae0a0c38.js",
+      "static/chunks/node_modules_firebase_analytics_dist_esm_index_esm_1382802d.js",
       "static/chunks/node_modules_e8c31788._.js",
       "static/chunks/src_components_FirebaseInitializer_tsx_2881c7da._.js",
-      "static/chunks/src_components_FirebaseInitializer_tsx_16d3d281._.js"
+      "static/chunks/src_components_FirebaseInitializer_tsx_1b0db8e0._.js"
     ]
   }
 }

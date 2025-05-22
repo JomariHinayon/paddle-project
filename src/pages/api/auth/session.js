@@ -1,4 +1,3 @@
-import type { NextApiRequest, NextApiResponse } from 'next/types';
 import admin from 'firebase-admin';
 
 // Initialize Firebase Admin SDK if not already initialized
@@ -15,7 +14,7 @@ if (!admin.apps.length) {
 const SESSION_COOKIE_NAME = 'session';
 const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 5 * 1000; // 5 days in ms
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
