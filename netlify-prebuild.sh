@@ -12,7 +12,7 @@ npm config set legacy-peer-deps true
 
 # Install TypeScript and type definitions first
 echo "Installing TypeScript and required type definitions..."
-npm install --no-save --force typescript@4.9.5 @types/react@18.2.0 @types/react-dom@18.2.0 @types/node@18.16.0
+npm install --no-save --force typescript@5.8.3 @types/react@19.1.5 @types/react-dom@19.0.4 @types/node@20.17.50
 
 # Create a minimal tsconfig if needed
 if [ ! -f "tsconfig.json" ]; then

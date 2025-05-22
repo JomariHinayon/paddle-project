@@ -23,7 +23,7 @@ try {
   execSync('npm config set legacy-peer-deps true', { stdio: 'inherit' });
   
   // Install compatible TypeScript versions
-  execSync('npm install --no-save typescript@4.9.5 @types/react@18.2.0 @types/react-dom@18.2.0 @types/node@18.16.0', {
+  execSync('npm install --no-save typescript@5.8.3 @types/react@19.1.5 @types/react-dom@19.0.4 @types/node@20.17.50', {
     stdio: 'inherit'
   });
   console.log('✅ TypeScript and type definitions installed');
