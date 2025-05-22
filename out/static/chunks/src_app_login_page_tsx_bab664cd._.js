@@ -5,13 +5,13 @@
 (globalThis.TURBOPACK_CHUNK_LISTS = globalThis.TURBOPACK_CHUNK_LISTS || []).push({
   "path": "static/chunks/src_app_login_page_tsx_bab664cd._.js",
   "chunks": [
-    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_415cced4._.js",
+    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_3678fcc8._.js",
     "static/chunks/node_modules_next_b8d00b57._.js",
     "static/chunks/node_modules_@firebase_auth_dist_esm2017_833bdb79._.js",
     "static/chunks/node_modules_@firebase_firestore_dist_index_esm2017_c2fcaa2e.js",
     "static/chunks/node_modules_@firebase_storage_dist_index_esm2017_b3a08d2a.js",
     "static/chunks/node_modules_ba1b0599._.js",
-    "static/chunks/src_8bef537a._.js"
+    "static/chunks/src_bdd3711d._.js"
   ],
   "source": "dynamic"
 });
