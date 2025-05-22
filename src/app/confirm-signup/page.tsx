@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, reload, sendEmailVerification, User } from 'firebase/auth';
 import Link from 'next/link';
 
 // Make this route static for export
@@ -22,15 +21,15 @@ function ConfirmSignupContent() {
       return;
     }
 
-    const checkVerification = async (user: User) => {
+    const checkVerification = async (user) => {
       if (user) {
-        await reload(user); // Reload user to get latest verification status
+        await user.reload(); // Reload user to get latest verification status
         setIsVerified(user.emailVerified);
       }
       setLoading(false);
     };
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
         router.replace('/signup');
         return;
@@ -45,7 +44,7 @@ function ConfirmSignupContent() {
     try {
       const user = auth.currentUser;
       if (user) {
-        await sendEmailVerification(user);
+        await user.sendEmailVerification();
         alert('Verification email has been resent!');
       }
     } catch (error) {

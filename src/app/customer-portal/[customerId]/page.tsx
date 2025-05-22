@@ -1,14 +1,7 @@
-import { notFound } from 'next/navigation';
-import { Metadata } from 'next';
+// Remove: import { notFound } from 'next/navigation';
 import DirectPortalAccess from '@/components/DirectPortalAccess';
 
-interface CustomerPortalPageProps {
-  params: {
-    customerId: string;
-  };
-}
-
-export const metadata: Metadata = {
+export const metadata = {
   title: 'Manage Your Subscription | Paddle Customer Portal',
   description: 'Access your subscription details and billing information.',
 };
@@ -17,19 +10,13 @@ export const metadata: Metadata = {
 export const dynamic = "force-static";
 
 // Generate static params for build time
-// This is required when using static export with dynamic routes
 export function generateStaticParams() {
-  // Since customer IDs are dynamic and likely come from a database,
-  // we'll provide a dummy/placeholder ID for static generation
-  // In a real app, you might fetch actual customer IDs from your database
   return [
     { customerId: 'placeholder-id' },
   ];
 }
 
-export default function CustomerPortalPage({
-  params,
-}: CustomerPortalPageProps) {
+export default function CustomerPortalPage({ params }) {
   const { customerId } = params;
   
   // Validate the customerId to ensure it's in the expected format

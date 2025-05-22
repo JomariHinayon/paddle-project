@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function VerifyEmailPage() {
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState('loading');
   const [message, setMessage] = useState('Verifying your email...');
   const router = useRouter();
 

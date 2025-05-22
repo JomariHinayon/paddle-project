@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 
 export default function AuthActionPage() {
   const [message, setMessage] = useState('Processing your request...');
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState('loading');
   const router = useRouter();
 
   useEffect(() => {
