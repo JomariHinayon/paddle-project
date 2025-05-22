@@ -30,11 +30,10 @@ npm list @types/react
 
 # Install TypeScript and type definitions first
 echo "Installing TypeScript and required type definitions..."
-npm install --no-save --force typescript@5.8.3 @types/react@19.1.5 @types/react-dom@19.0.4 @types/node@20.17.50
+# TypeScript installation removed
 
 # Create a minimal tsconfig if needed
-if [ ! -f "tsconfig.json" ]; then
-  echo "Creating minimal tsconfig.json..."
+# tsconfig.json creation removedg.json..."
   cat > tsconfig.json << EOF
 {
   "compilerOptions": {
@@ -63,13 +62,7 @@ EOF
 fi
 
 # Create next-env.d.ts if missing
-if [ ! -f "next-env.d.ts" ]; then
-  echo "Creating next-env.d.ts..."
-  cat > next-env.d.ts << EOF
-/// <reference types="next" />
-/// <reference types="next/image-types/global" />
-
-// NOTE: This file should not be edited
+# next-env.d.ts creation removedle should not be edited
 // see https://nextjs.org/docs/basic-features/typescript for more information.
 EOF
 fi
