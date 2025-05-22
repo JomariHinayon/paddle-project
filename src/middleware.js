@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
 const publicRoutes = ['/', '/login', '/signup', '/confirm-signup', '/auth/action', '/checkout', '/api/webhook/paddle'];
 const apiRoutes = ['/api/subscriptions', '/api/webhook', '/api/auth'];
 
-export async function middleware(request: NextRequest) {
+export async function middleware(request) {
   const response = NextResponse.next();
 
   const { pathname } = request.nextUrl;
