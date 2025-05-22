@@ -52,7 +52,7 @@ const tsFiles = findTsFiles(__dirname);
 console.log(`Found ${tsFiles.length} TypeScript files`);
 
 // Convert TypeScript files to JavaScript
-const removeTypeAnnotations = (content, file) => {
+const removeTypeAnnotations = (content) => {
     // Fix Next.js specific TypeScript patterns
     if (content.includes('use client')) {
         console.log('Found "use client" directive, preserving it...');
@@ -113,21 +113,6 @@ const removeTypeAnnotations = (content, file) => {
         content = "import React from 'react';\n" + content;
     }
 
-    // Special handling for page components - make sure they have correct metadata and params
-    if (file.includes('/page.')) {
-        // Fix common issues with Next.js page components
-        if (content.includes('export const metadata') && content.includes('title,') && !content.includes('const title')) {
-            content = content.replace(/title,/g, "title: 'Page Title',");
-        }
-
-        // Fix any semicolons in object declarations
-        content = content.replace(/(\w+);(\s+[\]\}])/g, '$1$2');
-    }
-
-    // Fix nested ternary expressions that got mangled
-    content = content.replace(/(\w+)\s*===\s*(['"][^'"]+['"])\s*\?\s*(['"][^'"]+['"])\s*===\s*(['"][^'"]+['"])\s*\?\s*(['"][^'"]+['"])\s*:/g,
-        "$1 === $2 ? $3 : $1 === $4 ? $5 :");
-
     return content;
 };
 
@@ -140,7 +125,7 @@ for (const file of tsFiles) {
         const content = fs.readFileSync(file, 'utf8');
 
         // Remove TypeScript annotations
-        const jsContent = removeTypeAnnotations(content, file);
+        const jsContent = removeTypeAnnotations(content);
 
         // Create new file path (.ts -> .js, .tsx -> .jsx)
         const newPath = file.replace(/\.tsx$/, '.jsx').replace(/\.ts$/, '.js');

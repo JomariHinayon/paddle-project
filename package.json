@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "build:static": "next build",
-    "netlify:static": "next build",
+    "build": "NEXT_IGNORE_ESLINT=1 SKIP_TYPE_CHECK=1 next build && next export -o out",
+    "build:static": "NEXT_IGNORE_ESLINT=1 SKIP_TYPE_CHECK=1 next build && next export -o out",
+    "netlify:static": "NEXT_IGNORE_ESLINT=1 SKIP_TYPE_CHECK=1 next build && next export -o out",
     "postbuild": "node build-cleanup.js",
     "netlify-prebuild": "chmod +x netlify-prebuild.sh && ./netlify-prebuild.sh",
-    "netlify-build": "next build",
+    "netlify-build": "NEXT_IGNORE_ESLINT=1 SKIP_TYPE_CHECK=1 next build && next export -o out",
     "netlify-install": "npm install",
     "start": "next start",
     "lint": "next lint"

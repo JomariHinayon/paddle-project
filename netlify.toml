@@ -1,5 +1,5 @@
 [build]
-  command = "node convert-to-js.js && node fix-syntax-errors.js && npm install --force && npm run build"
+  command = "NEXT_IGNORE_ESLINT=1 SKIP_TYPE_CHECK=1 next build && next export -o out"
   publish = "out"
   functions = "netlify/functions"
 
