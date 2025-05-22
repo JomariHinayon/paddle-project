@@ -1,8 +1,6 @@
-import React from 'react';
-
-
-const nextConfig= {
+const nextConfig = {
+  output: 'export',
   /* config options here */
 };
 
-export default nextConfig;
+module.exports = nextConfig;

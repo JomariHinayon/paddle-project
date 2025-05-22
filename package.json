@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export",
-    "build:static": "next build && next export",
-    "netlify:static": "next build && next export",
+    "build": "next build",
+    "build:static": "next build",
+    "netlify:static": "next build",
     "postbuild": "node build-cleanup.js",
     "netlify-prebuild": "chmod +x netlify-prebuild.sh && ./netlify-prebuild.sh",
-    "netlify-build": "next build && next export",
+    "netlify-build": "next build",
     "netlify-install": "npm install",
     "start": "next start",
     "lint": "next lint"
