@@ -3,11 +3,7 @@
 import { User } from 'firebase/auth';
 import Image from 'next/image';
 
-interface UserProfileCardProps {
-  user: User | null;
-}
-
-export default function UserProfileCard({ user }: UserProfileCardProps) {
+export default function UserProfileCard({ user }) {
   const getProfileImage = () => {
     if (user?.photoURL) {
       // Handle Google photo URL

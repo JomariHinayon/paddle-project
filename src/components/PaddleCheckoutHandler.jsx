@@ -2,23 +2,10 @@ import { useEffect, useState } from 'react';
 import { getFirestore, doc, setDoc, collection, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-interface PaddleCheckoutHandlerProps {
-  onSuccess?: (subscriptionData: any) => void;
-  onError?: (error: Error) => void;
-}
-
-interface SubscriptionResponse {
-  subscriptionId: string;
-  status: string;
-  planId: string;
-  nextBillDate: string | null;
-  customerId: string;
-}
-
-export default function PaddleCheckoutHandler({ onSuccess, onError }: PaddleCheckoutHandlerProps) {
+export default function PaddleCheckoutHandler({ onSuccess, onError }) {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [checkoutId, setCheckoutId] = useState<string | null>(null);
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [checkoutId, setCheckoutId] = useState(null);
+  const [customerId, setCustomerId] = useState(null);
   
   // Get checkout and customer ID from URL if present
   useEffect(() => {
@@ -82,7 +69,7 @@ export default function PaddleCheckoutHandler({ onSuccess, onError }: PaddleChec
           return;
         }
         
-        const subscriptionData: SubscriptionResponse = await response.json();
+        const subscriptionData = await response.json();
         console.log('Subscription details retrieved from API:', subscriptionData);
         
         // Only update user record if we have a valid subscription ID (not 'pending')
@@ -109,7 +96,7 @@ export default function PaddleCheckoutHandler({ onSuccess, onError }: PaddleChec
         if (onSuccess) {
           onSuccess(subscriptionData);
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error processing checkout:', error);
         if (onError) {
           onError(error);

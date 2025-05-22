@@ -1,4 +1,4 @@
-(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push(["static/chunks/src_1bebe55a._.js", {
+(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push(["static/chunks/src_eae6d241._.js", {
 
 "[project]/src/lib/firebase.js [app-client] (ecmascript) <locals>": ((__turbopack_context__) => {
 "use strict";
@@ -188,7 +188,7 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
 }}),
-"[project]/src/components/LogoutButton.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/components/LogoutButton.jsx [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
@@ -235,12 +235,12 @@ function LogoutButton({ className = '' }) {
         children: loading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "animate-spin rounded-full h-4 w-4 border-b-2 border-current"
         }, void 0, false, {
-            fileName: "[project]/src/components/LogoutButton.tsx",
+            fileName: "[project]/src/components/LogoutButton.jsx",
             lineNumber: 33,
             columnNumber: 9
         }, this) : 'Logout'
     }, void 0, false, {
-        fileName: "[project]/src/components/LogoutButton.tsx",
+        fileName: "[project]/src/components/LogoutButton.jsx",
         lineNumber: 27,
         columnNumber: 5
     }, this);
@@ -257,7 +257,7 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
 }}),
-"[project]/src/components/UserProfileCard.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/components/UserProfileCard.jsx [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
@@ -266,8 +266,10 @@ __turbopack_context__.s({
     "default": (()=>UserProfileCard)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/firebase/auth/dist/esm/index.esm.js [app-client] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$image$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/image.js [app-client] (ecmascript)");
 'use client';
+;
 ;
 ;
 function UserProfileCard({ user }) {
@@ -282,7 +284,7 @@ function UserProfileCard({ user }) {
                 className: "rounded-full",
                 priority: true
             }, void 0, false, {
-                fileName: "[project]/src/components/UserProfileCard.tsx",
+                fileName: "[project]/src/components/UserProfileCard.jsx",
                 lineNumber: 11,
                 columnNumber: 9
             }, this);
@@ -293,12 +295,12 @@ function UserProfileCard({ user }) {
                 className: "text-2xl text-violet-600",
                 children: (user?.displayName?.[0] || user?.email?.[0] || '?').toUpperCase()
             }, void 0, false, {
-                fileName: "[project]/src/components/UserProfileCard.tsx",
+                fileName: "[project]/src/components/UserProfileCard.jsx",
                 lineNumber: 24,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
-            fileName: "[project]/src/components/UserProfileCard.tsx",
+            fileName: "[project]/src/components/UserProfileCard.jsx",
             lineNumber: 23,
             columnNumber: 7
         }, this);
@@ -316,7 +318,7 @@ function UserProfileCard({ user }) {
                                 className: "text-xl font-semibold text-gray-800",
                                 children: user?.displayName || user?.email?.split('@')[0] || 'User'
                             }, void 0, false, {
-                                fileName: "[project]/src/components/UserProfileCard.tsx",
+                                fileName: "[project]/src/components/UserProfileCard.jsx",
                                 lineNumber: 36,
                                 columnNumber: 11
                             }, this),
@@ -324,19 +326,19 @@ function UserProfileCard({ user }) {
                                 className: "text-gray-500",
                                 children: user?.email
                             }, void 0, false, {
-                                fileName: "[project]/src/components/UserProfileCard.tsx",
+                                fileName: "[project]/src/components/UserProfileCard.jsx",
                                 lineNumber: 39,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
-                        fileName: "[project]/src/components/UserProfileCard.tsx",
+                        fileName: "[project]/src/components/UserProfileCard.jsx",
                         lineNumber: 35,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
-                fileName: "[project]/src/components/UserProfileCard.tsx",
+                fileName: "[project]/src/components/UserProfileCard.jsx",
                 lineNumber: 33,
                 columnNumber: 7
             }, this),
@@ -350,7 +352,7 @@ function UserProfileCard({ user }) {
                                 className: "text-sm text-gray-500",
                                 children: "Account Status"
                             }, void 0, false, {
-                                fileName: "[project]/src/components/UserProfileCard.tsx",
+                                fileName: "[project]/src/components/UserProfileCard.jsx",
                                 lineNumber: 45,
                                 columnNumber: 11
                             }, this),
@@ -358,13 +360,13 @@ function UserProfileCard({ user }) {
                                 className: "px-2 py-1 text-xs rounded-full bg-green-100 text-green-800",
                                 children: "Active"
                             }, void 0, false, {
-                                fileName: "[project]/src/components/UserProfileCard.tsx",
+                                fileName: "[project]/src/components/UserProfileCard.jsx",
                                 lineNumber: 46,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
-                        fileName: "[project]/src/components/UserProfileCard.tsx",
+                        fileName: "[project]/src/components/UserProfileCard.jsx",
                         lineNumber: 44,
                         columnNumber: 9
                     }, this),
@@ -375,7 +377,7 @@ function UserProfileCard({ user }) {
                                 className: "text-sm text-gray-500",
                                 children: "Email Verified"
                             }, void 0, false, {
-                                fileName: "[project]/src/components/UserProfileCard.tsx",
+                                fileName: "[project]/src/components/UserProfileCard.jsx",
                                 lineNumber: 57,
                                 columnNumber: 11
                             }, this),
@@ -383,25 +385,25 @@ function UserProfileCard({ user }) {
                                 className: `px-2 py-1 text-xs rounded-full ${user?.emailVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`,
                                 children: user?.emailVerified ? 'Verified' : 'Pending'
                             }, void 0, false, {
-                                fileName: "[project]/src/components/UserProfileCard.tsx",
+                                fileName: "[project]/src/components/UserProfileCard.jsx",
                                 lineNumber: 58,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
-                        fileName: "[project]/src/components/UserProfileCard.tsx",
+                        fileName: "[project]/src/components/UserProfileCard.jsx",
                         lineNumber: 56,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
-                fileName: "[project]/src/components/UserProfileCard.tsx",
+                fileName: "[project]/src/components/UserProfileCard.jsx",
                 lineNumber: 43,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
-        fileName: "[project]/src/components/UserProfileCard.tsx",
+        fileName: "[project]/src/components/UserProfileCard.jsx",
         lineNumber: 32,
         columnNumber: 5
     }, this);
@@ -413,7 +415,7 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
 }}),
-"[project]/src/lib/paddle-config.ts [app-client] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/lib/paddle-config.js [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
@@ -517,7 +519,7 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
 }}),
-"[project]/src/lib/paddle-utils.ts [app-client] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/lib/paddle-utils.js [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
@@ -530,7 +532,7 @@ __turbopack_context__.s({
     "getTransactionDetails": (()=>getTransactionDetails),
     "identifyPlan": (()=>identifyPlan)
 });
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/paddle-config.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/paddle-config.js [app-client] (ecmascript)");
 ;
 function TransactionData(checkoutId, transactionId, status, total, currency, items, paddleEventData) {
     this.checkoutId = checkoutId;
@@ -560,28 +562,28 @@ function PaddlePlan(name, features, description, tier, interval) {
 _c2 = PaddlePlan;
 const PADDLE_PLANS = {
     // Standard monthly plan
-    [__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month]: new PaddlePlan('Standard Monthly', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features, 'Basic features with monthly billing', 'standard', 'month'),
+    [__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month]: new PaddlePlan('Standard Monthly', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features, 'Basic features with monthly billing', 'standard', 'month'),
     // Standard yearly plan
-    [__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.year]: new PaddlePlan('Standard Yearly', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features, 'Basic features with yearly billing (save 16%)', 'standard', 'year'),
+    [__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.year]: new PaddlePlan('Standard Yearly', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features, 'Basic features with yearly billing (save 16%)', 'standard', 'year'),
     // Premium monthly plan
-    [__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.month]: new PaddlePlan('Premium Monthly', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features, 'Advanced features with monthly billing', 'premium', 'month'),
+    [__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.month]: new PaddlePlan('Premium Monthly', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features, 'Advanced features with monthly billing', 'premium', 'month'),
     // Premium yearly plan
-    [__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.year]: new PaddlePlan('Premium Yearly', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features, 'Advanced features with yearly billing (save 16%)', 'premium', 'year')
+    [__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.year]: new PaddlePlan('Premium Yearly', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features, 'Advanced features with yearly billing (save 16%)', 'premium', 'year')
 };
 function identifyPlan(planId) {
     // Check standard plans
-    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month) {
-        return new PlanInfo('Standard Monthly', 'standard', 'month', 'Basic features with monthly billing', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features);
+    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month) {
+        return new PlanInfo('Standard Monthly', 'standard', 'month', 'Basic features with monthly billing', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features);
     }
-    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.year) {
-        return new PlanInfo('Standard Yearly', 'standard', 'year', 'Basic features with yearly billing (save 16%)', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features);
+    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.year) {
+        return new PlanInfo('Standard Yearly', 'standard', 'year', 'Basic features with yearly billing (save 16%)', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.standard.features);
     }
     // Check premium plans
-    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.month) {
-        return new PlanInfo('Premium Monthly', 'premium', 'month', 'Advanced features with monthly billing', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features);
+    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.month) {
+        return new PlanInfo('Premium Monthly', 'premium', 'month', 'Advanced features with monthly billing', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features);
     }
-    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.year) {
-        return new PlanInfo('Premium Yearly', 'premium', 'year', 'Advanced features with yearly billing (save 16%)', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features);
+    if (planId === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.year) {
+        return new PlanInfo('Premium Yearly', 'premium', 'year', 'Advanced features with yearly billing (save 16%)', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].planDetails.premium.features);
     }
     return null;
 }
@@ -593,7 +595,7 @@ function formatPrice(amount, currencyCode = 'USD') {
     }).format(amount / 100);
 }
 function createCheckoutUrl(priceId, customerId, customerEmail) {
-    const baseUrl = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].checkoutUrl;
+    const baseUrl = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].checkoutUrl;
     const queryParams = new URLSearchParams();
     // Add the price ID as an item
     queryParams.append('items[0][priceId]', priceId);
@@ -632,7 +634,7 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
 }}),
-"[project]/src/components/PaddleCheckoutHandler.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/components/PaddleCheckoutHandler.jsx [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
@@ -780,16 +782,16 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$firebase$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/src/lib/firebase.js [app-client] (ecmascript) <locals>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$firebase$2f$auth$2f$dist$2f$esm$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/firebase/auth/dist/esm/index.esm.js [app-client] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm2017$2f$index$2d$8bd0c73f$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__z__as__onAuthStateChanged$3e$__ = __turbopack_context__.i("[project]/node_modules/@firebase/auth/dist/esm2017/index-8bd0c73f.js [app-client] (ecmascript) <export z as onAuthStateChanged>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$LogoutButton$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/LogoutButton.tsx [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UserProfileCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/UserProfileCard.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$LogoutButton$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/LogoutButton.jsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UserProfileCard$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/UserProfileCard.jsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$script$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/script.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/paddle-config.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/paddle-config.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$firebase$2f$firestore$2f$dist$2f$esm$2f$index$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/firebase/firestore/dist/esm/index.esm.js [app-client] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm2017$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@firebase/firestore/dist/index.esm2017.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$esm2017$2f$index$2d$8bd0c73f$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__p__as__getAuth$3e$__ = __turbopack_context__.i("[project]/node_modules/@firebase/auth/dist/esm2017/index-8bd0c73f.js [app-client] (ecmascript) <export p as getAuth>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/paddle-utils.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/paddle-utils.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$image$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/image.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$PaddleCheckoutHandler$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/PaddleCheckoutHandler.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$PaddleCheckoutHandler$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/PaddleCheckoutHandler.jsx [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.signature(), _s2 = __turbopack_context__.k.signature(), _s3 = __turbopack_context__.k.signature();
 'use client';
@@ -1208,10 +1210,10 @@ function Dashboard() {
             }["Dashboard.useEffect.unsubscribe"]);
             // Log Paddle configuration for debugging
             console.log('Paddle Config:', {
-                clientToken: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken ? `${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken.substring(0, 5)}...` : 'missing',
-                sellerId: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].sellerId,
-                standardMonthPrice: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month,
-                premiumMonthPrice: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.month
+                clientToken: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken ? `${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken.substring(0, 5)}...` : 'missing',
+                sellerId: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].sellerId,
+                standardMonthPrice: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month,
+                premiumMonthPrice: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium.month
             });
             return ({
                 "Dashboard.useEffect": ()=>unsubscribe()
@@ -1231,20 +1233,20 @@ function Dashboard() {
                 items: [
                     {
                         quantity: 1,
-                        priceId: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard[billingCycle]
+                        priceId: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard[billingCycle]
                     },
                     {
                         quantity: 1,
-                        priceId: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium[billingCycle]
+                        priceId: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium[billingCycle]
                     }
                 ]
             };
             const result = await window.Paddle.PricePreview(request);
             const newPrices = {};
             result.data.details.lineItems.forEach((item)=>{
-                if (item.price.id === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard[billingCycle]) {
+                if (item.price.id === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard[billingCycle]) {
                     newPrices.standard = item.formattedTotals.subtotal;
-                } else if (item.price.id === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium[billingCycle]) {
+                } else if (item.price.id === __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.premium[billingCycle]) {
                     newPrices.premium = item.formattedTotals.subtotal;
                 }
             });
@@ -1264,7 +1266,7 @@ function Dashboard() {
                     premiumMonth: ("TURBOPACK compile-time value", "pri_01jv17e3xm8mdsd22866ce8417"),
                     premiumYear: ("TURBOPACK compile-time value", "pri_01jv17f8370m2vyvspr2btg84s")
                 });
-                console.log('Paddle Config Price IDs:', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices);
+                console.log('Paddle Config Price IDs:', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices);
             }
         }
     }["Dashboard.useEffect"], [
@@ -1280,7 +1282,7 @@ function Dashboard() {
         // Set checkout status to show loading
         setCheckoutStatus('Opening checkout...');
         // Get price ID from config
-        const priceId = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices[plan][billingCycle];
+        const priceId = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices[plan][billingCycle];
         // Hardcoded fallback price ID for testing (Paddle sandbox test product)
         const fallbackPriceId = 'pri_01h8xz97pj0000000000000000';
         console.log(`Starting checkout for plan: ${plan}, cycle: ${billingCycle}`);
@@ -1292,8 +1294,8 @@ function Dashboard() {
         try {
             // Display debug info in console
             console.log('Paddle Config:', {
-                clientToken: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken ? `${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken.substring(0, 5)}...` : 'missing',
-                sellerId: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].sellerId,
+                clientToken: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken ? `${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken.substring(0, 5)}...` : 'missing',
+                sellerId: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].sellerId,
                 priceId: priceId
             });
             window.Paddle.Checkout.open({
@@ -1519,7 +1521,7 @@ function Dashboard() {
                 return {
                     id: doc.id,
                     ...data,
-                    planDetails: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(data.product?.id)
+                    planDetails: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(data.product?.id)
                 };
             });
             setTransactions(logs);
@@ -2001,7 +2003,7 @@ function Dashboard() {
                     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm2017$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setDoc"])(userRef, {
                         hasActiveSubscription: true,
                         lastTransactionDate: new Date(),
-                        currentPlan: subscriptionData.planId || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month,
+                        currentPlan: subscriptionData.planId || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month,
                         subscriptionStatus: 'active',
                         currentSubscriptionId: subscriptionData.subscriptionId,
                         paddleCustomerId: subscriptionData.customerId,
@@ -2068,7 +2070,7 @@ function Dashboard() {
             await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$firestore$2f$dist$2f$index$2e$esm2017$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["setDoc"])(userRef, {
                 hasActiveSubscription: true,
                 lastTransactionDate: new Date(),
-                currentPlan: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month,
+                currentPlan: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].prices.standard.month,
                 subscriptionStatus: 'active',
                 currentSubscriptionId: 'manual-' + new Date().getTime(),
                 paddleCustomerId: paddleCustomerId,
@@ -2162,9 +2164,9 @@ function Dashboard() {
                                 // Use sandbox in development mode
                                 console.log('Setting Paddle environment to sandbox');
                                 window.Paddle.Environment.set('sandbox');
-                                console.log('Setting up Paddle with token:', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken ? `${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken.substring(0, 5)}...` : 'missing');
+                                console.log('Setting up Paddle with token:', __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken ? `${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken.substring(0, 5)}...` : 'missing');
                                 window.Paddle.Setup({
-                                    token: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken,
+                                    token: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PADDLE_CONFIG"].clientToken,
                                     eventCallback: handlePaddleEvent
                                 });
                                 console.log('Paddle initialized successfully');
@@ -2184,7 +2186,7 @@ function Dashboard() {
                     lineNumber: 1256,
                     columnNumber: 9
                 }, this),
-                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$PaddleCheckoutHandler$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$PaddleCheckoutHandler$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                     onSuccess: handleCheckoutSuccess,
                     onError: handleCheckoutError
                 }, void 0, false, {
@@ -2257,7 +2259,7 @@ function Dashboard() {
                                             lineNumber: 1310,
                                             columnNumber: 17
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$LogoutButton$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$LogoutButton$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                                             className: "text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/dashboard/page.jsx",
@@ -2983,7 +2985,7 @@ function Dashboard() {
                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "sticky top-24 space-y-6",
                                         children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UserProfileCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UserProfileCard$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                                                 user: user
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/dashboard/page.jsx",
@@ -3021,7 +3023,7 @@ function Dashboard() {
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h4", {
                                                                                     className: "text-xl font-bold text-slate-900 dark:text-white",
-                                                                                    children: subscription.plan ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name || 'Standard Plan' : 'Free Plan'
+                                                                                    children: subscription.plan ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name || 'Standard Plan' : 'Free Plan'
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/dashboard/page.jsx",
                                                                                     lineNumber: 1578,
@@ -3325,7 +3327,7 @@ function Dashboard() {
                                                                             className: "flex items-center",
                                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                                 className: "text-lg font-medium text-slate-900 dark:text-white mr-2",
-                                                                                children: subscriptionDetails.planName || subscriptionDetails.items?.[0]?.price?.product_name || (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscriptionDetails.planId)?.name || 'Standard'
+                                                                                children: subscriptionDetails.planName || subscriptionDetails.items?.[0]?.price?.product_name || (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscriptionDetails.planId)?.name || 'Standard'
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/dashboard/page.jsx",
                                                                                 lineNumber: 1697,
@@ -3605,9 +3607,9 @@ function Dashboard() {
                                                     className: "grid grid-cols-1 md:grid-cols-2 gap-6 relative",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                            className: `group relative border ${subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' ? 'border-blue-300 bg-blue-50/30 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'} rounded-2xl p-6 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300`,
+                                                            className: `group relative border ${subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' ? 'border-blue-300 bg-blue-50/30 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'} rounded-2xl p-6 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300`,
                                                             children: [
-                                                                subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                     className: "absolute -top-3 right-6",
                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                         className: "bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm",
@@ -3831,9 +3833,9 @@ function Dashboard() {
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                                             onClick: ()=>handleSubscription('standard'),
-                                                                            disabled: Boolean(!paddleLoaded || subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active'),
-                                                                            className: `w-full py-3 px-4 rounded-xl transition-all ${!paddleLoaded ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed text-slate-500 dark:text-slate-400' : subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow group-hover:shadow-md'}`,
-                                                                            children: !paddleLoaded ? 'Loading...' : subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active' ? 'Current Plan' : `Get Standard ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}`
+                                                                            disabled: Boolean(!paddleLoaded || subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active'),
+                                                                            className: `w-full py-3 px-4 rounded-xl transition-all ${!paddleLoaded ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed text-slate-500 dark:text-slate-400' : subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow group-hover:shadow-md'}`,
+                                                                            children: !paddleLoaded ? 'Loading...' : subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Standard Plan' && subscription?.status === 'active' ? 'Current Plan' : `Get Standard ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}`
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/dashboard/page.jsx",
                                                                             lineNumber: 1857,
@@ -3852,9 +3854,9 @@ function Dashboard() {
                                                             columnNumber: 19
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                            className: `group relative border-2 ${subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' ? 'border-violet-300 bg-violet-50/30 dark:bg-violet-900/20' : 'border-violet-200 dark:border-violet-700'} rounded-2xl p-6 hover:shadow-md hover:border-violet-300 dark:hover:border-violet-600 transition-all duration-300`,
+                                                            className: `group relative border-2 ${subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' ? 'border-violet-300 bg-violet-50/30 dark:bg-violet-900/20' : 'border-violet-200 dark:border-violet-700'} rounded-2xl p-6 hover:shadow-md hover:border-violet-300 dark:hover:border-violet-600 transition-all duration-300`,
                                                             children: [
-                                                                subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                     className: "absolute -top-3 right-6",
                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                         className: "bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-sm",
@@ -4137,9 +4139,9 @@ function Dashboard() {
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                                             onClick: ()=>handleSubscription('premium'),
-                                                                            disabled: Boolean(!paddleLoaded || subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active'),
-                                                                            className: `w-full py-3 px-4 rounded-xl transition-all ${!paddleLoaded ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed text-slate-500 dark:text-slate-400' : subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm hover:shadow group-hover:shadow-md'}`,
-                                                                            children: !paddleLoaded ? 'Loading...' : subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active' ? 'Current Plan' : `Get Premium ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}`
+                                                                            disabled: Boolean(!paddleLoaded || subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active'),
+                                                                            className: `w-full py-3 px-4 rounded-xl transition-all ${!paddleLoaded ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed text-slate-500 dark:text-slate-400' : subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm hover:shadow group-hover:shadow-md'}`,
+                                                                            children: !paddleLoaded ? 'Loading...' : subscription?.plan && (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$paddle$2d$utils$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["identifyPlan"])(subscription.plan)?.name === 'Premium Plan' && subscription?.status === 'active' ? 'Current Plan' : `Get Premium ${billingCycle === 'month' ? 'Monthly' : 'Yearly'}`
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/dashboard/page.jsx",
                                                                             lineNumber: 1944,
@@ -4383,4 +4385,4 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 }}),
 }]);
 
-//# sourceMappingURL=src_1bebe55a._.js.map
+//# sourceMappingURL=src_eae6d241._.js.map

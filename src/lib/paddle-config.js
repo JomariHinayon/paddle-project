@@ -26,16 +26,13 @@ export const PADDLE_CONFIG = {
   customerPortalLink: process.env.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_LINK || 'https://sandbox-customer-portal.paddle.com/cpl_01jtqjeq79c64enc8qy3cs3zrm'
 };
 
-export type PlanType = keyof typeof PADDLE_CONFIG.prices;
-export type BillingCycle = keyof typeof PADDLE_CONFIG.prices.standard;
-
-export const identifyPriceId = (priceId: string): { plan: PlanType; cycle: BillingCycle } | null => {
+export const identifyPriceId = (priceId) => {
   for (const [plan, cycles] of Object.entries(PADDLE_CONFIG.prices)) {
     for (const [cycle, id] of Object.entries(cycles)) {
       if (id === priceId) {
-        return { 
-          plan: plan as PlanType, 
-          cycle: cycle as BillingCycle 
+        return {
+          plan: plan,
+          cycle: cycle
         };
       }
     }
@@ -43,10 +40,10 @@ export const identifyPriceId = (priceId: string): { plan: PlanType; cycle: Billi
   return null;
 };
 
-export const getPlanDetails = (priceId: string) => {
+export const getPlanDetails = (priceId) => {
   const identified = identifyPriceId(priceId);
   if (!identified) return null;
-  
+
   return {
     ...PADDLE_CONFIG.planDetails[identified.plan],
     billingCycle: identified.cycle,
@@ -54,22 +51,10 @@ export const getPlanDetails = (priceId: string) => {
   };
 };
 
-export interface PaddleTransaction {
-  items?: Array<{
-    price?: {
-      id?: string;
-      product_id?: string;
-    }
-  }>;
-  status?: string;
-  total?: number;
-  currency_code?: string;
-}
-
-export const getPlanFromTransaction = (transaction: PaddleTransaction) => {
+export const getPlanFromTransaction = (transaction) => {
   const priceId = transaction.items?.[0]?.price?.id;
   if (!priceId) return null;
-  
+
   const planInfo = identifyPriceId(priceId);
   if (!planInfo) return null;
 
@@ -83,16 +68,16 @@ export const getPlanFromTransaction = (transaction: PaddleTransaction) => {
   };
 };
 
-export const matchTransactionPlan = (productId: string | undefined) => {
+export const matchTransactionPlan = (productId) => {
   if (!productId) return null;
-  
+
   // Flatten price IDs for lookup
   const priceMap = Object.entries(PADDLE_CONFIG.prices).reduce((acc, [plan, cycles]) => {
     Object.entries(cycles).forEach(([cycle, id]) => {
-      acc[id] = { plan: plan as PlanType, cycle: cycle as BillingCycle };
+      acc[id] = { plan: plan, cycle: cycle };
     });
     return acc;
-  }, {} as Record<string, { plan: PlanType; cycle: BillingCycle }>);
-  
+  }, {});
+
   return priceMap[productId] || null;
 };

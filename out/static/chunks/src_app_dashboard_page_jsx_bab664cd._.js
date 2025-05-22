@@ -5,7 +5,7 @@
 (globalThis.TURBOPACK_CHUNK_LISTS = globalThis.TURBOPACK_CHUNK_LISTS || []).push({
   "path": "static/chunks/src_app_dashboard_page_jsx_bab664cd._.js",
   "chunks": [
-    "static/chunks/src_1bebe55a._.js",
+    "static/chunks/src_eae6d241._.js",
     "static/chunks/node_modules_next_9a9d437c._.js",
     "static/chunks/node_modules_@firebase_auth_dist_esm2017_62b486a1._.js",
     "static/chunks/node_modules_@firebase_firestore_dist_index_esm2017_c2fcaa2e.js",

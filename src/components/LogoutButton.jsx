@@ -6,11 +6,7 @@ import { clearSession } from '@/lib/session';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-interface LogoutButtonProps {
-  className?: string;
-}
-
-export default function LogoutButton({ className = '' }: LogoutButtonProps) {
+export default function LogoutButton({ className = '' }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
