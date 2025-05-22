@@ -12,9 +12,9 @@ import SubscriptionPortalButton from '../../components/SubscriptionPortalButton'
 
 export default function AccountPage() {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [subscriptionData, setSubscriptionData] = useState<any>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [user, setUser] = useState(null);
+  const [subscriptionData, setSubscriptionData] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
