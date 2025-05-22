@@ -11,8 +11,8 @@ export const dynamic = "force-static";
 function PaymentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const planParam = searchParams ? searchParams.get('plan') || 'basic' : 'basic';
-  const billingParam = searchParams ? searchParams.get('billing') || 'monthly' : 'monthly';
+  const planParam = searchParams?.get('plan') || 'basic';
+  const billingParam = searchParams?.get('billing') || 'monthly';
   
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,9 +52,9 @@ function PaymentPageContent() {
     }
   };
 
-  const selectedPlan = plans[planParam as keyof typeof plans] || plans.basic;
+  const selectedPlan = plans[planParam] || plans.basic;
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     
     // Format card number with spaces
@@ -289,7 +289,7 @@ function PaymentPageContent() {
                       Processing...
                     </span>
                   ) : (
-                    `Pay $${selectedPlan.price[billingParam as keyof typeof selectedPlan.price]} ${billingParam === 'monthly' ? 'per month' : 'per year'}`
+                    `Pay $${selectedPlan.price[billingParam]} ${billingParam === 'monthly' ? 'per month' : 'per year'}`
                   )}
                 </button>
                 
@@ -335,7 +335,7 @@ function PaymentPageContent() {
                 <div className="flex justify-between text-lg">
                   <span className="text-gray-200">Total</span>
                   <span className="text-white font-bold">
-                    ${selectedPlan.price[billingParam as keyof typeof selectedPlan.price]}
+                    ${selectedPlan.price[billingParam]}
                     <span className="text-sm font-normal text-gray-300">/{billingParam === 'monthly' ? 'month' : 'year'}</span>
                   </span>
                 </div>
