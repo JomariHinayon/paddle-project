@@ -1,4 +1,9 @@
-/** @type {import('next').NextConfig} */
+// CommonJS format for Next.js config
+// @ts-check
+
+/**
+ * @type {import('next').NextConfig} 
+ */
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -9,13 +14,14 @@ const nextConfig = {
   },
   output: 'export',
   distDir: 'out',
-  webpack: (config) => {
+  webpack: function (config) {
   // Simplified webpack config
     config.resolve.fallback = { fs: false, net: false, tls: false };
     
+    const path = require('path');
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': new URL('./src', 'file://' + __dirname).pathname
+      '@': path.join(__dirname, 'src')
     };
     
     return config;

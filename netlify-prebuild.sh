@@ -1,93 +1,18 @@
 #!/bin/bash
 set -e
 
-echo "=== NETLIFY PREBUILD SCRIPT ==="
+echo "=== NETLIFY PREBUILD SCRIPT (JAVASCRIPT VERSION) ==="
 
 # Check Node version
 echo "Node version: $(node -v)"
 echo "NPM version: $(npm -v)"
 
-# Check if @types/react is installed
-echo "Checking if @types/react is installed..."
-if npm list @types/react | grep -q "@types/react"; then
-  echo "✅ @types/react is already installed"
-else
-  echo "❌ @types/react is NOT installed"
-fi
-
-# Display package.json content
-echo "Contents of package.json:"
-cat package.json
-
 # Set legacy peer deps to avoid dependency conflicts
 npm config set legacy-peer-deps true
 
-# Force install React types as the very first step
-echo "Force installing React types directly..."
-npm install --save-dev --no-save --force @types/react@19.1.5 @types/react-dom@19.0.4
-echo "Verifying React types installation..."
-npm list @types/react
-
-# Install TypeScript and type definitions first
-echo "Installing TypeScript and required type definitions..."
-npm install --no-save --force typescript@5.8.3 @types/react@19.1.5 @types/react-dom@19.0.4 @types/node@20.17.50
-
-# Create a minimal tsconfig if needed
-if [ ! -f "tsconfig.json" ]; then
-  echo "Creating minimal tsconfig.json..."
-  cat > tsconfig.json << EOF
-{
-  "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-  "exclude": ["node_modules"]
-}
-EOF
-fi
-
-# Create next-env.d.ts if missing
-if [ ! -f "next-env.d.ts" ]; then
-  echo "Creating next-env.d.ts..."
-  cat > next-env.d.ts << EOF
-/// <reference types="next" />
-/// <reference types="next/image-types/global" />
-
-// NOTE: This file should not be edited
-// see https://nextjs.org/docs/basic-features/typescript for more information.
-EOF
-fi
-
-# Ensure we have next.config.js (not just .mjs)
-if [ -f "next.config.mjs" ] && [ ! -f "next.config.js" ]; then
-  echo "Converting next.config.mjs to next.config.js..."
-  content=$(cat next.config.mjs)
-  # Replace ES module syntax with CommonJS
-  content=$(echo "$content" | sed 's/export default/module.exports =/')
-  content=$(echo "$content" | sed "s/import.meta.url/'file:\/\/' + __dirname/")
-  echo "$content" > next.config.js
-fi
-
-echo "=== NETLIFY PREBUILD SCRIPT COMPLETE ==="
-
-# Prepare for Netlify deployment
-echo "Preparing Netlify functions..."
+# Install dependencies with more aggressive options for Netlify
+echo "Installing dependencies..."
+npm install --force
 
 # Ensure the functions directory exists
 mkdir -p netlify/functions
