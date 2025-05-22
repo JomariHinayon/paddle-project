@@ -3,7 +3,7 @@ import DirectPortalAccess from '@/components/DirectPortalAccess';
 
 export const metadata = {
   title: 'Manage Your Subscription | Paddle Customer Portal',
-  description: 'Access your subscription details and billing information.',
+  description: 'Access your subscription details and billing information.'
 };
 
 // Make this route static

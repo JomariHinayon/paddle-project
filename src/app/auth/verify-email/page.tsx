@@ -36,9 +36,11 @@ export default function VerifyEmailPage() {
         )}
         
         <p className={`mb-4 ${
-          status === 'success' ? 'text-green-600' : 
-          status === 'error' ? 'text-red-600' : 
-          'text-gray-600'
+          status === 'success'
+            ? 'text-green-600'
+            : status === 'error'
+              ? 'text-red-600'
+              : 'text-gray-600'
         }`}>
           {message}
         </p>
