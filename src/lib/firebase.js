@@ -89,7 +89,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Utility function to get current user token
-export const getCurrentUserToken = async (): Promise<string | null> => {
+export const getCurrentUserToken = async () => {
   try {
     const user = auth.currentUser;
     if (!user) return null;

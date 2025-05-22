@@ -7,36 +7,24 @@ import { onAuthStateChanged } from 'firebase/auth';
 import LogoutButton from '@/components/LogoutButton';
 import UserProfileCard from '@/components/UserProfileCard';
 import Script from 'next/script';
-import { PADDLE_CONFIG, type PlanType, type BillingCycle } from '@/lib/paddle-config';
+import { PADDLE_CONFIG } from '@/lib/paddle-config';
 import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { identifyPlan } from '@/lib/paddle-utils';
 import Image from 'next/image';
 import PaddleCheckoutHandler from '@/components/PaddleCheckoutHandler';
 
-declare global {
-  interface Window {
-    Paddle: any;
-  }
-}
-
 // Create a theme context
 import { createContext, useContext } from 'react';
 
-type ThemeType = 'light' | 'dark';
-type ThemeContextType = {
-  theme: ThemeType;
-  setTheme: (theme: ThemeType) => void;
-};
+const ThemeContext = createContext();
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeType>('light');
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
     // Load theme from localStorage if available
-    const savedTheme = localStorage.getItem('theme') as ThemeType;
+    const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       setTheme(savedTheme);
       if (savedTheme === 'dark') {
@@ -51,7 +39,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const changeTheme = (newTheme: ThemeType) => {
+  const changeTheme = (newTheme) => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     
@@ -63,7 +51,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: changeTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -78,7 +66,7 @@ function useTheme() {
 }
 
 // Settings Modal Component
-function SettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function SettingsModal({ isOpen, onClose }) {
   const { theme, setTheme } = useTheme();
 
   if (!isOpen) return null;
@@ -180,44 +168,18 @@ function SettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   );
 }
 
-// Define a type for Firestore timestamp objects
-interface FirestoreTimestamp {
-  seconds: number;
-  nanoseconds: number;
-  toDate?: () => Date;
-}
-
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(auth.currentUser);
   const [paddleLoaded, setPaddleLoaded] = useState(false);
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('month');
-  const [prices, setPrices] = useState<{[key in PlanType]?: string}>({});
+  const [billingCycle, setBillingCycle] = useState('month');
+  const [prices, setPrices] = useState({});
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
+  const [checkoutStatus, setCheckoutStatus] = useState(null);
   
-  // Add type definition for subscription state
-  interface SubscriptionState {
-    hasActive: boolean;
-    plan?: string | null;
-    status: string;
-    lastTransaction?: Date | FirestoreTimestamp | null;
-    product?: any;
-    customerId?: string | null;
-    subscriptionId?: string | null;
-    nextBillDate?: Date | FirestoreTimestamp | null;
-    canceledAt?: Date | FirestoreTimestamp | null;
-    scheduled_change?: {
-      action?: string;
-      effective_at?: string;
-      resume_at?: string | null;
-    } | null;
-    cancellationEffectiveDate?: Date | FirestoreTimestamp | null;
-  }
-  
-  const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
+  const [subscription, setSubscription] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [subscriptionDetails, setSubscriptionDetails] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -270,9 +232,9 @@ export default function Dashboard() {
       };
 
       const result = await window.Paddle.PricePreview(request);
-      const newPrices: {[key in PlanType]?: string} = {};
+      const newPrices = {};
 
-      result.data.details.lineItems.forEach((item: any) => {
+      result.data.details.lineItems.forEach((item) => {
         if (item.price.id === PADDLE_CONFIG.prices.standard[billingCycle]) {
           newPrices.standard = item.formattedTotals.subtotal;
         } else if (item.price.id === PADDLE_CONFIG.prices.premium[billingCycle]) {
@@ -302,7 +264,7 @@ export default function Dashboard() {
     }
   }, [paddleLoaded, billingCycle]);
 
-  const handleSubscription = (plan: PlanType) => {
+  const handleSubscription = (plan) => {
     if (!paddleLoaded) {
       console.error('Paddle is not loaded yet');
       setCheckoutStatus('Error: Paddle is not loaded yet. Please refresh the page.');
@@ -346,16 +308,16 @@ export default function Dashboard() {
         customData: {
           userId: user?.uid || ''
         },
-        successCallback: (data: any) => {
+        successCallback: (data) => {
           console.log('Checkout success callback triggered', data);
           setCheckoutStatus('Processing your subscription...');
         },
-        closeCallback: (data: any) => {
+        closeCallback: (data) => {
           console.log('Checkout closed', data);
           // Only clear the message if user manually closes the checkout
           setCheckoutStatus(null);
         },
-        errorCallback: (error: any) => {
+        errorCallback: (error) => {
           console.error('Checkout error:', error);
           
           // If we got a "product not found" error, try with the fallback price ID
@@ -425,7 +387,7 @@ export default function Dashboard() {
     }
   };
 
-  const handlePaddleEvent = async (event: any) => {
+  const handlePaddleEvent = async (event) => {
     console.log('Paddle event:', event);
 
     // Only process events that have a valid subscription ID - not just checkout completion
@@ -488,7 +450,7 @@ export default function Dashboard() {
     }
   };
 
-  const fetchSubscriptionStatus = async (userId: string) => {
+  const fetchSubscriptionStatus = async (userId) => {
     try {
       const db = getFirestore();
       const userRef = doc(db, 'users', userId);
@@ -519,7 +481,7 @@ export default function Dashboard() {
     }
   };
 
-  const fetchTransactionLogs = async (userId: string) => {
+  const fetchTransactionLogs = async (userId) => {
     try {
       const db = getFirestore();
       const transactionsRef = collection(db, 'users', userId, 'transactions');
@@ -548,7 +510,7 @@ export default function Dashboard() {
             if (subscription && data.subscriptionId === subscription.subscriptionId) {
               setSubscription(prev => {
                 const updatedSubscription = {
-                  ...prev as SubscriptionState,
+                  ...prev,
                   scheduled_change: rawDataObj.scheduled_change
                 };
                 return updatedSubscription;
@@ -563,7 +525,7 @@ export default function Dashboard() {
           if (subscription && data.subscriptionId === subscription.subscriptionId) {
             setSubscription(prev => {
               const updatedSubscription = {
-                ...prev as SubscriptionState,
+                ...prev,
                 scheduled_change: data.scheduled_change
               };
               return updatedSubscription;
@@ -602,7 +564,7 @@ export default function Dashboard() {
             if (rawDataObj.scheduled_change) {
               setSubscription(prev => {
                 const updatedSubscription = {
-                  ...prev as SubscriptionState,
+                  ...prev,
                   scheduled_change: rawDataObj.scheduled_change
                 };
                 return updatedSubscription;
@@ -614,7 +576,7 @@ export default function Dashboard() {
           if (subscriptionData.scheduled_change || subscriptionData.cancellationEffectiveDate) {
             setSubscription(prev => {
               const updatedSubscription = {
-                ...prev as SubscriptionState,
+                ...prev,
                 scheduled_change: subscriptionData.scheduled_change || prev?.scheduled_change,
                 cancellationEffectiveDate: subscriptionData.cancellationEffectiveDate?.toDate() || prev?.cancellationEffectiveDate
               };
@@ -628,7 +590,7 @@ export default function Dashboard() {
     }
   };
 
-  const fetchSubscriptionDetails = async (userId: string, subscriptionId: string) => {
+  const fetchSubscriptionDetails = async (userId, subscriptionId) => {
     try {
       const db = getFirestore();
       
@@ -647,7 +609,7 @@ export default function Dashboard() {
           
           setSubscription(prev => {
             const updatedSubscription = {
-              ...prev as SubscriptionState,
+              ...prev,
               scheduled_change: scheduled_change
             };
             console.log('Updated subscription with direct scheduled_change:', updatedSubscription);
@@ -669,7 +631,7 @@ export default function Dashboard() {
         if (data.scheduled_change || data.cancellationEffectiveDate) {
           setSubscription(prev => {
             const updatedSubscription = {
-              ...prev as SubscriptionState,
+              ...prev,
               scheduled_change: data.scheduled_change || prev?.scheduled_change,
               cancellationEffectiveDate: data.cancellationEffectiveDate?.toDate() || prev?.cancellationEffectiveDate
             };
@@ -683,7 +645,7 @@ export default function Dashboard() {
     }
   };
 
-  const fetchSubscriptionData = async (userId: string) => {
+  const fetchSubscriptionData = async (userId) => {
     try {
       const db = getFirestore();
       
@@ -696,7 +658,7 @@ export default function Dashboard() {
           const data = subscriptionDoc.data();
           
           // Format price data if it exists in different formats
-          let formattedData: any = {
+          let formattedData = {
             ...data,
             id: subscriptionDoc.id
           };
@@ -749,7 +711,7 @@ export default function Dashboard() {
         const data = subscriptionsSnap.docs[0].data();
         
         // Format price data if it exists in different formats
-        let formattedData: any = {
+        let formattedData = {
           ...data,
           id: subscriptionsSnap.docs[0].id
         };
@@ -946,7 +908,7 @@ export default function Dashboard() {
   // Remove the separate effects that were causing race conditions
   // Instead, load all data in sequence in the single effect above
 
-  const extractScheduledChangeFromRawData = (data: any) => {
+  const extractScheduledChangeFromRawData = (data) => {
     try {
       console.log("Attempting to extract scheduled_change from raw data:", data);
       
@@ -987,7 +949,7 @@ export default function Dashboard() {
     }
   };
 
-  const syncRawDataToSubscription = (rawData: any) => {
+  const syncRawDataToSubscription = (rawData) => {
     try {
       console.log("Attempting to sync raw data to subscription:", rawData);
       
@@ -1001,7 +963,7 @@ export default function Dashboard() {
         
         setSubscription(prev => {
           const updatedSubscription = {
-            ...prev as SubscriptionState,
+            ...prev,
             scheduled_change: scheduled_change
           };
           console.log('Updated subscription with raw data scheduled_change:', updatedSubscription);
@@ -1090,7 +1052,7 @@ export default function Dashboard() {
     // Also update the entire subscription object
     setSubscription(prev => {
       return {
-        ...prev as SubscriptionState,
+        ...prev,
         hasActive: true,
         status: "active",
         subscriptionId: exampleData.subscriptionId
@@ -1099,7 +1061,7 @@ export default function Dashboard() {
   };
 
   // Handle checkout success
-  const handleCheckoutSuccess = (subscriptionData: any) => {
+  const handleCheckoutSuccess = (subscriptionData) => {
     console.log('Checkout completed successfully:', subscriptionData);
     setCheckoutStatus('Subscription checkout completed! Updating your subscription status...');
     
@@ -1155,7 +1117,7 @@ export default function Dashboard() {
   };
   
   // Handle checkout error
-  const handleCheckoutError = (error: Error) => {
+  const handleCheckoutError = (error) => {
     console.error('Error during checkout:', error);
     setCheckoutStatus('There was an error processing your subscription. Please try again or contact support.');
   };
@@ -1247,7 +1209,7 @@ export default function Dashboard() {
     }
   };
 
-  const formatPrice = (amount: number | string, currency: string = 'USD') => {
+  const formatPrice = (amount, currency = 'USD') => {
     // If it's already a string with formatting, return it
     if (typeof amount === 'string' && amount.includes('.')) {
       return amount;
@@ -1266,7 +1228,7 @@ export default function Dashboard() {
   };
 
   // Helper function to safely format dates from Firestore Timestamps or Date objects
-  const formatDate = (date: Date | FirestoreTimestamp | string | null | undefined): string => {
+  const formatDate = (date) => {
     if (!date) return 'N/A';
     
     if (date instanceof Date) {
@@ -1443,7 +1405,7 @@ export default function Dashboard() {
                       // Manually inject the example data structure for testing
                       setSubscription(prev => {
                         const testData = {
-                          ...prev as SubscriptionState,
+                          ...prev,
                           hasActive: true,
                           status: 'active',
                           scheduled_change: {

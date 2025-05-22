@@ -3,15 +3,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-interface ManageSubscriptionButtonProps {
-  className?: string;
-  variant?: 'primary' | 'secondary' | 'outline' | 'text';
-  size?: 'small' | 'medium' | 'large';
-  showIcon?: boolean;
-  returnUrl?: string;
-  customerId?: string;
-}
-
 export default function ManageSubscriptionButton({
   className = '',
   variant = 'primary',
@@ -19,7 +10,7 @@ export default function ManageSubscriptionButton({
   showIcon = true,
   returnUrl,
   customerId,
-}: ManageSubscriptionButtonProps) {
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
