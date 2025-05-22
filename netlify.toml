@@ -1,7 +1,10 @@
 [build]
-  command = "npm run netlify-build"
+  command = "node fix-react-types.js && npm run netlify-build && node verify-types.js"
   publish = "out"
   functions = "netlify/functions"
+
+# If TypeScript errors persist, uncomment the line below to convert to JavaScript
+# command = "node convert-to-js.js && npm run netlify-build"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"

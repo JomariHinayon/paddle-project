@@ -7,8 +7,26 @@ echo "=== NETLIFY PREBUILD SCRIPT ==="
 echo "Node version: $(node -v)"
 echo "NPM version: $(npm -v)"
 
+# Check if @types/react is installed
+echo "Checking if @types/react is installed..."
+if npm list @types/react | grep -q "@types/react"; then
+  echo "✅ @types/react is already installed"
+else
+  echo "❌ @types/react is NOT installed"
+fi
+
+# Display package.json content
+echo "Contents of package.json:"
+cat package.json
+
 # Set legacy peer deps to avoid dependency conflicts
 npm config set legacy-peer-deps true
+
+# Force install React types as the very first step
+echo "Force installing React types directly..."
+npm install --save-dev --no-save --force @types/react@19.1.5 @types/react-dom@19.0.4
+echo "Verifying React types installation..."
+npm list @types/react
 
 # Install TypeScript and type definitions first
 echo "Installing TypeScript and required type definitions..."

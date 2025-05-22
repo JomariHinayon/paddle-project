@@ -4,6 +4,20 @@ const { execSync } = require('child_process');
 
 console.log('=== TYPESCRIPT FIX FOR NETLIFY ===');
 
+// Force install React types as the very first step
+console.log('Force installing React types directly...');
+try {
+  execSync('npm config set legacy-peer-deps true', { stdio: 'inherit' });
+  execSync('npm install --save-dev --no-save --force @types/react@19.1.5 @types/react-dom@19.0.4', {
+    stdio: 'inherit'
+  });
+  console.log('Verifying React types installation...');
+  execSync('npm list @types/react', { stdio: 'inherit' });
+  console.log('✅ React types installed directly');
+} catch (e) {
+  console.error('Error installing React types:', e);
+}
+
 // Backup existing tsconfig if present
 const tsconfigPath = path.join(__dirname, 'tsconfig.json');
 if (fs.existsSync(tsconfigPath)) {
