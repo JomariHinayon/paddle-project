@@ -4,35 +4,9 @@ import { useState, useEffect } from 'react';
 import { PADDLE_CONFIG } from '@/lib/paddle-config';
 import { identifyPlan } from '@/lib/paddle-utils';
 
-interface SubscriptionData {
-  id: string;
-  status: string;
-  nextBillDate?: Date | { seconds: number; nanoseconds: number };
-  canceledAt?: Date | { seconds: number; nanoseconds: number };
-  planId?: string;
-  planName?: string;
-  customerId?: string;
-  scheduledChange?: {
-    action: string;
-    effective_at: string;
-    started_at: string;
-    resume_at: string | null;
-  };
-}
-
-interface SubscriptionStatusCardProps {
-  subscription: SubscriptionData;
-  userEmail?: string;
-  className?: string;
-}
-
-export default function SubscriptionStatusCard({ 
-  subscription, 
-  userEmail,
-  className = ''
-}: SubscriptionStatusCardProps) {
+export default function SubscriptionStatusCard({ subscription, userEmail, className = '' }) {
   // Format dates from Firestore timestamp or Date object
-  const formatDate = (date: any): string => {
+  const formatDate = (date) => {
     if (!date) return 'N/A';
     
     // Handle Firestore timestamp

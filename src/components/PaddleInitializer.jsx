@@ -10,17 +10,7 @@ declare global {
   }
 }
 
-interface PaddleInitializerProps {
-  environment?: 'sandbox' | 'production';
-  vendorId: string;
-  onCheckoutComplete?: (data: any) => void;
-}
-
-export default function PaddleInitializer({
-  environment = 'sandbox',
-  vendorId,
-  onCheckoutComplete
-}: PaddleInitializerProps) {
+export default function PaddleInitializer({ environment = 'sandbox', vendorId, onCheckoutComplete }) {
   useEffect(() => {
     // Function to load Paddle.js
     const loadPaddle = () => {
@@ -69,7 +59,7 @@ export default function PaddleInitializer({
     };
 
     // Handle Paddle events
-    const handlePaddleEvent = async (eventData: any) => {
+    const handlePaddleEvent = async (eventData) => {
       console.log('Paddle event received:', eventData);
       
       // Handle Checkout.Complete event 

@@ -25,16 +25,7 @@ const PADDLE_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://api.paddle.com'
   : 'https://sandbox-api.paddle.com';
 
-// Define the type for the request body
-interface CreatePortalSessionRequest {
-  firebaseUid: string;
-  returnUrl?: string;
-}
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req, res) {
   // Only accept POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -42,7 +33,7 @@ export default async function handler(
 
   try {
     // Get the Firebase UID from the request body
-    const { firebaseUid, returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard` } = req.body as CreatePortalSessionRequest;
+    const { firebaseUid, returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard` } = req.body;
 
     if (!firebaseUid) {
       return res.status(400).json({ error: 'Firebase UID is required' });

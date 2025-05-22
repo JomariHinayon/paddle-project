@@ -3,15 +3,7 @@
 import React, { useState } from 'react';
 import { getAuth } from 'firebase/auth';
 
-interface ManageSubscriptionsButtonProps {
-  className?: string;
-  children?: React.ReactNode;
-}
-
-export default function ManageSubscriptionsButton({ 
-  className, 
-  children 
-}: ManageSubscriptionsButtonProps) {
+export default function ManageSubscriptionsButton({ className, children }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {

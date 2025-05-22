@@ -2,21 +2,7 @@
 
 import React from 'react';
 
-interface SandboxPortalButtonProps {
-  className?: string;
-  variant?: 'primary' | 'secondary' | 'outline';
-  size?: 'small' | 'medium' | 'large';
-  showIcon?: boolean;
-  label?: string;
-}
-
-export default function SandboxPortalButton({
-  className = '',
-  variant = 'primary',
-  size = 'medium',
-  showIcon = true,
-  label = 'Manage Subscription',
-}: SandboxPortalButtonProps) {
+export default function SandboxPortalButton({ className = '', variant = 'primary', size = 'medium', showIcon = true, label = 'Manage Subscription' }) {
   // Direct link to the Paddle sandbox customer portal
   const portalUrl = 'https://sandbox-customer-portal.paddle.com/cpl_01jqppqpftkjwppfthwevb3h64?customer_email=testemailuser89%40gmail.com&customer_id=ctm_01jrhz1tf0r5wx62mx6cby456r&origin-intended=true';
   

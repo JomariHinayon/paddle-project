@@ -16,33 +16,12 @@ useEffect(() => {
   }
 }, []);
 
-interface SubscriptionManagerProps {
-  userId: string;
-  onPlanChange?: (newPlan: string) => void;
-  onCancel?: () => void;
-}
-
-interface Subscription {
-  subscriptionId: string;
-  status: string;
-  planId: string;
-  planName: string;
-  nextBillDate: Timestamp | null;
-  startDate: Timestamp | null;
-  billingCycle: {
-    interval: string;
-    frequency: number;
-  };
-  canceledAt?: Timestamp;
-  pausedAt?: Timestamp;
-}
-
-export default function SubscriptionManager({ userId, onPlanChange, onCancel }: SubscriptionManagerProps) {
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
+export default function SubscriptionManager({ userId, onPlanChange, onCancel }) {
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [currentSubscription, setCurrentSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [error, setError] = useState(null);
+  const [processingAction, setProcessingAction] = useState(null);
 
   // Load subscriptions from Firestore
   useEffect(() => {
@@ -56,9 +35,9 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }: 
         const q = query(subscriptionsRef, where('status', '!=', 'canceled'));
         const querySnapshot = await getDocs(q);
         
-        const subscriptionData: Subscription[] = [];
+        const subscriptionData = [];
         querySnapshot.forEach((doc) => {
-          subscriptionData.push(doc.data() as Subscription);
+          subscriptionData.push(doc.data());
         });
         
         setSubscriptions(subscriptionData);
@@ -72,7 +51,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }: 
           setCurrentSubscription(activeSubscription);
         }
         
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching subscriptions:', err);
         setError(err.message || 'Failed to load subscription data');
       } finally {
@@ -86,7 +65,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }: 
   }, [userId]);
 
   // Handle plan change
-  const handlePlanChange = async (newPlanId: string) => {
+  const handlePlanChange = async (newPlanId) => {
     if (!currentSubscription || !currentSubscription.subscriptionId) {
       setError('No active subscription found');
       return;
@@ -130,7 +109,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }: 
       const updatedDoc = await getDoc(subscriptionRef);
       
       if (updatedDoc.exists()) {
-        const updatedSubscription = updatedDoc.data() as Subscription;
+        const updatedSubscription = updatedDoc.data();
         setCurrentSubscription(updatedSubscription);
         
         if (onPlanChange) {
@@ -138,7 +117,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }: 
         }
       }
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error updating subscription plan:', err);
       setError(err.message || 'Failed to update subscription plan');
     } finally {
@@ -147,7 +126,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }: 
   };
 
   // Handle subscription cancellation
-  const handleCancelSubscription = async (immediate: boolean = false) => {
+  const handleCancelSubscription = async (immediate = false) => {
     if (!currentSubscription || !currentSubscription.subscriptionId) {
       setError('No active subscription found');
       return;
@@ -199,7 +178,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }: 
       const updatedDoc = await getDoc(subscriptionRef);
       
       if (updatedDoc.exists()) {
-        const updatedSubscription = updatedDoc.data() as Subscription;
+        const updatedSubscription = updatedDoc.data();
         setCurrentSubscription(updatedSubscription);
         
         if (onCancel) {
@@ -207,7 +186,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }: 
         }
       }
       
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error cancelling subscription:', err);
       setError(err.message || 'Failed to cancel subscription');
     } finally {

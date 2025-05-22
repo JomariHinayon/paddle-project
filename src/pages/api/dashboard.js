@@ -1,4 +1,3 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
@@ -9,7 +8,7 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -21,14 +20,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'userId is required' });
     }
 
-    const dashboardRef = db.collection('dashboard').doc(userId as string);
+    const dashboardRef = db.collection('dashboard').doc(userId);
     const dashboardDoc = await dashboardRef.get();
 
     if (!dashboardDoc.exists) {
       return res.status(404).json({ message: 'Dashboard data not found' });
     }
 
-    const userRef = db.collection('users').doc(userId as string);
+    const userRef = db.collection('users').doc(userId);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
