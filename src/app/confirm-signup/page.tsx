@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, reload } from 'firebase/auth';
+import { onAuthStateChanged, reload, sendEmailVerification, User } from 'firebase/auth';
 import Link from 'next/link';
 
-export default function ConfirmSignup() {
+// Make this route static for export
+export const dynamic = "force-static";
+
+function ConfirmSignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get('email');
+  const email = searchParams ? searchParams.get('email') : null;
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +22,7 @@ export default function ConfirmSignup() {
       return;
     }
 
-    const checkVerification = async (user: any) => {
+    const checkVerification = async (user: User) => {
       if (user) {
         await reload(user); // Reload user to get latest verification status
         setIsVerified(user.emailVerified);
@@ -42,7 +45,7 @@ export default function ConfirmSignup() {
     try {
       const user = auth.currentUser;
       if (user) {
-        await user.sendEmailVerification();
+        await sendEmailVerification(user);
         alert('Verification email has been resent!');
       }
     } catch (error) {
@@ -93,5 +96,17 @@ export default function ConfirmSignup() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ConfirmSignup() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <ConfirmSignupContent />
+    </Suspense>
   );
 }

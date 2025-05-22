@@ -1,7 +1,5 @@
 # Node.js dependencies
 node_modules/
-package-lock.json
-yarn.lock
 
 # Expo-specific files
 .expo/
@@ -19,6 +17,8 @@ yarn-error.log*
 
 # Environment files (if any)
 .env
+.env.local
 
 # Service account key file
 /config/serviceAccountKey.json
+.next/

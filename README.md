@@ -1,3 +1,67 @@
+# Paddle Integration Project
+
+## Firebase Configuration
+
+This project requires Firebase Admin SDK credentials for server-side operations, particularly webhook handling.
+
+### Setup Instructions
+
+1. **Create a Firebase Service Account Key**:
+   - Go to your [Firebase Console](https://console.firebase.google.com/)
+   - Select your project
+   - Navigate to Project Settings > Service Accounts
+   - Click "Generate New Private Key"
+   - Save the JSON file securely
+
+2. **Configure Environment Variables**:
+   - Copy the `.env.example` file to `.env.local`
+   - Fill in the Firebase credentials from your service account key:
+     ```
+     FIREBASE_PROJECT_ID=your-project-id
+     FIREBASE_CLIENT_EMAIL=your-client-email
+     FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour Private Key Content\n-----END PRIVATE KEY-----"
+     ```
+   - Make sure to keep the newline characters (`\n`) in the private key
+
+3. **Paddle Configuration**:
+   - Add your Paddle public key and client token:
+     ```
+     PADDLE_PUBLIC_KEY=your-paddle-public-key
+     NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=your-paddle-client-token
+     ```
+
+4. **Development Mode**:
+   - For local testing, you can enable these options:
+     ```
+     NODE_ENV=development
+     BYPASS_PADDLE_VERIFICATION=true
+     PROCESS_INVALID_SIGNATURES=true
+     ```
+
+## Running the Project
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+## Webhook Testing
+
+You can use the included test-webhook.js script to simulate Paddle webhooks:
+
+```bash
+node test-webhook.js
+```
+
+## Troubleshooting
+
+If you encounter the error "Unable to detect a Project Id in the current environment", make sure:
+1. Your environment variables are correctly set with Firebase credentials
+2. The app is properly initializing Firebase Admin using those credentials
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

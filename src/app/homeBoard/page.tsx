@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { checkEmailVerification } from '@/lib/auth';
+import { sendEmailVerification } from 'firebase/auth';
 
 export default function SuccessPage() {
   const router = useRouter();

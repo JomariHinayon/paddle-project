@@ -1,26 +1,30 @@
 export const PADDLE_CONFIG = {
   clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || '',
+  sellerId: process.env.NEXT_PUBLIC_PADDLE_SELLER_ID || '',
   prices: {
     standard: {
-      month: "pri_01jqpptmznh4vswj791kdk56q3",
-      year: "pri_01jqppvckqd321w7vv04yadp72"
+      month: process.env.NEXT_PUBLIC_PADDLE_STANDARD_MONTH_PRICE_ID || 'pri_01h8xz97pj0000000000000000',
+      year: process.env.NEXT_PUBLIC_PADDLE_STANDARD_YEAR_PRICE_ID || 'pri_01h8xz97pj0000000000000000'
     },
     premium: {
-      month: "pri_01jrcyb5gnfxn2s012n83a2gcf",
-      year: "pri_01jrcyfgfqb3p51a7sfy2y5mav"
+      month: process.env.NEXT_PUBLIC_PADDLE_PREMIUM_MONTH_PRICE_ID || 'pri_01h8xz97pj0000000000000000',
+      year: process.env.NEXT_PUBLIC_PADDLE_PREMIUM_YEAR_PRICE_ID || 'pri_01h8xz97pj0000000000000000'
     }
   },
   planDetails: {
     standard: {
       name: 'Standard Plan',
-      features: ['Basic features', 'Email support'],
+      features: ['Core application features', 'Email support', 'Basic analytics']
     },
     premium: {
       name: 'Premium Plan',
-      features: ['All features', 'Priority support'],
+      features: ['All Standard features', 'Priority support', 'Advanced analytics', 'Custom integrations', 'Team collaboration tools']
     }
-  }
-} as const;
+  },
+  checkoutUrl: 'https://checkout.paddle.com/checkout',
+  customerPortalUrl: 'https://checkout.paddle.com/customer',
+  customerPortalLink: process.env.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_LINK || 'https://sandbox-customer-portal.paddle.com/cpl_01jtqjeq79c64enc8qy3cs3zrm'
+};
 
 export type PlanType = keyof typeof PADDLE_CONFIG.prices;
 export type BillingCycle = keyof typeof PADDLE_CONFIG.prices.standard;
