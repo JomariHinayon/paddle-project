@@ -4,6 +4,9 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { auth, firestore } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 // Make this route static for export
 export const dynamic = "force-static";
@@ -94,7 +97,32 @@ function PaymentPageContent() {
     // such as Stripe, PayPal, etc.
     
     // Simulate payment processing delay
-    setTimeout(() => {
+    setTimeout(async () => {
+      // Write payment info to Firestore
+      const user = getAuth().currentUser;
+      if (user) {
+        try {
+          await addDoc(collection(firestore, 'payments'), {
+            userId: user.uid,
+            plan: planParam,
+            billing: billingParam,
+            amount: selectedPlan.price[billingParam],
+            timestamp: serverTimestamp(),
+          });
+          // Update user's current plan
+          await setDoc(
+            doc(firestore, 'users', user.uid),
+            {
+              currentPlan: planParam,
+              billing: billingParam,
+              planUpdatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        } catch (err) {
+          console.error('Failed to record payment or update user plan:', err);
+        }
+      }
       // Redirect to success page after payment
       router.push('/payment/success');
     }, 2000);

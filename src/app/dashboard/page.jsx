@@ -1061,58 +1061,47 @@ export default function Dashboard() {
   };
 
   // Handle checkout success
-  const handleCheckoutSuccess = (subscriptionData) => {
+  const handleCheckoutSuccess = async (subscriptionData) => {
     console.log('Checkout completed successfully:', subscriptionData);
     setCheckoutStatus('Subscription checkout completed! Updating your subscription status...');
-    
-    // Try to update subscription data immediately
-    if (user?.uid) {
-      // First attempt to update using the provided subscription data
-      if (subscriptionData?.subscriptionId && subscriptionData.subscriptionId !== 'pending') {
-        try {
-          const db = getFirestore();
-          const userRef = doc(db, 'users', user.uid);
-          setDoc(userRef, {
-            hasActiveSubscription: true,
-            lastTransactionDate: new Date(),
-            currentPlan: subscriptionData.planId || PADDLE_CONFIG.prices.standard.month,
-            subscriptionStatus: 'active',
-            currentSubscriptionId: subscriptionData.subscriptionId,
-            paddleCustomerId: subscriptionData.customerId,
-            lastUpdated: new Date()
-          }, { merge: true })
-            .then(() => {
-              console.log('Successfully updated user subscription from checkout data');
-              // Refresh subscription data
-              fetchSubscriptionStatus(user.uid);
-              fetchTransactionLogs(user.uid);
-            })
-            .catch(error => {
-              console.error('Error updating subscription from checkout data:', error);
-              // If direct update fails, try the manual update as a fallback
-              setTimeout(() => manualCheckSubscriptionStatus(), 2000);
-            });
-        } catch (error) {
-          console.error('Error in immediate subscription update:', error);
-          // If there's an error, try the manual update as a fallback
-          setTimeout(() => manualCheckSubscriptionStatus(), 2000);
-        }
-      } else {
-        // If we don't have subscription data yet, poll for updates or try manual update
-        console.log('No subscription ID received yet, polling for updates...');
-        // Wait a few seconds and then check for subscription updates
-        setTimeout(() => {
-          fetchSubscriptionStatus(user.uid);
-          fetchTransactionLogs(user.uid);
-          
-          // If still no active subscription after a short delay, offer manual update
-          setTimeout(() => {
-            if (!subscription?.hasActive) {
-              setCheckoutStatus('Checkout completed, but subscription status not updated automatically. You can try updating manually.');
-            }
-          }, 5000);
-        }, 3000);
-      }
+
+    if (!user?.uid) {
+      setCheckoutStatus('No user found for subscription update.');
+      return;
+    }
+
+    try {
+      const db = getFirestore();
+
+      // 1. Write to payments collection
+      await addDoc(collection(db, 'payments'), {
+        userId: user.uid,
+        plan: subscriptionData.planId || 'unknown',
+        billing: subscriptionData.billing || 'unknown',
+        email: user.email,
+        timestamp: new Date(),
+        paddleData: subscriptionData // Save all Paddle data for debugging
+      });
+      console.log('Payment recorded in Firestore');
+
+      // 2. Update user document
+      await setDoc(doc(db, 'users', user.uid), {
+        hasActiveSubscription: true,
+        lastTransactionDate: new Date(),
+        currentPlan: subscriptionData.planId || 'unknown',
+        billing: subscriptionData.billing || 'unknown',
+        subscriptionStatus: 'active',
+        lastUpdated: new Date()
+      }, { merge: true });
+      console.log('User subscription updated in Firestore');
+
+      // 3. Refresh dashboard
+      await fetchSubscriptionStatus(user.uid);
+      setCheckoutStatus('Subscription updated!');
+
+    } catch (error) {
+      console.error('Error updating Firestore after checkout:', error);
+      setCheckoutStatus('Error updating subscription: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
   
@@ -1128,43 +1117,42 @@ export default function Dashboard() {
       console.error('No logged in user');
       return;
     }
-    
     try {
-      setCheckoutStatus('Manually checking subscription status...');
-      
-      // 1. First verify we can write to Firebase
+      setCheckoutStatus('Checking for real purchases...');
       const db = getFirestore();
-      const testRef = doc(db, 'users', user.uid, 'tests', 'manual-check');
-      await setDoc(testRef, {
-        timestamp: new Date(),
-        operation: 'manual-check'
+      // Query the payments collection for this user
+      const paymentsRef = collection(db, 'payments');
+      const q = query(paymentsRef, where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        setCheckoutStatus('You have not purchased a plan yet.');
+        return;
+      }
+      // Find the latest payment (by timestamp)
+      let latestPayment = null;
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        if (!latestPayment || (data.timestamp && data.timestamp.seconds > (latestPayment.timestamp?.seconds || 0))) {
+          latestPayment = data;
+        }
       });
-      
-      console.log('Firebase test write successful');
-      
-      // 2. Update user profile with a fake subscription for testing
+      if (!latestPayment) {
+        setCheckoutStatus('You have not purchased a plan yet.');
+        return;
+      }
+      // Update user profile with the latest real plan
       const userRef = doc(db, 'users', user.uid);
-      
-      // Generate fake customer ID if needed - could be email or email+timestamp
-      const paddleCustomerId = user.email || `user-${new Date().getTime()}@example.com`;
-      
       await setDoc(userRef, {
         hasActiveSubscription: true,
         lastTransactionDate: new Date(),
-        currentPlan: PADDLE_CONFIG.prices.standard.month,  // Using the standard plan price ID
+        currentPlan: latestPayment.plan,
+        billing: latestPayment.billing,
         subscriptionStatus: 'active',
-        currentSubscriptionId: 'manual-' + new Date().getTime(),
-        paddleCustomerId: paddleCustomerId,
         lastUpdated: new Date()
       }, { merge: true });
-      
-      console.log('Manually updated subscription status with customer ID:', paddleCustomerId);
-      setCheckoutStatus('Subscription status manually updated. Refreshing data...');
-      
-      // 3. Now fetch the updated subscription data
+      setCheckoutStatus('Subscription status updated from your latest purchase.');
+      // Fetch the updated subscription data
       await fetchSubscriptionStatus(user.uid);
-      
-      // 4. Clear status after a moment
       setTimeout(() => {
         setCheckoutStatus(null);
       }, 3000);
