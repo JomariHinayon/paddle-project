@@ -5,11 +5,15 @@ const admin = require('firebase-admin');
 // Initialize Firebase Admin
 let firebaseApp;
 if (!admin.apps.length) {
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY ?
+    process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') :
+    undefined;
+
   firebaseApp = admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      privateKey: privateKey
     }),
   });
 }
@@ -91,50 +95,64 @@ exports.handler = async function(event, context) {
     if (path === '/api/webhooks/paddle' && method === 'POST') {
       console.log('Received Paddle webhook:', body);
 
-      // Verify webhook signature
-      const signature = event.headers['paddle-signature'];
-      if (!signature || !verifyPaddleWebhook(event.body, signature)) {
-        console.error('Invalid webhook signature');
-        return {
-          statusCode: 401,
-          body: JSON.stringify({ error: 'Invalid webhook signature' })
-        };
-      }
-
-      // Process subscription events
-      if (body.event_type === 'subscription.created' ||
-        body.event_type === 'subscription.updated' ||
-        body.event_type === 'subscription.cancelled') {
-
-        // Get user ID from custom data
-        const userId = body.data.custom_data?.userId;
-        if (!userId) {
-          console.error('No user ID in webhook data');
+      try {
+        // Verify webhook signature
+        const signature = event.headers['paddle-signature'];
+        if (!signature || !verifyPaddleWebhook(event.body, signature)) {
+          console.error('Invalid webhook signature');
           return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Missing user ID in custom data' })
+            statusCode: 401,
+            body: JSON.stringify({ error: 'Invalid webhook signature' })
           };
         }
 
-        const success = await handleSubscriptionEvent(body, userId);
-        if (!success) {
+        // Process subscription events
+        if (body.event_type === 'subscription.created' ||
+          body.event_type === 'subscription.updated' ||
+          body.event_type === 'subscription.cancelled') {
+
+          // Get user ID from custom data
+          const userId = body.data.custom_data?.userId;
+          if (!userId) {
+            console.error('No user ID in webhook data:', body);
+            return {
+              statusCode: 400,
+              body: JSON.stringify({ error: 'Missing user ID in custom data' })
+            };
+          }
+
+          const success = await handleSubscriptionEvent(body, userId);
+          if (!success) {
+            console.error('Failed to process subscription event:', body);
+            return {
+              statusCode: 500,
+              body: JSON.stringify({ error: 'Failed to process subscription event' })
+            };
+          }
+
+          console.log('Successfully processed subscription event for user:', userId);
           return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Failed to process subscription event' })
+            statusCode: 200,
+            body: JSON.stringify({ message: 'Webhook processed successfully' })
           };
         }
 
+        // For other webhook events, just acknowledge receipt
+        console.log('Received non-subscription webhook event:', body.event_type);
         return {
           statusCode: 200,
-          body: JSON.stringify({ message: 'Webhook processed successfully' })
+          body: JSON.stringify({ message: 'Webhook received' })
+        };
+      } catch (error) {
+        console.error('Error processing webhook:', error);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            error: 'Internal Server Error',
+            message: error.message
+          })
         };
       }
-
-      // For other webhook events, just acknowledge receipt
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ message: 'Webhook received' })
-      };
     }
 
     // Handle portal session creation
