@@ -109,12 +109,12 @@ export default function SignUp() {
         });
         setErrors(newErrors);
       } else {
-        setAuthError(getAuthErrorMessage(error.code));
+        setAuthError(getAuthErrorMessage(error.code, error.message));
       }
     }
   };
 
-  const getAuthErrorMessage = (code) => {
+  const getAuthErrorMessage = (code, message) => {
     switch (code) {
       case 'auth/email-already-in-use':
         return 'Email already in use';
@@ -123,7 +123,8 @@ export default function SignUp() {
       case 'auth/weak-password':
         return 'Password is too weak';
       default:
-        return 'Failed to create account. Please try again.';
+        // Show the actual error message if available, otherwise generic
+        return message || 'Failed to create account. Please try again.';
     }
   };
 
