@@ -13,6 +13,8 @@ import { getAuth } from 'firebase/auth';
 import { identifyPlan } from '@/lib/paddle-utils';
 import Image from 'next/image';
 import PaddleCheckoutHandler from '@/components/PaddleCheckoutHandler';
+import { getApp } from "firebase/app";
+console.log("FIREBASE PROJECT ID:", getApp().options.projectId);
 
 // Create a theme context
 import { createContext, useContext } from 'react';
@@ -445,8 +447,24 @@ export default function Dashboard() {
         console.error('Event data:', event);
       }
     } else if (event.name === 'checkout.completed') {
-      // Just log the checkout completion without saving to Firebase
-      console.log('Checkout completed. Waiting for subscription.created event.');
+      // Write payment info to Firestore on checkout.completed
+      console.log('Checkout completed. Writing payment to Firestore...');
+      if (user) {
+        const db = getFirestore();
+        try {
+          await addDoc(collection(db, 'payments'), {
+            userId: user.uid,
+            plan: event.data.items?.[0]?.price?.product_id || 'unknown',
+            billing: event.data.items?.[0]?.price?.billing_cycle?.interval || 'unknown',
+            email: user.email,
+            timestamp: new Date(),
+            paddleData: event.data
+          });
+          console.log('Payment recorded in Firestore from checkout.completed');
+        } catch (error) {
+          console.error('Error writing payment from checkout.completed:', error);
+        }
+      }
     }
   };
 

@@ -4,6 +4,7 @@
   "description": "Netlify functions for Paddle integration",
   "main": "api.js",
   "dependencies": {
-    "axios": "^1.8.4"
+    "axios": "^1.8.4",
+    "firebase-admin": "^11.11.0"
   }
 } 

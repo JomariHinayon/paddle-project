@@ -22,3 +22,6 @@ yarn-error.log*
 # Service account key file
 /config/serviceAccountKey.json
 .next/
+
+# Local Netlify folder
+.netlify
