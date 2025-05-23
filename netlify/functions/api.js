@@ -37,14 +37,24 @@ async function handleSubscriptionEvent(event, userId) {
   const transactionsRef = userRef.collection('transactions');
 
   try {
+    console.log('Processing subscription event for user:', userId);
+
     // Get subscription details from the event
     const subscriptionId = event.data.id;
     const item = event.data.items?.[0];
     const status = event.data.status;
     const nextBillDate = event.data.next_billed_at ? new Date(event.data.next_billed_at) : null;
 
+    console.log('Subscription details:', {
+      subscriptionId,
+      status,
+      nextBillDate,
+      productId: item?.product?.id,
+      productName: item?.product?.name
+    });
+
     // Save transaction record
-    await transactionsRef.doc(subscriptionId).set({
+    const transactionData = {
       userId,
       subscriptionId,
       product: {
@@ -60,10 +70,13 @@ async function handleSubscriptionEvent(event, userId) {
       startDate: event.data.started_at ? new Date(event.data.started_at) : null,
       quantity: item?.quantity ?? 1,
       timestamp: new Date()
-    });
+    };
+
+    console.log('Saving transaction data:', transactionData);
+    await transactionsRef.doc(subscriptionId).set(transactionData);
 
     // Update user's subscription status
-    await userRef.set({
+    const userData = {
       hasActiveSubscription: status === 'active',
       currentSubscriptionId: subscriptionId,
       subscriptionStatus: status,
@@ -71,12 +84,16 @@ async function handleSubscriptionEvent(event, userId) {
       nextBillDate,
       paddleCustomerId: event.data.customer?.id,
       lastSubscriptionUpdate: new Date()
-    }, { merge: true });
+    };
 
-    console.log(`Successfully processed subscription event for user ${userId}`);
+    console.log('Updating user data:', userData);
+    await userRef.set(userData, { merge: true });
+
+    console.log('Successfully updated subscription data for user:', userId);
     return true;
   } catch (error) {
-    console.error('Error handling subscription event:', error);
+    console.error('Error in handleSubscriptionEvent:', error);
+    console.error('Failed event data:', JSON.stringify(event, null, 2));
     return false;
   }
 }
@@ -93,12 +110,26 @@ exports.handler = async function(event, context) {
 
     // Handle Paddle webhooks
     if (path === '/api/webhooks/paddle' && method === 'POST') {
-      console.log('Received Paddle webhook:', body);
+      console.log('Received Paddle webhook. Headers:', JSON.stringify(event.headers));
+      console.log('Webhook body:', JSON.stringify(body, null, 2));
 
       try {
         // Verify webhook signature
         const signature = event.headers['paddle-signature'];
-        if (!signature || !verifyPaddleWebhook(event.body, signature)) {
+        if (!signature) {
+          console.error('Missing Paddle signature header');
+          return {
+            statusCode: 401,
+            body: JSON.stringify({ error: 'Missing Paddle signature header' })
+          };
+        }
+
+        // Log the verification attempt
+        console.log('Attempting to verify webhook signature:', signature);
+        const isValid = verifyPaddleWebhook(event.body, signature);
+        console.log('Signature verification result:', isValid);
+
+        if (!isValid) {
           console.error('Invalid webhook signature');
           return {
             statusCode: 401,
@@ -111,45 +142,75 @@ exports.handler = async function(event, context) {
           body.event_type === 'subscription.updated' ||
           body.event_type === 'subscription.cancelled') {
 
+          console.log('Processing subscription event:', body.event_type);
+
           // Get user ID from custom data
-          const userId = body.data.custom_data?.userId;
+          const userId = body.data?.custom_data?.userId;
           if (!userId) {
-            console.error('No user ID in webhook data:', body);
+            console.error('No user ID in webhook data. Full data:', JSON.stringify(body.data));
             return {
               statusCode: 400,
-              body: JSON.stringify({ error: 'Missing user ID in custom data' })
+              body: JSON.stringify({
+                error: 'Missing user ID in custom data',
+                data: body.data
+              })
             };
           }
 
-          const success = await handleSubscriptionEvent(body, userId);
-          if (!success) {
-            console.error('Failed to process subscription event:', body);
+          console.log('Found user ID:', userId);
+
+          try {
+            const success = await handleSubscriptionEvent(body, userId);
+            if (!success) {
+              console.error('Failed to process subscription event for user:', userId);
+              return {
+                statusCode: 500,
+                body: JSON.stringify({
+                  error: 'Failed to process subscription event',
+                  userId: userId
+                })
+              };
+            }
+
+            console.log('Successfully processed subscription event for user:', userId);
+            return {
+              statusCode: 200,
+              body: JSON.stringify({
+                message: 'Webhook processed successfully',
+                eventType: body.event_type,
+                userId: userId
+              })
+            };
+          } catch (error) {
+            console.error('Error in handleSubscriptionEvent:', error);
             return {
               statusCode: 500,
-              body: JSON.stringify({ error: 'Failed to process subscription event' })
+              body: JSON.stringify({
+                error: 'Error processing subscription event',
+                message: error.message,
+                userId: userId
+              })
             };
           }
-
-          console.log('Successfully processed subscription event for user:', userId);
-          return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Webhook processed successfully' })
-          };
         }
 
-        // For other webhook events, just acknowledge receipt
+        // For other webhook events, log and acknowledge
         console.log('Received non-subscription webhook event:', body.event_type);
         return {
           statusCode: 200,
-          body: JSON.stringify({ message: 'Webhook received' })
+          body: JSON.stringify({
+            message: 'Webhook received',
+            eventType: body.event_type
+          })
         };
       } catch (error) {
-        console.error('Error processing webhook:', error);
+        console.error('Unhandled error processing webhook:', error);
         return {
           statusCode: 500,
-          body: JSON.stringify({
+          body: JSON.stringify({ 
             error: 'Internal Server Error',
-            message: error.message
+            message: error.message,
+            stack: error.stack
           })
         };
       }
