@@ -107,16 +107,47 @@ exports.handler = async function(event, context) {
     const body = event.body ? JSON.parse(event.body) : {};
     const params = event.queryStringParameters || {};
 
-    console.log(`API request: ${method} ${path}`, {
+    console.log('Received request:', {
       path: event.path,
       cleanPath: path,
-      params
+      method,
+      headers: event.headers,
+      body: body
     });
+
+    // Add a test endpoint
+    if (path === '/test' || path === '/api/test') {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: 'API is working',
+          environment: process.env.NODE_ENV,
+          hasFirebaseConfig: !!process.env.FIREBASE_PROJECT_ID,
+          hasPaddleConfig: !!process.env.PADDLE_PUBLIC_KEY
+        })
+      };
+    }
 
     // Handle Paddle webhooks
     if ((path === '/webhooks/paddle' || path === '/api/webhooks/paddle') && method === 'POST') {
-      console.log('Received Paddle webhook. Headers:', JSON.stringify(event.headers));
-      console.log('Webhook body:', JSON.stringify(body, null, 2));
+      console.log('Processing Paddle webhook');
+      console.log('Headers:', JSON.stringify(event.headers, null, 2));
+      console.log('Raw body:', event.body);
+      console.log('Parsed body:', JSON.stringify(body, null, 2));
+
+      // Check if Firebase is initialized
+      if (!admin.apps.length) {
+        console.error('Firebase not initialized');
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            error: 'Firebase not initialized',
+            projectId: process.env.FIREBASE_PROJECT_ID ? 'configured' : 'missing',
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL ? 'configured' : 'missing',
+            privateKey: process.env.FIREBASE_PRIVATE_KEY ? 'configured' : 'missing'
+          })
+        };
+      }
 
       try {
         // Verify webhook signature
@@ -125,12 +156,15 @@ exports.handler = async function(event, context) {
           console.error('Missing Paddle signature header');
           return {
             statusCode: 401,
-            body: JSON.stringify({ error: 'Missing Paddle signature header' })
+            body: JSON.stringify({
+              error: 'Missing Paddle signature header',
+              headers: Object.keys(event.headers)
+            })
           };
         }
 
         // Log the verification attempt
-        console.log('Attempting to verify webhook signature:', signature);
+        console.log('Verifying webhook signature:', signature);
         const isValid = verifyPaddleWebhook(event.body, signature);
         console.log('Signature verification result:', isValid);
 
@@ -155,9 +189,10 @@ exports.handler = async function(event, context) {
             console.error('No user ID in webhook data. Full data:', JSON.stringify(body.data));
             return {
               statusCode: 400,
-              body: JSON.stringify({
+              body: JSON.stringify({ 
                 error: 'Missing user ID in custom data',
-                data: body.data
+                data: body.data,
+                customData: body.data?.custom_data
               })
             };
           }
@@ -170,7 +205,7 @@ exports.handler = async function(event, context) {
               console.error('Failed to process subscription event for user:', userId);
               return {
                 statusCode: 500,
-                body: JSON.stringify({
+                body: JSON.stringify({ 
                   error: 'Failed to process subscription event',
                   userId: userId
                 })
@@ -180,7 +215,7 @@ exports.handler = async function(event, context) {
             console.log('Successfully processed subscription event for user:', userId);
             return {
               statusCode: 200,
-              body: JSON.stringify({
+              body: JSON.stringify({ 
                 message: 'Webhook processed successfully',
                 eventType: body.event_type,
                 userId: userId
@@ -190,7 +225,7 @@ exports.handler = async function(event, context) {
             console.error('Error in handleSubscriptionEvent:', error);
             return {
               statusCode: 500,
-              body: JSON.stringify({
+              body: JSON.stringify({ 
                 error: 'Error processing subscription event',
                 message: error.message,
                 userId: userId
@@ -203,17 +238,17 @@ exports.handler = async function(event, context) {
         console.log('Received non-subscription webhook event:', body.event_type);
         return {
           statusCode: 200,
-          body: JSON.stringify({
+          body: JSON.stringify({ 
             message: 'Webhook received',
             eventType: body.event_type
           })
         };
       } catch (error) {
-        console.error('Unhandled error processing webhook:', error);
+        console.error('Error processing webhook:', error);
         return {
           statusCode: 500,
           body: JSON.stringify({ 
-            error: 'Internal Server Error',
+            error: 'Error processing webhook',
             message: error.message,
             stack: error.stack
           })
@@ -260,22 +295,23 @@ exports.handler = async function(event, context) {
       }
     }
 
-    // Default response for unhandled API routes
+    // Default response for unhandled routes
     return {
       statusCode: 404,
       body: JSON.stringify({ 
-        error: 'API endpoint not found', 
-        path: path 
+        error: 'Not found',
+        path: path,
+        method: method
       })
     };
-    
   } catch (error) {
     console.error('Unhandled error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ 
-        error: 'Internal Server Error',
-        message: error.message
+        error: 'Internal server error',
+        message: error.message,
+        stack: error.stack
       })
     };
   }
