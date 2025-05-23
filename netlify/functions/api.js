@@ -101,15 +101,20 @@ async function handleSubscriptionEvent(event, userId) {
 // This is a simplified API handler that doesn't use Next.js
 exports.handler = async function(event, context) {
   try {
+    // Remove the /.netlify/functions/api prefix from the path
     const path = event.path.replace('/.netlify/functions/api', '');
     const method = event.httpMethod;
     const body = event.body ? JSON.parse(event.body) : {};
     const params = event.queryStringParameters || {};
 
-    console.log(`API request: ${method} ${path}`, { params });
+    console.log(`API request: ${method} ${path}`, {
+      path: event.path,
+      cleanPath: path,
+      params
+    });
 
     // Handle Paddle webhooks
-    if (path === '/api/webhooks/paddle' && method === 'POST') {
+    if ((path === '/webhooks/paddle' || path === '/api/webhooks/paddle') && method === 'POST') {
       console.log('Received Paddle webhook. Headers:', JSON.stringify(event.headers));
       console.log('Webhook body:', JSON.stringify(body, null, 2));
 
