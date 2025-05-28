@@ -1,6 +1,6 @@
 [build]
-  command = "node convert-to-js.js && npm run build"
-  publish = "out"
+  command = "npm run build"
+  publish = ".next"
   functions = "netlify/functions"
 
 # If TypeScript errors persist, uncomment the line below to convert to JavaScript
@@ -24,12 +24,6 @@
   to = "/.netlify/functions/api/:splat"
   status = 200
   force = true
-
-# Default SPA fallback
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
 
 # Cache static assets 
 [[headers]]
