@@ -8,11 +8,10 @@ import LogoutButton from '@/components/LogoutButton';
 import UserProfileCard from '@/components/UserProfileCard';
 import Script from 'next/script';
 import { PADDLE_CONFIG } from '@/lib/paddle-config';
-import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, collection, addDoc, getDoc, getDocs, query, orderBy, limit, where, onSnapshot } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { identifyPlan } from '@/lib/paddle-utils';
 import Image from 'next/image';
-import PaddleCheckoutHandler from '@/components/PaddleCheckoutHandler';
 import { getApp } from "firebase/app";
 console.log("FIREBASE PROJECT ID:", getApp().options.projectId);
 
@@ -1290,12 +1289,6 @@ export default function Dashboard() {
           }}
         />
         
-        {/* Add PaddleCheckoutHandler to handle checkout completion */}
-        <PaddleCheckoutHandler 
-          onSuccess={handleCheckoutSuccess}
-          onError={handleCheckoutError}
-        />
-        
         {/* Modern Navigation Bar with Glass Effect */}
         <nav className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-700/80">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -2022,6 +2015,53 @@ export default function Dashboard() {
       </div>
     );
   };
+
+  // Real-time Firestore listeners for subscription and payments
+  useEffect(() => {
+    if (!user?.uid) return;
+    const db = getFirestore();
+    // Listen to the latest subscription
+    const subRef = collection(db, 'users', user.uid, 'subscriptions');
+    const unsubSub = onSnapshot(subRef, (snapshot) => {
+      let latest = null;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (!latest || (data.createdAt && data.createdAt > latest.createdAt)) {
+          latest = { ...data, id: doc.id };
+        }
+      });
+      if (latest) {
+        setSubscription({
+          hasActive: latest.status === 'active',
+          plan: latest.planId || latest.plan || null,
+          status: latest.status || 'inactive',
+          lastTransaction: latest.lastTransactionDate || null,
+          product: latest.product || null,
+          customerId: latest.customerId || null,
+          subscriptionId: latest.subscriptionId || latest.id || null,
+          nextBillDate: latest.nextBillDate || null,
+          canceledAt: latest.canceledAt || null,
+          scheduled_change: latest.scheduled_change || null,
+          cancellationEffectiveDate: latest.cancellationEffectiveDate || null
+        });
+        setSubscriptionDetails(latest);
+      }
+    });
+    // Listen to the latest payment
+    const payRef = collection(db, 'users', user.uid, 'payments');
+    const unsubPay = onSnapshot(payRef, (snapshot) => {
+      const logs = [];
+      snapshot.forEach(doc => {
+        logs.push({ id: doc.id, ...doc.data() });
+      });
+      logs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+      setTransactions(logs);
+    });
+    return () => {
+      unsubSub();
+      unsubPay();
+    };
+  }, [user?.uid]);
 
   return (
     <ThemeProvider>

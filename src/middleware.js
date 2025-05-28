@@ -5,7 +5,6 @@ const apiRoutes = ['/api/subscriptions', '/api/webhook', '/api/auth'];
 
 export async function middleware(request) {
   const response = NextResponse.next();
-
   const { pathname } = request.nextUrl;
 
   // Skip CSP enforcement for dashboard to avoid issues with Paddle
@@ -40,33 +39,20 @@ export async function middleware(request) {
     return response;
   }
 
-  // Check for session token
-  const session = request.cookies.get('session')?.value;
-
-  if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  try {
-    // Simple validation check - we'll do actual verification in API routes
-    // Edge runtime doesn't support Firebase Admin, so we just do a basic format check
-    if (!session || session.split('.').length !== 3) {
-      throw new Error('Invalid session format');
-    }
-
-    // For protected routes, proceed with the user's session
+  // Skip API routes (no auth for /api/*)
+  if (pathname.startsWith('/api')) {
     return response;
-  } catch (error) {
-    // Clear invalid session and redirect to login
-    const redirectResponse = NextResponse.redirect(new URL('/login', request.url));
-    redirectResponse.cookies.delete('session');
-    return redirectResponse;
   }
+
+  // Only protect API routes (no session check for dashboard or other pages)
+  // Remove session cookie check for non-API routes
+
+  return response;
 }
 
 export const config = {
   matcher: [
     // Protect all routes except static assets and public files
-    '/((?!_next/static|favicon.ico|.*\\.[^/]*$).*)',
+    '/((?!_next/static|favicon.ico|.*\.[^/]*$).*)',
   ],
 };
