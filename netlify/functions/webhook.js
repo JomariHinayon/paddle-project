@@ -68,7 +68,7 @@ exports.handler = async (event, context) => {
             return { statusCode: 400, body: JSON.stringify({ error: 'Invalid signature' }) };
         }
 
-        // Robust userId extraction
+        // Robust userId extraction (now includes nested data.custom_data.userId)
         let userId = '';
         if (body.custom_data_userId) {
             userId = String(body.custom_data_userId);
@@ -76,6 +76,8 @@ exports.handler = async (event, context) => {
             userId = String(body.user_id);
         } else if (body.custom_data && body.custom_data.userId) {
             userId = String(body.custom_data.userId);
+        } else if (body.data && body.data.custom_data && body.data.custom_data.userId) {
+            userId = String(body.data.custom_data.userId);
         }
 
         const subscriptionId = String(body.subscription_id || body.data?.id || '');
