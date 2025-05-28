@@ -75,6 +75,20 @@ export default async function handler(req, res) {
         const planId = body.subscription_plan_id || body.product_id || null;
         const timestamp = new Date();
 
+        // Defensive checks for required fields
+        if (!userId) {
+            console.error('Missing userId in webhook payload:', body);
+            return res.status(400).json({ error: 'Missing userId in webhook payload' });
+        }
+        if ((alertName === 'subscription_created' || alertName === 'subscription_updated') && !subscriptionId) {
+            console.error('Missing subscriptionId in webhook payload:', body);
+            return res.status(400).json({ error: 'Missing subscriptionId in webhook payload' });
+        }
+        if ((alertName === 'payment_succeeded' || alertName === 'checkout_completed') && !paymentId) {
+            console.error('Missing paymentId in webhook payload:', body);
+            return res.status(400).json({ error: 'Missing paymentId in webhook payload' });
+        }
+
         // Logging for debugging
         console.log('Received Paddle webhook:', { alertName, userId, subscriptionId, paymentId, email, planId });
 
