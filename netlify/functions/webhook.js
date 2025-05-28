@@ -1,7 +1,6 @@
-import { getFirestore, doc, setDoc } from 'firebase-admin/firestore';
-import { initializeApp, applicationDefault } from 'firebase-admin/app';
-import { buffer } from 'micro';
-import crypto from 'crypto';
+const { getFirestore, doc, setDoc } = require('firebase-admin/firestore');
+const { initializeApp, applicationDefault } = require('firebase-admin/app');
+const crypto = require('crypto');
 
 // Initialize Firebase Admin if not already initialized
 if (!global._firebaseAdminInitialized) {
@@ -39,22 +38,14 @@ function verifyPaddleSignature(body, signature) {
     }
 }
 
-export const config = {
-    api: {
-        bodyParser: false, // We'll handle raw body for signature verification
-    },
-};
-
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+exports.handler = async (event, context) => {
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
     try {
-        const rawBody = await buffer(req);
-        const bodyStr = rawBody.toString('utf8');
-        // Paddle sends as application/x-www-form-urlencoded
-        const params = new URLSearchParams(bodyStr);
+        // Parse body (x-www-form-urlencoded)
+        const params = new URLSearchParams(event.body);
         const body = {};
         for (const [key, value] of params.entries()) {
             body[key] = value;
@@ -63,30 +54,29 @@ export default async function handler(req, res) {
         // Signature verification (skip if BYPASS_PADDLE_VERIFICATION is true)
         if (!BYPASS_PADDLE_VERIFICATION && !verifyPaddleSignature(body, body.p_signature)) {
             console.error('Invalid Paddle signature');
-            return res.status(400).json({ error: 'Invalid signature' });
+            return { statusCode: 400, body: JSON.stringify({ error: 'Invalid signature' }) };
         }
 
-        // Parse event type
+        // Defensive checks for required fields
+        const userId = String(body.custom_data_userId || body.user_id || '');
+        const subscriptionId = String(body.subscription_id || '');
+        const paymentId = String(body.order_id || body.checkout_id || '');
         const alertName = body.alert_name;
-        const userId = body.custom_data_userId || body.user_id || null;
-        const subscriptionId = body.subscription_id || null;
-        const paymentId = body.order_id || body.checkout_id || null;
         const email = body.email || body.user_email || null;
         const planId = body.subscription_plan_id || body.product_id || null;
         const timestamp = new Date();
 
-        // Defensive checks for required fields
         if (!userId) {
             console.error('Missing userId in webhook payload:', body);
-            return res.status(400).json({ error: 'Missing userId in webhook payload' });
+            return { statusCode: 400, body: JSON.stringify({ error: 'Missing userId in webhook payload' }) };
         }
         if ((alertName === 'subscription_created' || alertName === 'subscription_updated') && !subscriptionId) {
             console.error('Missing subscriptionId in webhook payload:', body);
-            return res.status(400).json({ error: 'Missing subscriptionId in webhook payload' });
+            return { statusCode: 400, body: JSON.stringify({ error: 'Missing subscriptionId in webhook payload' }) };
         }
         if ((alertName === 'payment_succeeded' || alertName === 'checkout_completed') && !paymentId) {
             console.error('Missing paymentId in webhook payload:', body);
-            return res.status(400).json({ error: 'Missing paymentId in webhook payload' });
+            return { statusCode: 400, body: JSON.stringify({ error: 'Missing paymentId in webhook payload' }) };
         }
 
         // Logging for debugging
@@ -139,9 +129,9 @@ export default async function handler(req, res) {
             console.log('Global payment written to Firestore');
         }
 
-        res.status(200).json({ received: true });
+        return { statusCode: 200, body: JSON.stringify({ received: true }) };
     } catch (error) {
         console.error('Webhook handler error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) };
     }
-} 
+}; 
