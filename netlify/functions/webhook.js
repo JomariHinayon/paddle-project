@@ -44,11 +44,22 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // Parse body (x-www-form-urlencoded)
-        const params = new URLSearchParams(event.body);
-        const body = {};
-        for (const [key, value] of params.entries()) {
-            body[key] = value;
+        // Detect content type and parse body accordingly
+        let body = {};
+        const contentType = event.headers['content-type'] || event.headers['Content-Type'] || '';
+        if (contentType.includes('application/json')) {
+            try {
+                body = JSON.parse(event.body);
+            } catch (e) {
+                console.error('Failed to parse JSON body:', e, event.body);
+                return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+            }
+        } else {
+            // Default: x-www-form-urlencoded
+            const params = new URLSearchParams(event.body);
+            for (const [key, value] of params.entries()) {
+                body[key] = value;
+            }
         }
 
         // Signature verification (skip if BYPASS_PADDLE_VERIFICATION is true)
@@ -57,55 +68,70 @@ exports.handler = async (event, context) => {
             return { statusCode: 400, body: JSON.stringify({ error: 'Invalid signature' }) };
         }
 
-        // Defensive checks for required fields
-        const userId = String(body.custom_data_userId || body.user_id || '');
-        const subscriptionId = String(body.subscription_id || '');
-        const paymentId = String(body.order_id || body.checkout_id || '');
-        const alertName = body.alert_name;
-        const email = body.email || body.user_email || null;
-        const planId = body.subscription_plan_id || body.product_id || null;
+        // Robust userId extraction
+        let userId = '';
+        if (body.custom_data_userId) {
+            userId = String(body.custom_data_userId);
+        } else if (body.user_id) {
+            userId = String(body.user_id);
+        } else if (body.custom_data && body.custom_data.userId) {
+            userId = String(body.custom_data.userId);
+        }
+
+        const subscriptionId = String(body.subscription_id || body.data?.id || '');
+        const paymentId = String(body.order_id || body.checkout_id || body.data?.id || '');
+        const alertName = body.alert_name || body.event_type;
+        const email = body.email || body.user_email || body.data?.email || null;
+        const planId = body.subscription_plan_id || body.product_id || body.data?.plan_id || null;
         const timestamp = new Date();
 
+        // Improved error logging
         if (!userId) {
-            console.error('Missing userId in webhook payload:', body);
+            console.error('Missing userId in webhook payload:', JSON.stringify(body, null, 2));
             return { statusCode: 400, body: JSON.stringify({ error: 'Missing userId in webhook payload' }) };
         }
-        if ((alertName === 'subscription_created' || alertName === 'subscription_updated') && !subscriptionId) {
-            console.error('Missing subscriptionId in webhook payload:', body);
+        if ((alertName === 'subscription_created' || alertName === 'subscription_updated' || alertName === 'subscription.created' || alertName === 'subscription.updated') && !subscriptionId) {
+            console.error('Missing subscriptionId in webhook payload:', JSON.stringify(body, null, 2));
             return { statusCode: 400, body: JSON.stringify({ error: 'Missing subscriptionId in webhook payload' }) };
         }
-        if ((alertName === 'payment_succeeded' || alertName === 'checkout_completed') && !paymentId) {
-            console.error('Missing paymentId in webhook payload:', body);
+        if ((alertName === 'payment_succeeded' || alertName === 'checkout_completed' || alertName === 'payment.succeeded' || alertName === 'checkout.completed') && !paymentId) {
+            console.error('Missing paymentId in webhook payload:', JSON.stringify(body, null, 2));
             return { statusCode: 400, body: JSON.stringify({ error: 'Missing paymentId in webhook payload' }) };
         }
 
         // Logging for debugging
-        console.log('Received Paddle webhook:', { alertName, userId, subscriptionId, paymentId, email, planId });
+        console.log('Received Paddle webhook:', { alertName, userId, subscriptionId, paymentId, email, planId, contentType });
+
+        // Defensive check for doc function
+        if (typeof doc !== 'function') {
+            console.error('Firestore doc is not a function! Check your firebase-admin version and import.');
+            return { statusCode: 500, body: JSON.stringify({ error: 'Firestore doc is not a function' }) };
+        }
 
         // Write to Firestore based on event type
-        if ((alertName === 'subscription_created' || alertName === 'subscription_updated') && userId && subscriptionId) {
+        if ((alertName === 'subscription_created' || alertName === 'subscription_updated' || alertName === 'subscription.created' || alertName === 'subscription.updated') && userId && subscriptionId) {
             await setDoc(doc(db, 'users', userId, 'subscriptions', subscriptionId), {
                 userId,
                 subscriptionId,
                 planId,
                 email,
-                status: body.status || 'active',
-                nextBillDate: body.next_bill_date ? new Date(body.next_bill_date) : null,
-                canceledAt: body.cancellation_effective_date ? new Date(body.cancellation_effective_date) : null,
+                status: body.status || body.data?.status || 'active',
+                nextBillDate: body.next_bill_date ? new Date(body.next_bill_date) : (body.data?.next_billed_at ? new Date(body.data.next_billed_at) : null),
+                canceledAt: body.cancellation_effective_date ? new Date(body.cancellation_effective_date) : (body.data?.canceled_at ? new Date(body.data.canceled_at) : null),
                 createdAt: timestamp,
                 rawData: body,
             }, { merge: true });
             console.log('Subscription written to Firestore');
         }
-        if ((alertName === 'payment_succeeded' || alertName === 'checkout_completed') && userId && paymentId) {
+        if ((alertName === 'payment_succeeded' || alertName === 'checkout_completed' || alertName === 'payment.succeeded' || alertName === 'checkout.completed') && userId && paymentId) {
             await setDoc(doc(db, 'users', userId, 'payments', paymentId), {
                 userId,
                 paymentId,
                 subscriptionId,
                 planId,
                 email,
-                amount: body.sale_gross || body.amount || null,
-                currency: body.currency || 'USD',
+                amount: body.sale_gross || body.amount || body.data?.amount || null,
+                currency: body.currency || body.data?.currency_code || 'USD',
                 status: 'completed',
                 timestamp,
                 rawData: body,
@@ -120,8 +146,8 @@ exports.handler = async (event, context) => {
                 subscriptionId,
                 planId,
                 email,
-                amount: body.sale_gross || body.amount || null,
-                currency: body.currency || 'USD',
+                amount: body.sale_gross || body.amount || body.data?.amount || null,
+                currency: body.currency || body.data?.currency_code || 'USD',
                 status: alertName,
                 timestamp,
                 rawData: body,
@@ -132,6 +158,6 @@ exports.handler = async (event, context) => {
         return { statusCode: 200, body: JSON.stringify({ received: true }) };
     } catch (error) {
         console.error('Webhook handler error:', error);
-        return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) };
+        return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error', details: error.message }) };
     }
 }; 
