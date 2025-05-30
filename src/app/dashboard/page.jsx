@@ -1261,6 +1261,10 @@ export default function Dashboard() {
       if (details.plan && identifyPlan(details.plan)?.name) return identifyPlan(details.plan).name;
       if (details.product?.id && identifyPlan(details.product.id)?.name) return identifyPlan(details.product.id).name;
       if (details.name) return details.name;
+      if (details.items && details.items[0]) {
+        if (details.items[0].name) return details.items[0].name;
+        if (details.items[0].id && identifyPlan(details.items[0].id)?.name) return identifyPlan(details.items[0].id).name;
+      }
       return 'Free Plan';
     };
     
