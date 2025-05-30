@@ -67,6 +67,9 @@ exports.handler = async (event, context) => {
             }
         }
 
+        // Log the full webhook payload for debugging
+        console.log('Full Paddle webhook body:', JSON.stringify(body, null, 2));
+
         // Signature verification (skip if BYPASS_PADDLE_VERIFICATION is true)
         if (!BYPASS_PADDLE_VERIFICATION && !verifyPaddleSignature(body, body.p_signature)) {
             console.error('Invalid Paddle signature');
