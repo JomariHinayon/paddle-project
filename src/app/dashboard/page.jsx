@@ -1163,7 +1163,7 @@ export default function Dashboard() {
         hasActiveSubscription: true,
         lastTransactionDate: new Date(),
         currentPlan: latestPayment.plan || latestPayment.planId || latestPayment.planName || null,
-        billing: latestPayment.billing,
+        billing: typeof latestPayment.billing !== 'undefined' ? latestPayment.billing : null,
         subscriptionStatus: 'active',
         lastUpdated: new Date()
       }, { merge: true });
