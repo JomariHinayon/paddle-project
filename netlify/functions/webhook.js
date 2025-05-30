@@ -1,16 +1,17 @@
-const { getFirestore, doc, setDoc } = require('firebase-admin/firestore');
+const admin = require('firebase-admin');
 const { initializeApp, applicationDefault } = require('firebase-admin/app');
 const crypto = require('crypto');
 
 // Initialize Firebase Admin if not already initialized
 if (!global._firebaseAdminInitialized) {
-    initializeApp({
-        credential: applicationDefault(),
-    });
+    // For admin SDK, use initializeApp from firebase-admin
+    if (!admin.apps.length) {
+        admin.initializeApp({
+            credential: applicationDefault(),
+        });
+    }
     global._firebaseAdminInitialized = true;
 }
-
-const db = getFirestore();
 
 // Paddle public key for webhook signature verification (replace with your actual Paddle public key)
 const PADDLE_PUBLIC_KEY = process.env.PADDLE_PUBLIC_KEY || `-----BEGIN PUBLIC KEY-----\nYOUR_PADDLE_PUBLIC_KEY_HERE\n-----END PUBLIC KEY-----`;
@@ -104,15 +105,9 @@ exports.handler = async (event, context) => {
         // Logging for debugging
         console.log('Received Paddle webhook:', { alertName, userId, subscriptionId, paymentId, email, planId, contentType });
 
-        // Defensive check for doc function
-        if (typeof doc !== 'function') {
-            console.error('Firestore doc is not a function! Check your firebase-admin version and import.');
-            return { statusCode: 500, body: JSON.stringify({ error: 'Firestore doc is not a function' }) };
-        }
-
         // Write to Firestore based on event type
         if ((alertName === 'subscription_created' || alertName === 'subscription_updated' || alertName === 'subscription.created' || alertName === 'subscription.updated') && userId && subscriptionId) {
-            await setDoc(doc(db, 'users', userId, 'subscriptions', subscriptionId), {
+            await admin.firestore().doc(`users/${userId}/subscriptions/${subscriptionId}`).set({
                 userId,
                 subscriptionId,
                 planId,
@@ -126,7 +121,7 @@ exports.handler = async (event, context) => {
             console.log('Subscription written to Firestore');
         }
         if ((alertName === 'payment_succeeded' || alertName === 'checkout_completed' || alertName === 'payment.succeeded' || alertName === 'checkout.completed') && userId && paymentId) {
-            await setDoc(doc(db, 'users', userId, 'payments', paymentId), {
+            await admin.firestore().doc(`users/${userId}/payments/${paymentId}`).set({
                 userId,
                 paymentId,
                 subscriptionId,
@@ -142,7 +137,7 @@ exports.handler = async (event, context) => {
         }
         // Optionally, write to a global payments collection for admin
         if (userId && paymentId) {
-            await setDoc(doc(db, 'payments', paymentId), {
+            await admin.firestore().doc(`payments/${paymentId}`).set({
                 userId,
                 paymentId,
                 subscriptionId,
