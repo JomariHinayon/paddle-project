@@ -1112,8 +1112,9 @@ export default function Dashboard() {
       }, { merge: true });
       console.log('User subscription updated in Firestore');
 
-      // 3. Refresh dashboard
+      // 3. Refresh dashboard (manual fetch to force UI update)
       await fetchSubscriptionStatus(user.uid);
+      await fetchSubscriptionData(user.uid);
       setCheckoutStatus('Subscription updated!');
 
     } catch (error) {
