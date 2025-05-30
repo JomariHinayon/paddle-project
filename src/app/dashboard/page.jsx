@@ -1255,6 +1255,14 @@ export default function Dashboard() {
 
   const DashboardContent = () => {
     const { theme } = useTheme();
+    // Dito ilalagay ang getPlanName function
+    const getPlanName = (details) => {
+      if (details.planId && identifyPlan(details.planId)?.name) return identifyPlan(details.planId).name;
+      if (details.plan && identifyPlan(details.plan)?.name) return identifyPlan(details.plan).name;
+      if (details.product?.id && identifyPlan(details.product.id)?.name) return identifyPlan(details.product.id).name;
+      if (details.name) return details.name;
+      return 'Free Plan';
+    };
     
     return (
       <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-slate-900' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`}>
