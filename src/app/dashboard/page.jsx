@@ -1162,7 +1162,7 @@ export default function Dashboard() {
       await setDoc(userRef, {
         hasActiveSubscription: true,
         lastTransactionDate: new Date(),
-        currentPlan: latestPayment.plan,
+        currentPlan: latestPayment.plan || latestPayment.planId || latestPayment.planName || null,
         billing: latestPayment.billing,
         subscriptionStatus: 'active',
         lastUpdated: new Date()
