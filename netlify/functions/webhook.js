@@ -92,8 +92,14 @@ exports.handler = async (event, context) => {
         const paymentId = String(body.order_id || body.checkout_id || body.data?.id || '');
         const alertName = body.alert_name || body.event_type;
         const email = body.email || body.user_email || body.data?.email || null;
-        const planId = body.plan_id || body.product_id || body.subscription_plan_id || (body.data && (body.data.plan_id || body.data.product_id)) || null;
-        const planName = body.plan_name || (body.data && body.data.plan_name) || null;
+        // Extract plan info from various possible locations
+        let planId = body.plan_id || body.product_id || body.subscription_plan_id || (body.data && (body.data.plan_id || body.data.product_id));
+        let planName = body.plan_name || (body.data && body.data.plan_name);
+        // NEW: Check in data.items[0].price
+        if ((!planId || !planName) && body.data && Array.isArray(body.data.items) && body.data.items[0] && body.data.items[0].price) {
+            planId = planId || body.data.items[0].price.id;
+            planName = planName || body.data.items[0].price.name;
+        }
         const timestamp = new Date();
 
         // Log the Firestore project ID for debugging (robust)
