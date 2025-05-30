@@ -17,6 +17,7 @@ if (!global._firebaseAdminInitialized) {
     global._firebaseAdminInitialized = true;
 }
 
+
 // Paddle public key for webhook signature verification (replace with your actual Paddle public key)
 const PADDLE_PUBLIC_KEY = process.env.PADDLE_PUBLIC_KEY || `-----BEGIN PUBLIC KEY-----\nYOUR_PADDLE_PUBLIC_KEY_HERE\n-----END PUBLIC KEY-----`;
 const BYPASS_PADDLE_VERIFICATION = process.env.BYPASS_PADDLE_VERIFICATION === 'true';
