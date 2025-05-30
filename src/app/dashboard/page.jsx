@@ -1573,7 +1573,7 @@ export default function Dashboard() {
                           <div>
                             <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Current Plan</span>
                             <h4 className="text-xl font-bold text-slate-900 dark:text-white">
-                              {subscriptionDetails.planId ? identifyPlan(subscriptionDetails.planId)?.name || 'Standard Plan' : 'Free Plan'}
+                              {getPlanName(subscriptionDetails)}
                             </h4>
                           </div>
                           <div className={`px-3 py-1 rounded-full text-xs font-medium ${
