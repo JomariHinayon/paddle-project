@@ -92,13 +92,21 @@ exports.handler = async (event, context) => {
         const planId = body.subscription_plan_id || body.product_id || body.data?.plan_id || null;
         const timestamp = new Date();
 
-        // Log the Firestore project ID for debugging
-        console.log('Firestore project:', admin.app().options.projectId);
+        // Log the Firestore project ID for debugging (robust)
+        let projectId = admin.app().options.projectId || (admin.app().options.credential && admin.app().options.credential.projectId) || process.env.FIREBASE_PROJECT_ID || 'undefined';
+        console.log('Firestore project:', projectId);
         // Optionally, log the full options for debugging
         console.log('Firebase Admin app options:', admin.app().options);
 
-        // Improved error logging
-        if (!userId) {
+        // Only require userId for relevant events
+        const eventsRequiringUserId = [
+            'transaction.created', 'transaction.updated', 'transaction.completed', 'transaction.paid', 'transaction.ready',
+            'subscription.created', 'subscription.updated', 'subscription.trialing', 'subscription.cancelled',
+            'payment.succeeded', 'payment.failed', 'checkout.completed', 'payment_succeeded', 'checkout_completed',
+        ];
+        const needsUserId = eventsRequiringUserId.includes(alertName);
+
+        if (needsUserId && !userId) {
             console.error('Missing userId in webhook payload:', JSON.stringify(body, null, 2));
             return { statusCode: 400, body: JSON.stringify({ error: 'Missing userId in webhook payload' }) };
         }
