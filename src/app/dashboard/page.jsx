@@ -1479,8 +1479,12 @@ export default function Dashboard() {
                           Welcome, {user?.displayName || user?.email?.split('@')[0]}!
                         </h1>
                         <p className="text-blue-100 max-w-md">
-                          Your subscription is active. 
-                          Enjoy full access to all premium features.
+                          {(() => {
+                            const plan = getPlanName(subscriptionDetails).toLowerCase();
+                            if (plan.includes('standard')) return 'Enjoy full access to all Standard Plan features.';
+                            if (plan.includes('premium')) return 'Enjoy full access to all Premium Plan features.';
+                            return 'Enjoy full access to all features.';
+                          })()}
                         </p>
                       </div>
                       <div className="mt-6 pt-4 ">
