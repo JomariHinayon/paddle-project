@@ -4,10 +4,14 @@ const crypto = require('crypto');
 
 // Initialize Firebase Admin if not already initialized
 if (!global._firebaseAdminInitialized) {
-    // For admin SDK, use initializeApp from firebase-admin
+    // For admin SDK, use initializeApp from firebase-admin with explicit credentials
     if (!admin.apps.length) {
         admin.initializeApp({
-            credential: applicationDefault(),
+            credential: admin.credential.cert({
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            }),
         });
     }
     global._firebaseAdminInitialized = true;
