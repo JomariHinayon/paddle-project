@@ -1506,7 +1506,6 @@ export default function Dashboard() {
               <div className="px-6 py-8 md:px-8 md:py-8 relative">
                 <div className="absolute top-0 right-0 w-64 h-64 -translate-y-24 translate-x-24 rounded-full bg-white/10 opacity-50" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 translate-y-20 -translate-x-16 rounded-full bg-white/5 opacity-50" />
-                
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                   <div>
                     <h1 className="text-2xl font-bold text-white mb-2">
@@ -1533,7 +1532,6 @@ export default function Dashboard() {
             <div className="mb-8 bg-gradient-to-r from-slate-700 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-2xl shadow-md overflow-hidden">
               <div className="px-6 py-8 md:px-8 md:py-8 relative">
                 <div className="absolute top-0 right-0 w-64 h-64 -translate-y-24 translate-x-24 rounded-full bg-white/10 opacity-20" />
-                
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                   <div>
                     <h1 className="text-2xl font-bold text-white mb-2">
@@ -1555,6 +1553,26 @@ export default function Dashboard() {
                     >
                       View Plans
                     </button>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm p-5 rounded-xl hidden md:block">
+                    <div className="flex items-center space-x-3 text-white mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Access all premium features</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-white mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Priority customer support</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-300" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Cancel anytime</span>
+                    </div>
                   </div>
                 </div>
               </div>
