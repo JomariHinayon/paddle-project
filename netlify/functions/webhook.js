@@ -88,6 +88,9 @@ exports.handler = async (event, context) => {
         const planId = body.subscription_plan_id || body.product_id || body.data?.plan_id || null;
         const timestamp = new Date();
 
+        // Log the Firestore project ID for debugging
+        console.log('Firestore project:', admin.app().options.projectId);
+
         // Improved error logging
         if (!userId) {
             console.error('Missing userId in webhook payload:', JSON.stringify(body, null, 2));
@@ -105,51 +108,66 @@ exports.handler = async (event, context) => {
         // Logging for debugging
         console.log('Received Paddle webhook:', { alertName, userId, subscriptionId, paymentId, email, planId, contentType });
 
-        // Write to Firestore based on event type
+        // Write to Firestore based on event type, with detailed logging and error catching
         if ((alertName === 'subscription_created' || alertName === 'subscription_updated' || alertName === 'subscription.created' || alertName === 'subscription.updated') && userId && subscriptionId) {
-            await admin.firestore().doc(`users/${userId}/subscriptions/${subscriptionId}`).set({
-                userId,
-                subscriptionId,
-                planId,
-                email,
-                status: body.status || body.data?.status || 'active',
-                nextBillDate: body.next_bill_date ? new Date(body.next_bill_date) : (body.data?.next_billed_at ? new Date(body.data.next_billed_at) : null),
-                canceledAt: body.cancellation_effective_date ? new Date(body.cancellation_effective_date) : (body.data?.canceled_at ? new Date(body.data.canceled_at) : null),
-                createdAt: timestamp,
-                rawData: body,
-            }, { merge: true });
-            console.log('Subscription written to Firestore');
+            try {
+                console.log('Writing subscription to Firestore:', `users/${userId}/subscriptions/${subscriptionId}`);
+                await admin.firestore().doc(`users/${userId}/subscriptions/${subscriptionId}`).set({
+                    userId,
+                    subscriptionId,
+                    planId,
+                    email,
+                    status: body.status || body.data?.status || 'active',
+                    nextBillDate: body.next_bill_date ? new Date(body.next_bill_date) : (body.data?.next_billed_at ? new Date(body.data.next_billed_at) : null),
+                    canceledAt: body.cancellation_effective_date ? new Date(body.cancellation_effective_date) : (body.data?.canceled_at ? new Date(body.data.canceled_at) : null),
+                    createdAt: timestamp,
+                    rawData: body,
+                }, { merge: true });
+                console.log('Successfully wrote subscription to Firestore:', `users/${userId}/subscriptions/${subscriptionId}`);
+            } catch (err) {
+                console.error('Firestore write error (subscription):', err);
+            }
         }
         if ((alertName === 'payment_succeeded' || alertName === 'checkout_completed' || alertName === 'payment.succeeded' || alertName === 'checkout.completed') && userId && paymentId) {
-            await admin.firestore().doc(`users/${userId}/payments/${paymentId}`).set({
-                userId,
-                paymentId,
-                subscriptionId,
-                planId,
-                email,
-                amount: body.sale_gross || body.amount || body.data?.amount || null,
-                currency: body.currency || body.data?.currency_code || 'USD',
-                status: 'completed',
-                timestamp,
-                rawData: body,
-            }, { merge: true });
-            console.log('Payment written to Firestore');
+            try {
+                console.log('Writing payment to Firestore:', `users/${userId}/payments/${paymentId}`);
+                await admin.firestore().doc(`users/${userId}/payments/${paymentId}`).set({
+                    userId,
+                    paymentId,
+                    subscriptionId,
+                    planId,
+                    email,
+                    amount: body.sale_gross || body.amount || body.data?.amount || null,
+                    currency: body.currency || body.data?.currency_code || 'USD',
+                    status: 'completed',
+                    timestamp,
+                    rawData: body,
+                }, { merge: true });
+                console.log('Successfully wrote payment to Firestore:', `users/${userId}/payments/${paymentId}`);
+            } catch (err) {
+                console.error('Firestore write error (payment):', err);
+            }
         }
         // Optionally, write to a global payments collection for admin
         if (userId && paymentId) {
-            await admin.firestore().doc(`payments/${paymentId}`).set({
-                userId,
-                paymentId,
-                subscriptionId,
-                planId,
-                email,
-                amount: body.sale_gross || body.amount || body.data?.amount || null,
-                currency: body.currency || body.data?.currency_code || 'USD',
-                status: alertName,
-                timestamp,
-                rawData: body,
-            }, { merge: true });
-            console.log('Global payment written to Firestore');
+            try {
+                console.log('Writing global payment to Firestore:', `payments/${paymentId}`);
+                await admin.firestore().doc(`payments/${paymentId}`).set({
+                    userId,
+                    paymentId,
+                    subscriptionId,
+                    planId,
+                    email,
+                    amount: body.sale_gross || body.amount || body.data?.amount || null,
+                    currency: body.currency || body.data?.currency_code || 'USD',
+                    status: alertName,
+                    timestamp,
+                    rawData: body,
+                }, { merge: true });
+                console.log('Successfully wrote global payment to Firestore:', `payments/${paymentId}`);
+            } catch (err) {
+                console.error('Firestore write error (global payment):', err);
+            }
         }
 
         return { statusCode: 200, body: JSON.stringify({ received: true }) };
