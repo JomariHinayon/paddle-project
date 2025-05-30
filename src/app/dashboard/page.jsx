@@ -1564,93 +1564,85 @@ export default function Dashboard() {
                 <UserProfileCard user={user} />
                 
                 {/* Subscription Status Card */}
-                {subscription && (
+                {subscriptionDetails && (
                   <div className="mt-6">
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200/80 dark:border-slate-700/50 p-5">
                       <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Subscription Status</h3>
-                      
-                      {/* Current plan info */}
                       <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30">
                         <div className="flex justify-between items-center">
                           <div>
                             <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Current Plan</span>
                             <h4 className="text-xl font-bold text-slate-900 dark:text-white">
-                              {subscription.plan ? identifyPlan(subscription.plan)?.name || 'Standard Plan' : 'Free Plan'}
+                              {subscriptionDetails.planId ? identifyPlan(subscriptionDetails.planId)?.name || 'Standard Plan' : 'Free Plan'}
                             </h4>
                           </div>
                           <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            subscription.status === 'active' 
+                            subscriptionDetails.status === 'active' 
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' 
-                              : subscription.status === 'paused'
+                              : subscriptionDetails.status === 'paused'
                                 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
-                                : subscription.status === 'canceled' 
+                                : subscriptionDetails.status === 'canceled' 
                                   ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
                                   : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
                           }`}>
-                            {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                            {subscriptionDetails.status ? subscriptionDetails.status.charAt(0).toUpperCase() + subscriptionDetails.status.slice(1) : 'Inactive'}
                           </div>
                         </div>
-                        
                         <div className="mt-4">
-                          {subscription.nextBillDate && (
+                          {subscriptionDetails.nextBillDate && (
                             <div className="flex justify-between items-center mb-2">
                               <span className="text-sm text-slate-500 dark:text-slate-400">Next Billing Date</span>
                               <span className="font-medium text-slate-700 dark:text-slate-300">
-                                {formatDate(subscription.nextBillDate)}
+                                {formatDate(subscriptionDetails.nextBillDate)}
                               </span>
                             </div>
                           )}
-                          
-                          {subscription.lastTransaction && (
+                          {subscriptionDetails.lastTransaction && (
                             <div className="flex justify-between items-center mb-2">
                               <span className="text-sm text-slate-500 dark:text-slate-400">Last Payment</span>
                               <span className="font-medium text-slate-700 dark:text-slate-300">
-                                {formatDate(subscription.lastTransaction)}
+                                {formatDate(subscriptionDetails.lastTransaction)}
                               </span>
                             </div>
                           )}
-                          
-                          {subscription.subscriptionId && (
+                          {subscriptionDetails.subscriptionId && (
                             <div className="flex justify-between items-center">
                               <span className="text-sm text-slate-500 dark:text-slate-400">Subscription ID</span>
                               <span className="font-mono text-xs text-slate-600 dark:text-slate-400">
-                                {subscription.subscriptionId.substring(0, 8)}...
+                                {subscriptionDetails.subscriptionId.substring(0, 8)}...
                               </span>
                             </div>
                           )}
                         </div>
-                        
-                        {/* Display scheduled cancellation notice */}
-                        {subscription.scheduled_change && 
-                          subscription.scheduled_change.action === 'cancel' && 
-                          subscription.status === 'active' && (
+                        {/* Scheduled cancellation notice */}
+                        {subscriptionDetails.scheduled_change && 
+                          subscriptionDetails.scheduled_change.action === 'cancel' && 
+                          subscriptionDetails.status === 'active' && (
                           <div className="mt-4 bg-amber-50 border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800/30 text-amber-800 dark:text-amber-200 px-4 py-3 rounded-lg">
                             <div className="flex items-start">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                               </svg>
                               <div>
-                                <p className="font-medium">This subscription is scheduled to be canceled on {subscription.scheduled_change?.effective_at ? formatDate(subscription.scheduled_change.effective_at) : 'soon'}</p>
+                                <p className="font-medium">This subscription is scheduled to be canceled on {subscriptionDetails.scheduled_change?.effective_at ? formatDate(subscriptionDetails.scheduled_change.effective_at) : 'soon'}</p>
                                 <p className="text-sm mt-1">Your access will continue until this date.</p>
                               </div>
                             </div>
                           </div>
                         )}
-                        
-                        {/* Display cancellation notice if already canceled */}
-                        {subscription.status === 'canceled' && (
+                        {/* Cancellation notice if already canceled */}
+                        {subscriptionDetails.status === 'canceled' && (
                           <div className="mt-4 bg-red-50 border border-red-100 dark:bg-red-900/20 dark:border-red-800/30 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg">
                             <p className="text-sm">
                               Your subscription has been canceled
-                              {subscription.canceledAt 
-                                ? ` on ${formatDate(subscription.canceledAt)}`
+                              {subscriptionDetails.canceledAt 
+                                ? ` on ${formatDate(subscriptionDetails.canceledAt)}`
                                 : ''
                               }.
                             </p>
                           </div>
                         )}
                       </div>
-                      
                       {/* Portal access button */}
                       <div className="mt-4">
                         <button 
