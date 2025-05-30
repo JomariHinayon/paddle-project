@@ -89,7 +89,8 @@ exports.handler = async (event, context) => {
         const paymentId = String(body.order_id || body.checkout_id || body.data?.id || '');
         const alertName = body.alert_name || body.event_type;
         const email = body.email || body.user_email || body.data?.email || null;
-        const planId = body.subscription_plan_id || body.product_id || body.data?.plan_id || null;
+        const planId = body.plan_id || body.product_id || body.subscription_plan_id || (body.data && (body.data.plan_id || body.data.product_id)) || null;
+        const planName = body.plan_name || (body.data && body.data.plan_name) || null;
         const timestamp = new Date();
 
         // Log the Firestore project ID for debugging (robust)
@@ -120,7 +121,7 @@ exports.handler = async (event, context) => {
         }
 
         // Logging for debugging
-        console.log('Received Paddle webhook:', { alertName, userId, subscriptionId, paymentId, email, planId, contentType });
+        console.log('Received Paddle webhook:', { alertName, userId, subscriptionId, paymentId, email, planId, planName, contentType });
 
         // Write to Firestore based on event type, with detailed logging and error catching
         if ((alertName === 'subscription_created' || alertName === 'subscription_updated' || alertName === 'subscription.created' || alertName === 'subscription.updated') && userId && subscriptionId) {
@@ -130,6 +131,7 @@ exports.handler = async (event, context) => {
                     userId,
                     subscriptionId,
                     planId,
+                    planName,
                     email,
                     status: body.status || body.data?.status || 'active',
                     nextBillDate: body.next_bill_date ? new Date(body.next_bill_date) : (body.data?.next_billed_at ? new Date(body.data.next_billed_at) : null),
@@ -150,6 +152,7 @@ exports.handler = async (event, context) => {
                     paymentId,
                     subscriptionId,
                     planId,
+                    planName,
                     email,
                     amount: body.sale_gross || body.amount || body.data?.amount || null,
                     currency: body.currency || body.data?.currency_code || 'USD',
@@ -171,6 +174,7 @@ exports.handler = async (event, context) => {
                     paymentId,
                     subscriptionId,
                     planId,
+                    planName,
                     email,
                     amount: body.sale_gross || body.amount || body.data?.amount || null,
                     currency: body.currency || body.data?.currency_code || 'USD',

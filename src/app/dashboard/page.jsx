@@ -1265,6 +1265,18 @@ export default function Dashboard() {
         if (details.items[0].name) return details.items[0].name;
         if (details.items[0].id && identifyPlan(details.items[0].id)?.name) return identifyPlan(details.items[0].id).name;
       }
+      // Check rawData
+      if (details.rawData) {
+        const rd = details.rawData;
+        if (rd.plan_id && identifyPlan(rd.plan_id)?.name) return identifyPlan(rd.plan_id).name;
+        if (rd.product_id && identifyPlan(rd.product_id)?.name) return identifyPlan(rd.product_id).name;
+        if (rd.name) return rd.name;
+        if (rd.data) {
+          if (rd.data.plan_id && identifyPlan(rd.data.plan_id)?.name) return identifyPlan(rd.data.plan_id).name;
+          if (rd.data.product_id && identifyPlan(rd.data.product_id)?.name) return identifyPlan(rd.data.product_id).name;
+          if (rd.data.name) return rd.data.name;
+        }
+      }
       return 'Free Plan';
     };
     
