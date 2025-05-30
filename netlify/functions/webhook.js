@@ -1,5 +1,4 @@
 const admin = require('firebase-admin');
-const { initializeApp, applicationDefault } = require('firebase-admin/app');
 const crypto = require('crypto');
 
 // Initialize Firebase Admin if not already initialized
@@ -95,6 +94,8 @@ exports.handler = async (event, context) => {
 
         // Log the Firestore project ID for debugging
         console.log('Firestore project:', admin.app().options.projectId);
+        // Optionally, log the full options for debugging
+        console.log('Firebase Admin app options:', admin.app().options);
 
         // Improved error logging
         if (!userId) {
