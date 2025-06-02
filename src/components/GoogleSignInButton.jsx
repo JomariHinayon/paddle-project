@@ -6,6 +6,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { setSession } from '@/lib/session';
+import toast from 'react-hot-toast';
 
 export default function GoogleSignInButton() {
   const [loading, setLoading] = useState(false);
@@ -56,11 +57,12 @@ export default function GoogleSignInButton() {
         provider: 'google',
         lastLogin: serverTimestamp(),
       }, { merge: true });
-
+      toast.success('Google sign-in successful!');
       router.replace('/dashboard');
     } catch (error) {
       console.error('Error signing in with Google:', error);
       setError(error.message || 'Failed to sign in with Google');
+      toast.error(error.message || 'Failed to sign in with Google');
     } finally {
       setLoading(false);
     }
@@ -84,12 +86,13 @@ export default function GoogleSignInButton() {
             provider: 'google',
             lastLogin: serverTimestamp(),
           }, { merge: true });
-
+          toast.success('Google sign-in successful!');
           router.replace('/dashboard');
         }
       } catch (error) {
         console.error('Error handling redirect result:', error);
         setError(error.message || 'Failed to complete sign in');
+        toast.error(error.message || 'Failed to complete sign in');
       }
     };
 

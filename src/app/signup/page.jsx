@@ -9,6 +9,7 @@ import { z } from 'zod';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import Link from 'next/link';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 
 // Form validation schema
 const signUpSchema = z.object({
@@ -33,6 +34,8 @@ export default function SignUp() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -97,6 +100,8 @@ export default function SignUp() {
       setFormData({ email: '', password: '', confirmPassword: '' });
       setLoading(false);
       
+      toast.success('Signup successful! Please check your email to verify your account.');
+      
       // Redirect to confirmation page
       router.replace('/confirm-signup?email=' + encodeURIComponent(formData.email));
       
@@ -108,8 +113,10 @@ export default function SignUp() {
           if (err.path) newErrors[err.path[0]] = err.message;
         });
         setErrors(newErrors);
+        toast.error('Please fix the errors in the form.');
       } else {
         setAuthError(getAuthErrorMessage(error.code, error.message));
+        toast.error(getAuthErrorMessage(error.code, error.message));
       }
     }
   };
@@ -196,15 +203,28 @@ export default function SignUp() {
                   </svg>
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border ${errors.password ? 'border-red-500 dark:border-red-600' : 'border-gray-300 dark:border-slate-600'} rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white`}
+                  className={`w-full pl-10 pr-12 py-3 border ${errors.password ? 'border-red-500 dark:border-red-600' : 'border-gray-300 dark:border-slate-600'} rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white`}
                   placeholder="••••••••"
                   required
                 />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-700 dark:text-slate-500 dark:hover:text-slate-300"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.22 1.125-4.575M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.364-2.364A9.956 9.956 0 0021.999 9c0 5.523-4.477 10-10 10a9.956 9.956 0 01-4.636-1.364M9.88 9.88a3 3 0 104.24 4.24" /></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm2.828-2.828A9.956 9.956 0 0121.999 9c0 5.523-4.477 10-10 10S2 14.523 2 9c0-1.657.403-3.22 1.125-4.575" /></svg>
+                  )}
+                </button>
               </div>
               {errors.password && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>}
               <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
@@ -223,15 +243,28 @@ export default function SignUp() {
                   </svg>
                 </div>
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border ${errors.confirmPassword ? 'border-red-500 dark:border-red-600' : 'border-gray-300 dark:border-slate-600'} rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white`}
+                  className={`w-full pl-10 pr-12 py-3 border ${errors.confirmPassword ? 'border-red-500 dark:border-red-600' : 'border-gray-300 dark:border-slate-600'} rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white`}
                   placeholder="••••••••"
                   required
                 />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-700 dark:text-slate-500 dark:hover:text-slate-300"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.22 1.125-4.575M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.364-2.364A9.956 9.956 0 0021.999 9c0 5.523-4.477 10-10 10a9.956 9.956 0 01-4.636-1.364M9.88 9.88a3 3 0 104.24 4.24" /></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm2.828-2.828A9.956 9.956 0 0121.999 9c0 5.523-4.477 10-10 10S2 14.523 2 9c0-1.657.403-3.22 1.125-4.575" /></svg>
+                  )}
+                </button>
               </div>
               {errors.confirmPassword && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.confirmPassword}</p>}
             </div>

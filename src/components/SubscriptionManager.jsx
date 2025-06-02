@@ -5,6 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { PADDLE_CONFIG } from '@/lib/paddle-config';
 import { identifyPlan } from '@/lib/paddle-utils';
+import toast from 'react-hot-toast';
 
 // Initialize Paddle with the client token
 useEffect(() => {
@@ -68,6 +69,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }) 
   const handlePlanChange = async (newPlanId) => {
     if (!currentSubscription || !currentSubscription.subscriptionId) {
       setError('No active subscription found');
+      toast.error('No active subscription found');
       return;
     }
     
@@ -115,11 +117,13 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }) 
         if (onPlanChange) {
           onPlanChange(newPlanId);
         }
+        toast.success('Subscription plan updated successfully!');
       }
       
     } catch (err) {
       console.error('Error updating subscription plan:', err);
       setError(err.message || 'Failed to update subscription plan');
+      toast.error(err.message || 'Failed to update subscription plan');
     } finally {
       setProcessingAction(null);
     }
@@ -129,6 +133,7 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }) 
   const handleCancelSubscription = async (immediate = false) => {
     if (!currentSubscription || !currentSubscription.subscriptionId) {
       setError('No active subscription found');
+      toast.error('No active subscription found');
       return;
     }
     
@@ -184,11 +189,13 @@ export default function SubscriptionManager({ userId, onPlanChange, onCancel }) 
         if (onCancel) {
           onCancel();
         }
+        toast.success('Subscription canceled successfully!');
       }
       
     } catch (err) {
       console.error('Error cancelling subscription:', err);
       setError(err.message || 'Failed to cancel subscription');
+      toast.error(err.message || 'Failed to cancel subscription');
     } finally {
       setProcessingAction(null);
     }

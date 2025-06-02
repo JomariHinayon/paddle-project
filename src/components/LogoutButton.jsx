@@ -5,6 +5,7 @@ import { auth } from '@/lib/firebase';
 import { clearSession } from '@/lib/session';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 export default function LogoutButton({ className = '' }) {
   const router = useRouter();
@@ -15,9 +16,11 @@ export default function LogoutButton({ className = '' }) {
       setLoading(true);
       await signOut(auth);
       clearSession();
+      toast.success('You have been logged out.');
       router.replace('/login');
     } catch (error) {
       console.error('Error signing out:', error);
+      toast.error('Failed to log out. Please try again.');
     } finally {
       setLoading(false);
     }
