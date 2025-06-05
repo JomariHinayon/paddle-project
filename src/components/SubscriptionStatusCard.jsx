@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PADDLE_CONFIG } from '@/lib/paddle-config';
 import { identifyPlan } from '@/lib/paddle-utils';
+import { getAuth } from 'firebase/auth';
 
 export default function SubscriptionStatusCard({ subscription, userEmail, className = '' }) {
   // Format dates from Firestore timestamp or Date object
@@ -56,9 +57,16 @@ export default function SubscriptionStatusCard({ subscription, userEmail, classN
     setIsCancelling(true);
     setCancelError('');
     try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not authenticated');
+      const idToken = await user.getIdToken();
       const res = await fetch('/api/subscriptions/cancel', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({
           subscriptionId: subscription.id,
           reason: cancelReason,

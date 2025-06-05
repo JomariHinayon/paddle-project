@@ -181,6 +181,10 @@ export default function Dashboard() {
   const [subscription, setSubscription] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [subscriptionDetails, setSubscriptionDetails] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -1254,8 +1258,44 @@ export default function Dashboard() {
     return 'N/A';
   };
 
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    setCancelError('');
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not authenticated');
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/subscriptions/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          subscriptionId: subscriptionDetails.subscriptionId,
+          reason: cancelReason,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to cancel subscription');
+      setShowCancelModal(false);
+      window.location.reload();
+    } catch (err) {
+      setCancelError(err.message || 'Failed to cancel subscription');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const DashboardContent = () => {
     const { theme } = useTheme();
+    // Move modal state here to avoid reset on parent re-render
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [cancelError, setCancelError] = useState('');
+
     // Dito ilalagay ang getPlanName function
     const getPlanName = (details) => {
       if (details.planId && identifyPlan(details.planId)?.name) return identifyPlan(details.planId).name;
@@ -1488,9 +1528,9 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <div className="mt-6 pt-4 ">
-                        <button 
+                        <button
                           onClick={openCustomerPortal}
-                          className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                          className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 hover:bg-opacity-90 rounded-lg transition-colors border border-blue-200"
                         >
                           Manage Subscription
                         </button>
@@ -1639,13 +1679,13 @@ export default function Dashboard() {
                           </div>
                         )}
                       </div>
-                      {/* Portal access button */}
+                      {/* Portal access button replaced with Cancel Subscription */}
                       <div className="mt-4">
                         <button 
-                          onClick={openCustomerPortal}
-                          className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                          onClick={() => setShowCancelModal(true)}
+                          className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-red-600 hover:text-white bg-red-50 hover:bg-red-600 hover:bg-opacity-90 rounded-lg transition-colors border border-red-200"
                         >
-                          Manage Subscription
+                          Cancel Subscription
                         </button>
                       </div>
                     </div>
@@ -1906,6 +1946,38 @@ export default function Dashboard() {
         
         {/* Settings Modal */}
         <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        {showCancelModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+              <h4 className="text-lg font-semibold mb-2 text-gray-900">Cancel Subscription</h4>
+              <p className="text-sm text-gray-700 mb-4">Please let us know why you're cancelling:</p>
+              <textarea
+                className="w-full border border-gray-300 rounded p-2 mb-4 text-slate-800"
+                rows={3}
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+                placeholder="Reason for cancellation (optional)"
+              />
+              {cancelError && <div className="text-red-600 text-sm mb-2">{cancelError}</div>}
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                  onClick={() => setShowCancelModal(false)}
+                  disabled={isCancelling}
+                >
+                  Close
+                </button>
+                <button
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                  onClick={handleCancelSubscription}
+                  disabled={isCancelling}
+                >
+                  {isCancelling ? 'Cancelling...' : 'Confirm Cancel Subscription'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
