@@ -23,6 +23,10 @@ export default async function handler(req, res) {
         if (!subscriptionId || !idToken) {
             return res.status(400).json({ error: 'Missing subscriptionId or auth token' });
         }
+        // Debug logs
+        console.log('Paddle API Key (first 10):', PADDLE_API_KEY?.slice(0, 10));
+        console.log('Subscription ID:', subscriptionId);
+        console.log('Paddle API URL:', PADDLE_API_BASE_URL);
         // Verify user
         const decoded = await getAuth().verifyIdToken(idToken);
         const userId = decoded.uid;
@@ -37,10 +41,20 @@ export default async function handler(req, res) {
         const subData = userSubSnap.data();
 
         // Call Paddle API to cancel
-        const paddleRes = await paddleApiClient.post(`/subscriptions/${subscriptionId}/cancel`, {
-            effective_from: 'immediately',
-        });
-        const paddleData = paddleRes.data?.data || {};
+        let paddleRes, paddleData;
+        try {
+            paddleRes = await paddleApiClient.post(`/subscriptions/${subscriptionId}/cancel`, {
+                effective_from: 'immediately',
+            });
+            paddleData = paddleRes.data?.data || {};
+        } catch (error) {
+            if (error.response) {
+                console.error('Paddle error response:', error.response.data);
+            } else {
+                console.error('Paddle error:', error.message);
+            }
+            throw error;
+        }
 
         // Update subscription doc
         await userSubRef.set({
