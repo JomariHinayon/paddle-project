@@ -44,6 +44,38 @@ export default function SubscriptionStatusCard({ subscription, userEmail, classN
   const cancellationDate = hasScheduledCancellation && subscription.scheduledChange ? 
     formatDate(subscription.scheduledChange.effective_at) : 'N/A';
 
+  // Modal state
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState('');
+  const [cancelSuccess, setCancelSuccess] = useState('');
+
+  // Cancel subscription handler
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    setCancelError('');
+    try {
+      const res = await fetch('/api/subscriptions/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionId: subscription.id,
+          reason: cancelReason,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to cancel subscription');
+      setCancelSuccess('Subscription cancelled successfully.');
+      setShowCancelModal(false);
+      window.location.reload();
+    } catch (err) {
+      setCancelError(err.message || 'Failed to cancel subscription');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   return (
     <div className={`bg-white rounded-lg shadow p-6 ${className}`}>
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Subscription Status</h3>
@@ -109,17 +141,49 @@ export default function SubscriptionStatusCard({ subscription, userEmail, classN
         )}
       </div>
       
-      {/* Portal access button */}
+      {/* Portal access button replaced with Cancel Subscription */}
       <div className="mt-6">
-        <a 
-          href={`${PADDLE_CONFIG.customerPortalLink}?customer_email=${encodeURIComponent(userEmail || '')}${subscription?.customerId ? `&customer_id=${encodeURIComponent(subscription.customerId)}` : ''}`} 
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+        <button
+          onClick={() => setShowCancelModal(true)}
+          className="flex items-center justify-center w-full py-2 px-4 text-sm font-medium text-red-600 hover:text-white bg-red-50 hover:bg-red-600 hover:bg-opacity-90 rounded-lg transition-colors border border-red-200"
         >
-          Manage Subscription
-        </a>
+          Cancel Subscription
+        </button>
       </div>
+
+      {/* Cancel Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h4 className="text-lg font-semibold mb-2 text-gray-900">Cancel Subscription</h4>
+            <p className="text-sm text-gray-700 mb-4">Please let us know why you're cancelling:</p>
+            <textarea
+              className="w-full border border-gray-300 rounded p-2 mb-4"
+              rows={3}
+              value={cancelReason}
+              onChange={e => setCancelReason(e.target.value)}
+              placeholder="Reason for cancellation (optional)"
+            />
+            {cancelError && <div className="text-red-600 text-sm mb-2">{cancelError}</div>}
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                onClick={() => setShowCancelModal(false)}
+                disabled={isCancelling}
+              >
+                Close
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                onClick={handleCancelSubscription}
+                disabled={isCancelling}
+              >
+                {isCancelling ? 'Cancelling...' : 'Confirm Cancel Subscription'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
