@@ -3,7 +3,7 @@ import { getFirestore } from '@/lib/firebase-admin';
 import axios from 'axios';
 
 const PADDLE_API_KEY = process.env.PADDLE_API_KEY;
-const PADDLE_API_BASE_URL = 'https://api.paddle.com';
+const PADDLE_API_BASE_URL = 'https://sandbox-api.paddle.com';
 
 const paddleApiClient = axios.create({
     baseURL: PADDLE_API_BASE_URL,
